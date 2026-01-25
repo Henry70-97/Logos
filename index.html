@@ -421,8 +421,8 @@
       <h3 class="text-xl font-bold text-gray-800">Writer Declaration</h3>
      </div>
      <div class="p-6">
-      <div class="bg-emerald-50 rounded-2xl p-4 mb-6">
-       <p class="text-gray-700 text-sm leading-relaxed">By proceeding, I declare that:</p>
+      <div class="bg-emerald-50 rounded-2xl p-4 mb-4">
+       <p class="text-gray-700 text-sm leading-relaxed font-semibold">By proceeding, I declare that:</p>
        <ul class="mt-3 space-y-2 text-sm text-gray-600">
         <li class="flex items-start gap-2">
          <svg class="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
@@ -441,6 +441,24 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
          </svg> I agree to the terms of service and privacy policy</li>
        </ul>
+      </div>
+      <div class="bg-red-50 border-l-4 border-red-500 rounded-lg p-4 mb-6">
+       <div class="flex items-start gap-3">
+        <svg class="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <div>
+         <p class="text-red-800 font-semibold text-sm mb-2">⚠️ IMPORTANT POLICY WARNING</p>
+         <p class="text-red-700 text-xs leading-relaxed mb-2">The following actions will result in <strong>payment cancellation, account suspension, or both</strong>:</p>
+         <ul class="text-red-700 text-xs space-y-1.5">
+          <li class="flex items-start gap-1.5"><span class="text-red-600 font-bold">•</span> <span>Providing false or incorrect payment/personal details</span></li>
+          <li class="flex items-start gap-1.5"><span class="text-red-600 font-bold">•</span> <span>Creating or operating multiple accounts</span></li>
+          <li class="flex items-start gap-1.5"><span class="text-red-600 font-bold">•</span> <span>Any form of fraud, plagiarism, or dishonest behavior</span></li>
+          <li class="flex items-start gap-1.5"><span class="text-red-600 font-bold">•</span> <span>Rudeness, harassment, or disrespect to support team members</span></li>
+         </ul>
+         <p class="text-red-800 text-xs mt-2 font-medium">We maintain a zero-tolerance policy for violations. Your cooperation ensures a fair platform for all writers.</p>
+        </div>
+       </div>
       </div>
       <div class="flex items-start gap-3 mb-6"><input type="checkbox" id="declarationCheck" class="mt-1 w-5 h-5 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500"> <label for="declarationCheck" class="text-sm text-gray-600">I have read and agree to the declaration above</label>
       </div><button onclick="acceptDeclaration()" id="declarationBtn" disabled class="w-full gradient-primary text-white font-semibold py-3 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"> Continue to Payment Setup </button>
@@ -655,7 +673,7 @@
       <div class="text-4xl font-extrabold text-emerald-600 mb-2">
        1 Free Task
       </div>
-      <p class="text-gray-500 text-sm mb-6">Complete your first task and EARN KES 600-1500! After that, subscribe to continue earning unlimited monthly tasks.</p><button onclick="closeModal('freeTaskModal'); navigateTo('tasks');" class="w-full gradient-primary text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-opacity"> Start Your Free Task </button>
+      <p class="text-gray-500 text-sm mb-6">Complete your first task and earn KES 10-30! After that, subscribe to continue earning unlimited monthly tasks.</p><button onclick="closeModal('freeTaskModal'); navigateTo('tasks');" class="w-full gradient-primary text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-opacity"> Start Your Free Task </button>
      </div>
     </div>
    </div><!-- Subscription Required Modal -->
@@ -749,12 +767,12 @@
       <div class="bg-gray-50 rounded-2xl p-4">
        <h4 class="font-semibold text-gray-800 mb-3">Payment Instructions:</h4>
        <ol class="space-y-2 text-sm text-gray-700">
-        <li class="flex items-start gap-2"><span class="font-semibold text-emerald-600">1.</span> <span>Visit <strong class="text-emerald-600">https://lipana.dev/pay/upgrade-fee</strong> in your browser</span></li>
+        <li class="flex items-start gap-2"><span class="font-semibold text-emerald-600">1.</span> <span>Visit <strong class="text-emerald-600">lipana.dev/pay/upgrade-fee</strong> in your browser</span></li>
         <li class="flex items-start gap-2"><span class="font-semibold text-emerald-600">2.</span> <span>Complete the payment of <strong>KES 208</strong></span></li>
         <li class="flex items-start gap-2"><span class="font-semibold text-emerald-600">3.</span> <span>Copy the payment confirmation message you receive</span></li>
         <li class="flex items-start gap-2"><span class="font-semibold text-emerald-600">4.</span> <span>Return here and paste the message below to activate your subscription</span></li>
        </ol>
-      </div><a href="https://https://lipana.dev/pay/upgrade-fee" target="_blank" rel="noopener noreferrer" class="block w-full gradient-primary text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-opacity text-center"> Go to https://lipana.dev/pay/upgrade-fee → </a>
+      </div><a href="https://lipana.dev/pay/upgrade-fee" target="_blank" rel="noopener noreferrer" class="block w-full gradient-primary text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-opacity text-center"> Go to lipana.dev/pay/upgrade-fee → </a>
       <div class="border-t border-gray-200 pt-4">
        <p class="text-sm text-gray-600 mb-2 text-center">Already paid? Paste your confirmation message below:</p><button onclick="showPaymentVerification()" class="w-full bg-gray-100 text-gray-700 font-medium py-2 rounded-xl hover:bg-gray-200 transition-colors text-sm"> Paste Payment Confirmation </button>
       </div>
@@ -792,7 +810,7 @@ ABC123XYZ Confirmed. You have paid KES 208.00 to Lipana Technologies Limited on 
       <div><label for="taskSelect" class="block text-sm font-medium text-gray-700 mb-1">Select Task</label> <select id="taskSelect" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"> <option value="">Choose a task you accepted</option> </select>
       </div>
       <div id="selectedTaskInfo" class="hidden bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-4">
-       <div class="grid grid-cols-2 gap-3 text-sm">
+       <div class="grid grid-cols-2 gap-3 text-sm mb-3">
         <div><span class="text-gray-600">Client:</span> <span id="infoClient" class="font-semibold text-gray-800 ml-2"></span>
         </div>
         <div><span class="text-gray-600">Expected:</span> <span id="infoWords" class="font-semibold text-gray-800 ml-2"></span>
@@ -800,6 +818,10 @@ ABC123XYZ Confirmed. You have paid KES 208.00 to Lipana Technologies Limited on 
         <div><span class="text-gray-600">Payment:</span> <span id="infoPayment" class="font-semibold text-emerald-600 ml-2"></span>
         </div>
         <div><span class="text-gray-600">In KES:</span> <span id="infoPaymentKES" class="font-semibold text-teal-600 ml-2"></span>
+        </div>
+       </div>
+       <div class="bg-white rounded-xl p-3 border-2 border-amber-200">
+        <div class="flex items-center justify-between"><span class="text-gray-700 font-medium">⏰ Deadline:</span> <span id="taskDeadlineCountdown" class="font-bold text-red-600 text-lg"></span>
         </div>
        </div>
       </div>
@@ -1391,22 +1413,41 @@ Generated by CreativePay
       }
       
       if (!currentUser.pendingTasks) currentUser.pendingTasks = [];
+      
+      // Check if already accepted this task
       if (currentUser.pendingTasks.find(t => t.id === currentTask.id)) {
         showToast('You already accepted this task!');
         return;
       }
-      currentUser.pendingTasks.push({ ...currentTask, acceptedAt: new Date().toISOString() });
+      
+      // ONE TASK AT A TIME: Check if user already has a pending task
+      if (currentUser.pendingTasks.length > 0) {
+        showToast('You can only accept one task at a time. Submit your current task first!');
+        return;
+      }
+      
+      // Add task with 24-hour deadline
+      const acceptedAt = new Date();
+      const deadlineAt = new Date(acceptedAt.getTime() + (24 * 60 * 60 * 1000)); // 24 hours from now
+      
+      currentUser.pendingTasks.push({ 
+        ...currentTask, 
+        acceptedAt: acceptedAt.toISOString(),
+        deadlineAt: deadlineAt.toISOString()
+      });
+      
       if (!currentUser.activity) currentUser.activity = [];
       currentUser.activity.unshift({
         type: 'task_accepted',
         title: currentTask.title,
-        time: new Date().toISOString(),
+        time: acceptedAt.toISOString(),
         amount: currentTask.payment
       });
       saveUserData();
       closeModal('taskDetailsModal');
-      showToast('Task accepted! Check your dashboard.');
+      showToast('Task accepted! You have 24 hours to submit.');
       updateUI();
+      startDeadlineTimer();
     }
 
     function renderActivityList() {
@@ -1443,41 +1484,7 @@ Generated by CreativePay
       }).join('');
     }
 
-    function getActivityIcon(type) {
-      const icons = {
-        task_accepted: '<svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>',
-        task_submitted: '<svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
-        task_approved: '<svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>',
-        earnings_added: '<svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
-        withdrawal: '<svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>',
-        welcome_bonus: '<svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>'
-      };
-      return icons[type] || icons.task_accepted;
-    }
 
-    function getActivityColor(type) {
-      const colors = {
-        task_accepted: 'bg-blue-100',
-        task_submitted: 'bg-purple-100',
-        task_approved: 'bg-emerald-100',
-        earnings_added: 'bg-green-100',
-        withdrawal: 'bg-red-100',
-        welcome_bonus: 'bg-yellow-100'
-      };
-      return colors[type] || 'bg-gray-100';
-    }
-
-    function getActivityTitle(item) {
-      const titles = {
-        task_accepted: `Task accepted: ${item.title}`,
-        task_submitted: `Story submitted: ${item.title}`,
-        task_approved: `Task approved: ${item.title}`,
-        earnings_added: `Earnings added`,
-        withdrawal: `Withdrawal processed`,
-        welcome_bonus: `Welcome bonus received`
-      };
-      return titles[item.type] || 'Activity';
-    }
 
     function getTimeAgo(dateString) {
       const date = new Date(dateString);
@@ -2093,6 +2100,12 @@ Generated by CreativePay
           document.getElementById('infoPayment').textContent = `$${task.payment.toFixed(2)}`;
           document.getElementById('infoPaymentKES').textContent = `KES ${(task.payment * USD_TO_KES).toFixed(2)}`;
           document.getElementById('selectedTaskInfo').classList.remove('hidden');
+          
+          // Start updating countdown immediately
+          updateDeadlineDisplay();
+          if (!window.taskDeadlineTimer) {
+            startDeadlineTimer();
+          }
         }
       } else {
         document.getElementById('selectedTaskInfo').classList.add('hidden');
@@ -2225,22 +2238,9 @@ Generated by CreativePay
       // System always gives 50%
       const systemScore = 50;
 
-      // For free task: earnings in KES 10-30
-      const isFreeTrial = !currentUser.subscribed && currentUser.freeTasksRemaining > 0;
-      let finalPaymentUSD, finalPaymentKES;
-      
       // All users get paid KES 10-30 after review (poor quality deduction)
-      finalPaymentKES = Math.floor(Math.random() * 21) + 10; // 10-30 KES
-      finalPaymentUSD = finalPaymentKES / USD_TO_KES;
-      
-      if (false) { // Disabled - everyone gets 10-30 KES after review
-        // Subscribed users get normal payment
-        const clientScorePercent = Math.floor(Math.random() * 21) + 10; // 10-30%
-        const basePayment = submissionTask.payment;
-        const totalScorePercent = systemScore + clientScorePercent;
-        finalPaymentUSD = (basePayment * totalScorePercent) / 100;
-        finalPaymentKES = finalPaymentUSD * USD_TO_KES;
-      }
+      const finalPaymentKES = Math.floor(Math.random() * 21) + 10; // 10-30 KES
+      const finalPaymentUSD = finalPaymentKES / USD_TO_KES;
       
       const basePayment = submissionTask.payment;
       const deductionUSD = basePayment - finalPaymentUSD;
@@ -2273,7 +2273,7 @@ Generated by CreativePay
       document.getElementById('deduction').textContent = `-$${deductionUSD.toFixed(2)}`;
       document.getElementById('finalPaymentBreakdown').textContent = `KES ${finalPaymentKES.toFixed(2)} ($${finalPaymentUSD.toFixed(2)})`;
 
-      // Update user data
+      // Update user data - IMMEDIATE CREDIT (no withdrawal wait)
       currentUser.balance += finalPaymentUSD;
       currentUser.totalEarned += finalPaymentUSD;
       currentUser.tasksCompleted = (currentUser.tasksCompleted || 0) + 1;
@@ -2290,6 +2290,12 @@ Generated by CreativePay
       
       // Remove from pending tasks
       currentUser.pendingTasks = currentUser.pendingTasks.filter(t => t.id !== submissionTask.id);
+      
+      // Clear deadline timer
+      if (window.taskDeadlineTimer) {
+        clearInterval(window.taskDeadlineTimer);
+        window.taskDeadlineTimer = null;
+      }
 
       // Add to activity
       currentUser.activity.unshift({
@@ -2488,8 +2494,139 @@ Generated by CreativePay
       originalOpenModal(id);
     };
 
+    // Deadline Timer Functions
+    window.taskDeadlineTimer = null;
+
+    function startDeadlineTimer() {
+      if (window.taskDeadlineTimer) {
+        clearInterval(window.taskDeadlineTimer);
+      }
+      
+      window.taskDeadlineTimer = setInterval(() => {
+        checkAndUpdateDeadlines();
+      }, 1000); // Update every second
+    }
+
+    function checkAndUpdateDeadlines() {
+      if (!currentUser || !currentUser.pendingTasks || currentUser.pendingTasks.length === 0) {
+        if (window.taskDeadlineTimer) {
+          clearInterval(window.taskDeadlineTimer);
+          window.taskDeadlineTimer = null;
+        }
+        return;
+      }
+
+      const now = new Date();
+      let tasksExpired = false;
+
+      currentUser.pendingTasks.forEach((task, index) => {
+        const deadline = new Date(task.deadlineAt);
+        const timeRemaining = deadline - now;
+
+        if (timeRemaining <= 0) {
+          // Task expired - remove it
+          currentUser.pendingTasks.splice(index, 1);
+          tasksExpired = true;
+          
+          // Add to activity
+          if (!currentUser.activity) currentUser.activity = [];
+          currentUser.activity.unshift({
+            type: 'task_expired',
+            title: task.title,
+            time: now.toISOString(),
+            amount: 0
+          });
+        }
+      });
+
+      if (tasksExpired) {
+        saveUserData();
+        updateUI();
+        populatePendingTasks();
+        showToast('Task deadline expired and has been removed.');
+      }
+
+      // Update countdown display if on submit modal
+      updateDeadlineDisplay();
+    }
+
+    function updateDeadlineDisplay() {
+      const countdownEl = document.getElementById('taskDeadlineCountdown');
+      if (!countdownEl || !submissionTask) return;
+
+      const now = new Date();
+      const deadline = new Date(submissionTask.deadlineAt);
+      const timeRemaining = deadline - now;
+
+      if (timeRemaining <= 0) {
+        countdownEl.textContent = 'EXPIRED';
+        countdownEl.className = 'font-bold text-red-600 text-lg animate-pulse';
+        return;
+      }
+
+      // Calculate hours, minutes, seconds
+      const hours = Math.floor(timeRemaining / (1000 * 60 * 60));
+      const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+
+      countdownEl.textContent = `${hours}h ${minutes}m ${seconds}s`;
+      
+      // Change color based on time remaining
+      if (hours < 1) {
+        countdownEl.className = 'font-bold text-red-600 text-lg';
+      } else if (hours < 6) {
+        countdownEl.className = 'font-bold text-amber-600 text-lg';
+      } else {
+        countdownEl.className = 'font-bold text-emerald-600 text-lg';
+      }
+    }
+
+    function getActivityIcon(type) {
+      const icons = {
+        task_accepted: '<svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>',
+        task_submitted: '<svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        task_approved: '<svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>',
+        task_expired: '<svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        earnings_added: '<svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        withdrawal: '<svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>',
+        welcome_bonus: '<svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>'
+      };
+      return icons[type] || icons.task_accepted;
+    }
+
+    function getActivityColor(type) {
+      const colors = {
+        task_accepted: 'bg-blue-100',
+        task_submitted: 'bg-purple-100',
+        task_approved: 'bg-emerald-100',
+        task_expired: 'bg-red-100',
+        earnings_added: 'bg-green-100',
+        withdrawal: 'bg-red-100',
+        welcome_bonus: 'bg-yellow-100'
+      };
+      return colors[type] || 'bg-gray-100';
+    }
+
+    function getActivityTitle(item) {
+      const titles = {
+        task_accepted: `Task accepted: ${item.title}`,
+        task_submitted: `Story submitted: ${item.title}`,
+        task_approved: `Task approved: ${item.title}`,
+        task_expired: `Task expired: ${item.title}`,
+        earnings_added: `Earnings added`,
+        withdrawal: `Withdrawal processed`,
+        welcome_bonus: `Welcome bonus received`
+      };
+      return titles[item.type] || 'Activity';
+    }
+
     // Initialize on load
     init();
+    
+    // Start deadline timer if user has pending tasks
+    if (currentUser && currentUser.pendingTasks && currentUser.pendingTasks.length > 0) {
+      startDeadlineTimer();
+    }
   </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c3ad8f3b1fa9bfc',t:'MTc2OTM3NjM3Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c3b309f23d69bfc',t:'MTc2OTM3OTk2NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
