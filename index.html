@@ -47,11 +47,29 @@
       transform: translateY(-4px);
       box-shadow: 0 20px 40px rgba(0,0,0,0.1);
     }
-    .task-card:nth-child(odd) {
-      background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+    .task-card:nth-child(6n+1) {
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      border-left: 4px solid #f59e0b;
     }
-    .task-card:nth-child(even) {
-      background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%);
+    .task-card:nth-child(6n+2) {
+      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+      border-left: 4px solid #3b82f6;
+    }
+    .task-card:nth-child(6n+3) {
+      background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+      border-left: 4px solid #ec4899;
+    }
+    .task-card:nth-child(6n+4) {
+      background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+      border-left: 4px solid #6366f1;
+    }
+    .task-card:nth-child(6n+5) {
+      background: linear-gradient(135deg, #ccfbf1 0%, #99f6e4 100%);
+      border-left: 4px solid #14b8a6;
+    }
+    .task-card:nth-child(6n+6) {
+      background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
+      border-left: 4px solid #f97316;
     }
     .pdf-paper {
       background: white;
@@ -131,7 +149,10 @@
        </svg><span class="font-medium">Home</span> </a> <a href="#" onclick="navigateTo('tasks'); closeMenu();" class="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-all">
        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-       </svg><span class="font-medium">Available Writing Tasks</span> </a> <a href="#" onclick="navigateTo('dashboard'); closeMenu();" class="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-all">
+       </svg><span class="font-medium">Available Writing Tasks</span> </a> <a href="#" onclick="navigateTo('forex'); closeMenu();" class="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-all">
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+       </svg><span class="font-medium">Forex Trading</span> </a> <a href="#" onclick="navigateTo('dashboard'); closeMenu();" class="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-all">
        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
        </svg><span class="font-medium">My Dashboard</span> </a> <a href="#" onclick="navigateTo('earnings'); closeMenu();" class="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-all">
@@ -304,7 +325,7 @@
       <div class="flex items-center gap-2"><select id="genreFilter" onchange="filterTasks()" class="px-4 py-2 rounded-xl border border-gray-200 text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"> <option value="all">All Genres</option> <option value="romance">Romance</option> <option value="mystery">Mystery</option> <option value="fantasy">Fantasy</option> <option value="scifi">Sci-Fi</option> <option value="horror">Horror</option> <option value="drama">Drama</option> </select>
       </div>
      </div>
-     <div id="tasksList" class="space-y-4"><!-- Tasks will be rendered here -->
+     <div id="tasksList" class="grid md:grid-cols-2 gap-4"><!-- Tasks will be rendered here -->
      </div>
     </section><!-- Earnings Page -->
     <section id="earningsPage" class="hidden">
@@ -342,6 +363,132 @@
       <div id="transactionsList" class="divide-y divide-gray-50">
        <div class="p-6 text-center text-gray-500">
         <p>No transactions yet.</p>
+       </div>
+      </div>
+     </div>
+    </section><!-- Forex Trading Page -->
+    <section id="forexPage" class="hidden">
+     <div class="mb-6">
+      <h2 class="text-3xl font-bold text-gray-800 mb-2">Urban Trade</h2>
+      <p class="text-gray-600">Professional Forex Trading Platform • Earn KES 20/second</p>
+     </div><!-- Forex Balance Card -->
+     <div class="bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl p-6 lg:p-8 text-white shadow-xl shadow-blue-200 mb-8">
+      <div class="flex items-center justify-between mb-4"><span class="text-blue-100 font-medium">Trading Account Balance</span>
+       <div class="bg-white/20 rounded-full px-3 py-1 text-sm font-medium">
+        Active
+       </div>
+      </div>
+      <div class="text-4xl lg:text-5xl font-extrabold mb-6" id="forexBalance">
+       KES 0.00
+      </div>
+      <div class="flex flex-col sm:flex-row gap-3"><button onclick="topUpForex()" class="flex-1 bg-white text-blue-600 font-semibold py-3 px-6 rounded-xl hover:bg-blue-50 transition-all flex items-center justify-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg> Top Up Account </button> <button onclick="openModal('forexCashoutModal')" class="flex-1 bg-blue-700/50 text-white font-semibold py-3 px-6 rounded-xl hover:bg-blue-700/70 transition-all flex items-center justify-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg> Cash Out </button>
+      </div>
+      <div class="mt-4 flex flex-col gap-2 text-center"><button onclick="openModal('forexTopUpVerifyModal')" class="text-sm text-blue-100 hover:text-white underline"> Already topped up but not reflecting? Click here </button>
+      </div>
+     </div><!-- Live Trading Chart -->
+     <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 mb-8">
+      <div class="flex items-center justify-between mb-4">
+       <div>
+        <h3 class="text-xl font-bold text-gray-800">Live Market Chart</h3>
+        <p class="text-sm text-gray-500">EUR/USD • Real-time trading data</p>
+       </div>
+       <div class="flex items-center gap-2"><span class="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 flex items-center gap-1"> <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Live </span> <span id="chartPrice" class="text-lg font-bold text-blue-600">1.0847</span>
+       </div>
+      </div>
+      <div class="relative bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-4" style="height: 250px;">
+       <canvas id="tradingChart" class="w-full h-full"></canvas>
+      </div>
+      <div class="grid grid-cols-4 gap-2 mt-4">
+       <div class="text-center p-2 bg-gray-50 rounded-lg">
+        <p class="text-xs text-gray-500">High</p>
+        <p id="chartHigh" class="text-sm font-semibold text-green-600">1.0851</p>
+       </div>
+       <div class="text-center p-2 bg-gray-50 rounded-lg">
+        <p class="text-xs text-gray-500">Low</p>
+        <p id="chartLow" class="text-sm font-semibold text-red-600">1.0843</p>
+       </div>
+       <div class="text-center p-2 bg-gray-50 rounded-lg">
+        <p class="text-xs text-gray-500">Volume</p>
+        <p id="chartVolume" class="text-sm font-semibold text-gray-800">2.4M</p>
+       </div>
+       <div class="text-center p-2 bg-gray-50 rounded-lg">
+        <p class="text-xs text-gray-500">Change</p>
+        <p id="chartChange" class="text-sm font-semibold text-green-600">+0.12%</p>
+       </div>
+      </div>
+     </div><!-- Trading Interface -->
+     <div class="grid lg:grid-cols-2 gap-6 mb-8"><!-- Trading Form -->
+      <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+       <h3 class="text-xl font-bold text-gray-800 mb-4">Start Trading</h3>
+       <form id="tradeForm" onsubmit="handleTrade(event)" class="space-y-4">
+        <div><label for="tradeAmount" class="block text-sm font-medium text-gray-700 mb-1">Stake Amount (KES)</label> <input type="number" id="tradeAmount" required min="400" step="1" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Minimum KES 400">
+         <p class="text-xs text-gray-500 mt-1">Minimum stake: KES 400</p>
+        </div>
+        <div><label for="tradeTime" class="block text-sm font-medium text-gray-700 mb-1">Trading Duration (seconds)</label> <select id="tradeTime" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"> <option value="5">5 seconds (+KES 100)</option> <option value="10">10 seconds (+KES 200)</option> <option value="15">15 seconds (+KES 300)</option> <option value="20">20 seconds (+KES 400)</option> <option value="30">30 seconds (+KES 600)</option> <option value="60">60 seconds (+KES 1,200)</option> </select>
+        </div>
+        <div class="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-4">
+         <div class="flex justify-between items-center mb-2"><span class="text-sm text-gray-600">Stake Amount:</span> <span class="font-semibold text-gray-800" id="previewStake">KES 0</span>
+         </div>
+         <div class="flex justify-between items-center mb-2"><span class="text-sm text-gray-600">Expected Return:</span> <span class="font-semibold text-green-600" id="previewReturn">KES 0</span>
+         </div>
+         <div class="flex justify-between items-center pt-2 border-t border-blue-200"><span class="text-sm font-medium text-gray-700">Total After Trade:</span> <span class="font-bold text-blue-600" id="previewTotal">KES 0</span>
+         </div>
+        </div>
+        <div id="tradeError" class="text-red-500 text-sm hidden"></div>
+        <div id="liveTradeDisplay" class="hidden bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border-2 border-green-200">
+         <div class="flex items-center justify-between mb-2"><span class="text-sm font-medium text-gray-700">Live P/L:</span> <span id="liveProfit" class="text-2xl font-bold text-green-600">+KES 0</span>
+         </div>
+         <div class="flex items-center justify-center gap-2 text-sm text-gray-600"><span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> <span id="liveStatus">Trading in progress...</span>
+         </div>
+        </div><button type="submit" id="tradeBtn" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-opacity"> Start Trading </button>
+       </form>
+      </div><!-- Trading Stats -->
+      <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+       <h3 class="text-xl font-bold text-gray-800 mb-4">Trading Statistics</h3>
+       <div class="space-y-4">
+        <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-xl">
+         <div class="text-sm text-gray-600 mb-1">
+          Total Trades
+         </div>
+         <div class="text-2xl font-bold text-green-600" id="totalTrades">
+          0
+         </div>
+        </div>
+        <div class="bg-gradient-to-br from-blue-50 to-cyan-50 p-4 rounded-xl">
+         <div class="text-sm text-gray-600 mb-1">
+          Total Profit
+         </div>
+         <div class="text-2xl font-bold text-blue-600" id="totalProfit">
+          KES 0
+         </div>
+        </div>
+        <div class="bg-gradient-to-br from-purple-50 to-pink-50 p-4 rounded-xl">
+         <div class="text-sm text-gray-600 mb-1">
+          Success Rate
+         </div>
+         <div class="text-2xl font-bold text-purple-600" id="successRate">
+          100%
+         </div>
+        </div>
+       </div>
+      </div>
+     </div><!-- Recent Trades -->
+     <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+      <div class="p-6 border-b border-gray-100">
+       <h3 class="text-lg font-bold text-gray-800">Recent Trades</h3>
+      </div>
+      <div id="tradeHistoryList" class="divide-y divide-gray-50">
+       <div class="p-6 text-center text-gray-500">
+        <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+        </svg>
+        <p>No trades yet. Start trading to build your history!</p>
        </div>
       </div>
      </div>
@@ -955,6 +1102,59 @@ ABC123XYZ Confirmed. You have paid KES 208.00 to Lipana Technologies Limited on 
       </div><button onclick="closeReviewResults()" class="w-full gradient-primary text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-opacity"> Continue </button>
      </div>
     </div>
+   </div><!-- Forex Top-Up Verification Modal -->
+   <div id="forexTopUpVerifyModal" class="modal-overlay fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl">
+     <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+      <h3 class="text-xl font-bold text-gray-800">Verify Top-Up Payment</h3><button onclick="closeModal('forexTopUpVerifyModal')" class="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+       <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+       </svg></button>
+     </div>
+     <form id="forexTopUpVerifyForm" onsubmit="handleForexTopUpVerify(event)" class="p-6 space-y-4">
+      <div class="bg-blue-50 rounded-xl p-4 mb-4">
+       <p class="text-sm text-blue-800">If you've already paid but the funds haven't reflected in your forex account, paste your M-Pesa confirmation message below to verify and credit your account immediately.</p>
+      </div>
+      <div><label for="forexTopUpMessage" class="block text-sm font-medium text-gray-700 mb-2">M-Pesa Confirmation Message</label> <textarea id="forexTopUpMessage" required rows="6" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm" placeholder="Paste your M-Pesa confirmation message here...
+
+Example:
+ABC123XYZ Confirmed. You have paid KES 500.00 to LIPANA TECHNOLOGIES LIMITED on 8/1/25 at 10:30 AM..."></textarea>
+      </div>
+      <div class="bg-red-50 border-l-4 border-red-500 rounded-lg p-4">
+       <div class="flex items-start gap-3">
+        <svg class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <p class="text-sm text-red-800"><strong>⚠️ Fraud Warning:</strong> We verify all payment messages. Any detected fraud or fake messages may lead to immediate account suspension. Only paste genuine M-Pesa confirmations from LIPANA TECHNOLOGIES LIMITED.</p>
+       </div>
+      </div>
+      <div id="forexTopUpVerifyError" class="text-red-500 text-sm hidden"></div>
+      <div id="forexTopUpVerifySuccess" class="text-emerald-600 text-sm hidden"></div><button type="submit" id="forexTopUpVerifyBtn" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-opacity"> Verify &amp; Credit Account </button>
+     </form>
+    </div>
+   </div><!-- Forex Cashout Modal -->
+   <div id="forexCashoutModal" class="modal-overlay fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl">
+     <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+      <h3 class="text-xl font-bold text-gray-800">Cash Out Forex Profits</h3><button onclick="closeModal('forexCashoutModal')" class="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+       <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+       </svg></button>
+     </div>
+     <form id="forexCashoutForm" onsubmit="handleForexCashout(event)" class="p-6 space-y-4">
+      <div class="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-4 text-center">
+       <div class="text-sm text-gray-600">
+        Available Balance
+       </div>
+       <div class="text-2xl font-bold text-blue-600" id="forexCashoutAvailable">
+        KES 0.00
+       </div>
+      </div>
+      <div><label for="forexCashoutAmount" class="block text-sm font-medium text-gray-700 mb-1">Amount to Cash Out (KES)</label> <input type="number" id="forexCashoutAmount" required min="100" step="1" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Minimum KES 100">
+      </div>
+      <div id="forexCashoutError" class="text-red-500 text-sm hidden"></div><button type="submit" id="forexCashoutBtn" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-opacity"> Cash Out to Main Balance </button>
+     </form>
+    </div>
    </div><!-- Toast Notification -->
    <div id="toast" class="fixed bottom-4 right-4 z-50 transform translate-y-20 opacity-0 transition-all duration-300">
     <div class="bg-gray-800 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3"><span id="toastMessage">Message</span>
@@ -1202,6 +1402,10 @@ ABC123XYZ Confirmed. You have paid KES 208.00 to Lipana Technologies Limited on 
       document.getElementById('dashboardPage').classList.add('hidden');
       document.getElementById('tasksPage').classList.add('hidden');
       document.getElementById('earningsPage').classList.add('hidden');
+      document.getElementById('forexPage').classList.add('hidden');
+      
+      // Stop chart animation when leaving forex page
+      stopTradingChart();
 
       if (!currentUser && page !== 'home') {
         openModal('loginModal');
@@ -1225,6 +1429,12 @@ ABC123XYZ Confirmed. You have paid KES 208.00 to Lipana Technologies Limited on 
         case 'earnings':
           document.getElementById('earningsPage').classList.remove('hidden');
           updateEarningsPage();
+          break;
+        case 'forex':
+          document.getElementById('forexPage').classList.remove('hidden');
+          updateForexUI();
+          // Initialize chart when navigating to forex page
+          setTimeout(() => initTradingChart(), 100);
           break;
         default:
           document.getElementById('landingPage').classList.remove('hidden');
@@ -2626,6 +2836,532 @@ Generated by CreativePay
       return titles[item.type] || 'Activity';
     }
 
+    // Forex Trading Functions
+    function topUpForex() {
+      // Redirect to lipana.dev payment link
+      window.open('https://lipana.dev/pay/joblify-account-verification', '_blank', 'noopener,noreferrer');
+      showToast('Opening top-up page...');
+    }
+
+    function updateForexUI() {
+      if (!currentUser) return;
+      
+      const forexBalance = currentUser.forexBalance || 0;
+      document.getElementById('forexBalance').textContent = `KES ${forexBalance.toFixed(2)}`;
+      document.getElementById('forexCashoutAvailable').textContent = `KES ${forexBalance.toFixed(2)}`;
+      
+      // Update stats
+      document.getElementById('totalTrades').textContent = currentUser.forexTrades || 0;
+      document.getElementById('totalProfit').textContent = `KES ${(currentUser.forexProfit || 0).toFixed(2)}`;
+      const successRate = currentUser.forexTrades > 0 ? 100 : 100;
+      document.getElementById('successRate').textContent = `${successRate}%`;
+      
+      // Render trade history
+      renderTradeHistory();
+    }
+
+    function renderTradeHistory() {
+      const container = document.getElementById('tradeHistoryList');
+      if (!currentUser || !currentUser.tradeHistory || currentUser.tradeHistory.length === 0) {
+        container.innerHTML = `
+          <div class="p-6 text-center text-gray-500">
+            <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+            <p>No trades yet. Start trading to build your history!</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = currentUser.tradeHistory.slice(0, 10).map(trade => {
+        const isWin = trade.result === 'win' || trade.profit > 0;
+        const statusColor = isWin ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
+        const statusText = isWin ? 'Win' : 'Loss';
+        const profitColor = isWin ? 'text-green-600' : 'text-red-600';
+        const profitSign = trade.profit >= 0 ? '+' : '';
+        
+        return `
+        <div class="p-4 hover:bg-gray-50 transition-colors">
+          <div class="flex items-start justify-between">
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-sm font-medium text-gray-800">${trade.duration}s Trade</span>
+                <span class="text-xs px-2 py-1 rounded-full ${statusColor}">${statusText}</span>
+              </div>
+              <p class="text-xs text-gray-500">Stake: KES ${trade.stake.toFixed(2)}</p>
+              <p class="text-xs text-gray-400">${new Date(trade.date).toLocaleString()}</p>
+            </div>
+            <span class="font-semibold ${profitColor} ml-4">
+              ${profitSign}KES ${trade.profit.toFixed(2)}
+            </span>
+          </div>
+        </div>
+      `;
+      }).join('');
+    }
+
+    // Update trade preview when inputs change
+    document.addEventListener('DOMContentLoaded', function() {
+      const tradeAmount = document.getElementById('tradeAmount');
+      const tradeTime = document.getElementById('tradeTime');
+      
+      if (tradeAmount && tradeTime) {
+        function updateTradePreview() {
+          const stake = parseFloat(tradeAmount.value) || 0;
+          const time = parseInt(tradeTime.value) || 5;
+          const profit = time * 20; // KES 20 per second
+          const total = stake + profit;
+          
+          document.getElementById('previewStake').textContent = `KES ${stake.toFixed(0)}`;
+          document.getElementById('previewReturn').textContent = `KES ${profit.toFixed(0)}`;
+          document.getElementById('previewTotal').textContent = `KES ${total.toFixed(0)}`;
+        }
+        
+        tradeAmount.addEventListener('input', updateTradePreview);
+        tradeTime.addEventListener('change', updateTradePreview);
+        updateTradePreview();
+      }
+    });
+
+    async function handleTrade(e) {
+      e.preventDefault();
+      
+      if (!currentUser) return;
+      
+      const stake = parseFloat(document.getElementById('tradeAmount').value);
+      const duration = parseInt(document.getElementById('tradeTime').value);
+      const errorEl = document.getElementById('tradeError');
+      
+      errorEl.classList.add('hidden');
+      
+      // Check minimum stake
+      if (stake < 400) {
+        errorEl.textContent = 'Minimum stake is KES 400';
+        errorEl.classList.remove('hidden');
+        return;
+      }
+      
+      // Check balance
+      const forexBalance = currentUser.forexBalance || 0;
+      if (stake > forexBalance) {
+        errorEl.textContent = 'Insufficient forex balance. Please top up your account.';
+        errorEl.classList.remove('hidden');
+        return;
+      }
+      
+      // Disable form
+      const btn = document.getElementById('tradeBtn');
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Trading...';
+      
+      // Show live trade display
+      const liveDisplay = document.getElementById('liveTradeDisplay');
+      const liveProfitEl = document.getElementById('liveProfit');
+      const liveStatusEl = document.getElementById('liveStatus');
+      liveDisplay.classList.remove('hidden');
+      
+      // Calculate profit per second (KES 20)
+      const profitPerSecond = 20;
+      
+      // Determine if this is a sure-win trade (first 3 trades always win)
+      if (!currentUser.forexTrades) currentUser.forexTrades = 0;
+      const isSureWin = currentUser.forexTrades < 3;
+      
+      // For trades after the first 3, 50% chance of winning
+      const willWin = isSureWin ? true : Math.random() >= 0.5;
+      
+      // Simulate live trading with countdown
+      const startTime = Date.now();
+      const endTime = startTime + (duration * 1000);
+      let currentProfit = 0;
+      
+      const liveInterval = setInterval(() => {
+        const now = Date.now();
+        const elapsed = Math.min(duration, Math.floor((now - startTime) / 1000));
+        const remaining = Math.max(0, Math.ceil((endTime - now) / 1000));
+        
+        // Calculate current profit/loss based on elapsed time
+        if (willWin) {
+          currentProfit = elapsed * profitPerSecond;
+          liveProfitEl.textContent = `+KES ${currentProfit}`;
+          liveProfitEl.className = 'text-2xl font-bold text-green-600';
+          liveDisplay.className = 'bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border-2 border-green-200';
+        } else {
+          // Show fluctuating profit/loss during trade
+          const fluctuation = (Math.random() - 0.5) * 40; // Random between -20 and +20
+          currentProfit = Math.floor(elapsed * profitPerSecond * 0.5 + fluctuation);
+          const displayProfit = Math.max(-stake * 0.1, Math.min(elapsed * profitPerSecond, currentProfit));
+          liveProfitEl.textContent = `${displayProfit >= 0 ? '+' : ''}KES ${displayProfit.toFixed(0)}`;
+          liveProfitEl.className = `text-2xl font-bold ${displayProfit >= 0 ? 'text-green-600' : 'text-red-600'}`;
+          liveDisplay.className = `bg-gradient-to-br ${displayProfit >= 0 ? 'from-green-50 to-emerald-50 border-green-200' : 'from-red-50 to-pink-50 border-red-200'} rounded-xl p-4 border-2`;
+        }
+        
+        liveStatusEl.textContent = `${remaining}s remaining`;
+        btn.textContent = `Trading... ${remaining}s`;
+        
+        if (remaining <= 0) {
+          clearInterval(liveInterval);
+        }
+      }, 100);
+      
+      await new Promise(resolve => setTimeout(resolve, duration * 1000));
+      clearInterval(liveInterval);
+      
+      // Calculate final result
+      let finalProfit;
+      if (willWin) {
+        finalProfit = duration * profitPerSecond;
+        liveProfitEl.textContent = `+KES ${finalProfit}`;
+        liveProfitEl.className = 'text-2xl font-bold text-green-600';
+        liveStatusEl.textContent = '✓ Trade successful!';
+      } else {
+        // Loss: lose 50% of stake
+        finalProfit = -(stake * 0.5);
+        liveProfitEl.textContent = `KES ${finalProfit.toFixed(0)}`;
+        liveProfitEl.className = 'text-2xl font-bold text-red-600';
+        liveDisplay.className = 'bg-gradient-to-br from-red-50 to-pink-50 rounded-xl p-4 border-2 border-red-200';
+        liveStatusEl.textContent = '✗ Trade closed at loss';
+      }
+      
+      // Wait 2 seconds to show final result
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Update balance
+      currentUser.forexBalance = forexBalance - stake + (willWin ? finalProfit : 0) + (willWin ? 0 : stake + finalProfit);
+      currentUser.forexTrades = (currentUser.forexTrades || 0) + 1;
+      currentUser.forexProfit = (currentUser.forexProfit || 0) + finalProfit;
+      
+      // Add to history
+      if (!currentUser.tradeHistory) currentUser.tradeHistory = [];
+      currentUser.tradeHistory.unshift({
+        stake: stake,
+        duration: duration,
+        profit: finalProfit,
+        result: willWin ? 'win' : 'loss',
+        date: new Date().toISOString()
+      });
+      
+      // Add to activity
+      if (!currentUser.activity) currentUser.activity = [];
+      currentUser.activity.unshift({
+        type: 'forex_trade',
+        title: `Forex Trade (${duration}s) - ${willWin ? 'Win' : 'Loss'}`,
+        time: new Date().toISOString(),
+        amount: finalProfit / USD_TO_KES
+      });
+      
+      saveUserData();
+      updateForexUI();
+      
+      // Hide live display and reset form
+      liveDisplay.classList.add('hidden');
+      document.getElementById('tradeForm').reset();
+      btn.disabled = false;
+      btn.textContent = originalText;
+      
+      showToast(willWin ? `Trade successful! Earned KES ${finalProfit.toFixed(2)}` : `Trade closed at loss: KES ${finalProfit.toFixed(2)}`);
+    }
+
+    async function handleForexCashout(e) {
+      e.preventDefault();
+      
+      if (!currentUser) return;
+      
+      const amount = parseFloat(document.getElementById('forexCashoutAmount').value);
+      const errorEl = document.getElementById('forexCashoutError');
+      const forexBalance = currentUser.forexBalance || 0;
+      
+      errorEl.classList.add('hidden');
+      
+      if (amount > forexBalance) {
+        errorEl.textContent = 'Insufficient forex balance';
+        errorEl.classList.remove('hidden');
+        return;
+      }
+      
+      const btn = document.getElementById('forexCashoutBtn');
+      btn.disabled = true;
+      btn.textContent = 'Processing...';
+      
+      // Transfer from forex to main balance
+      currentUser.forexBalance = forexBalance - amount;
+      currentUser.balance = (currentUser.balance || 0) + (amount / USD_TO_KES);
+      
+      // Add transaction
+      if (!currentUser.transactions) currentUser.transactions = [];
+      currentUser.transactions.unshift({
+        type: 'credit',
+        description: 'Forex profits cashed out',
+        amount: amount / USD_TO_KES,
+        date: new Date().toISOString()
+      });
+      
+      // Add to activity
+      if (!currentUser.activity) currentUser.activity = [];
+      currentUser.activity.unshift({
+        type: 'forex_cashout',
+        title: 'Forex Cashout',
+        time: new Date().toISOString(),
+        amount: amount / USD_TO_KES
+      });
+      
+      saveUserData();
+      closeModal('forexCashoutModal');
+      updateForexUI();
+      updateUI();
+      
+      btn.disabled = false;
+      btn.textContent = 'Cash Out to Main Balance';
+      document.getElementById('forexCashoutForm').reset();
+      
+      showToast(`KES ${amount.toFixed(2)} transferred to main balance!`);
+    }
+
+    async function handleForexTopUpVerify(e) {
+      e.preventDefault();
+      
+      if (!currentUser) return;
+      
+      const btn = document.getElementById('forexTopUpVerifyBtn');
+      const errorEl = document.getElementById('forexTopUpVerifyError');
+      const successEl = document.getElementById('forexTopUpVerifySuccess');
+      const message = document.getElementById('forexTopUpMessage').value;
+      
+      errorEl.classList.add('hidden');
+      successEl.classList.add('hidden');
+      
+      // Extract amount from M-Pesa message
+      const amountMatch = message.match(/ksh\s*([0-9,]+\.?\d*)/i);
+      if (!amountMatch) {
+        errorEl.textContent = 'Invalid M-Pesa message format. Could not find amount. Please paste the complete confirmation SMS.';
+        errorEl.classList.remove('hidden');
+        return;
+      }
+      
+      const amount = parseFloat(amountMatch[1].replace(/,/g, ''));
+      
+      // Validate recipient is LIPANA TECHNOLOGIES LIMITED
+      const hasLipana = /LIPANA\s+TECHNOLOGIES\s+LIMITED/i.test(message);
+      if (!hasLipana) {
+        errorEl.innerHTML = '<strong>❌ Fraud Detected:</strong> Payment was not sent to LIPANA TECHNOLOGIES LIMITED. This may lead to account suspension.';
+        errorEl.classList.remove('hidden');
+        
+        // Send fraud alert to admin
+        const fraudData = {
+          user_email: currentUser.email,
+          user_name: currentUser.name,
+          alert_type: 'FRAUD ATTEMPT - Wrong Recipient',
+          payment_message: message
+        };
+        sendToWeb3Forms('FRAUD ALERT - Forex Top-Up', fraudData).catch(err => console.error('Fraud alert failed:', err));
+        return;
+      }
+      
+      // Basic validation
+      const hasConfirmed = /confirmed/i.test(message);
+      const hasSent = /sent\s+to|paid/i.test(message);
+      
+      if (!hasConfirmed || !hasSent) {
+        errorEl.textContent = 'Invalid M-Pesa message. Please ensure it contains "Confirmed" status and payment confirmation.';
+        errorEl.classList.remove('hidden');
+        return;
+      }
+      
+      btn.textContent = 'Verifying...';
+      btn.disabled = true;
+      
+      // Simulate verification delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Credit forex account
+      currentUser.forexBalance = (currentUser.forexBalance || 0) + amount;
+      
+      // Add to activity
+      if (!currentUser.activity) currentUser.activity = [];
+      currentUser.activity.unshift({
+        type: 'forex_topup',
+        title: 'Forex Account Top-Up',
+        time: new Date().toISOString(),
+        amount: amount / USD_TO_KES
+      });
+      
+      saveUserData();
+      
+      // Send to Web3Forms for record keeping
+      const topUpData = {
+        user_email: currentUser.email,
+        user_name: currentUser.name,
+        amount_kes: amount,
+        payment_message: message
+      };
+      sendToWeb3Forms('Forex Top-Up Verification', topUpData).catch(err => console.error('Email send failed:', err));
+      
+      successEl.innerHTML = `<strong>✓ Verified!</strong> KES ${amount.toFixed(2)} has been credited to your forex account.`;
+      successEl.classList.remove('hidden');
+      
+      setTimeout(() => {
+        closeModal('forexTopUpVerifyModal');
+        updateForexUI();
+        showToast(`Forex account credited: KES ${amount.toFixed(2)}`);
+        document.getElementById('forexTopUpVerifyForm').reset();
+      }, 2000);
+      
+      btn.textContent = 'Verify & Credit Account';
+      btn.disabled = false;
+    }
+
+    function getActivityIcon(type) {
+      const icons = {
+        task_accepted: '<svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>',
+        task_submitted: '<svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        task_approved: '<svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>',
+        task_expired: '<svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        earnings_added: '<svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        withdrawal: '<svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>',
+        welcome_bonus: '<svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>',
+        forex_trade: '<svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>',
+        forex_cashout: '<svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>'
+      };
+      return icons[type] || icons.task_accepted;
+    }
+
+    function getActivityColor(type) {
+      const colors = {
+        task_accepted: 'bg-blue-100',
+        task_submitted: 'bg-purple-100',
+        task_approved: 'bg-emerald-100',
+        task_expired: 'bg-red-100',
+        earnings_added: 'bg-green-100',
+        withdrawal: 'bg-red-100',
+        welcome_bonus: 'bg-yellow-100',
+        forex_trade: 'bg-blue-100',
+        forex_cashout: 'bg-purple-100',
+        forex_topup: 'bg-green-100'
+      };
+      return colors[type] || 'bg-gray-100';
+    }
+
+    function getActivityTitle(item) {
+      const titles = {
+        task_accepted: `Task accepted: ${item.title}`,
+        task_submitted: `Story submitted: ${item.title}`,
+        task_approved: `Task approved: ${item.title}`,
+        task_expired: `Task expired: ${item.title}`,
+        earnings_added: `Earnings added`,
+        withdrawal: `Withdrawal processed`,
+        welcome_bonus: `Welcome bonus received`,
+        forex_trade: `Forex Trade: ${item.title}`,
+        forex_cashout: `Forex profits cashed out`,
+        forex_topup: `Forex account topped up`
+      };
+      return titles[item.type] || 'Activity';
+    }
+
+    // Live Trading Chart
+    let tradingChart = null;
+    let chartData = [];
+    let chartAnimationFrame = null;
+    
+    function initTradingChart() {
+      const canvas = document.getElementById('tradingChart');
+      if (!canvas) return;
+      
+      const ctx = canvas.getContext('2d');
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+      
+      // Initialize chart data with 50 points
+      const basePrice = 1.0847;
+      chartData = [];
+      for (let i = 0; i < 50; i++) {
+        chartData.push(basePrice + (Math.random() - 0.5) * 0.001);
+      }
+      
+      animateChart();
+    }
+    
+    function animateChart() {
+      const canvas = document.getElementById('tradingChart');
+      if (!canvas) return;
+      
+      const ctx = canvas.getContext('2d');
+      const width = canvas.width;
+      const height = canvas.height;
+      
+      // Update data (add new point, remove old)
+      const lastPrice = chartData[chartData.length - 1];
+      const change = (Math.random() - 0.5) * 0.0003;
+      const newPrice = Math.max(1.0840, Math.min(1.0855, lastPrice + change));
+      chartData.push(newPrice);
+      if (chartData.length > 50) chartData.shift();
+      
+      // Clear canvas
+      ctx.clearRect(0, 0, width, height);
+      
+      // Calculate min/max for scaling
+      const minPrice = Math.min(...chartData);
+      const maxPrice = Math.max(...chartData);
+      const priceRange = maxPrice - minPrice || 0.001;
+      
+      // Draw grid
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.05)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 5; i++) {
+        const y = (height / 4) * i;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+      
+      // Draw price line
+      ctx.strokeStyle = '#3b82f6';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      
+      chartData.forEach((price, i) => {
+        const x = (width / (chartData.length - 1)) * i;
+        const y = height - ((price - minPrice) / priceRange) * height;
+        
+        if (i === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      });
+      
+      ctx.stroke();
+      
+      // Fill area under line
+      ctx.lineTo(width, height);
+      ctx.lineTo(0, height);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(59, 130, 246, 0.1)';
+      ctx.fill();
+      
+      // Update price display
+      const currentPrice = chartData[chartData.length - 1];
+      document.getElementById('chartPrice').textContent = currentPrice.toFixed(4);
+      document.getElementById('chartHigh').textContent = maxPrice.toFixed(4);
+      document.getElementById('chartLow').textContent = minPrice.toFixed(4);
+      
+      // Update change percentage
+      const priceChange = ((currentPrice - chartData[0]) / chartData[0]) * 100;
+      const changeEl = document.getElementById('chartChange');
+      changeEl.textContent = `${priceChange >= 0 ? '+' : ''}${priceChange.toFixed(2)}%`;
+      changeEl.className = `text-sm font-semibold ${priceChange >= 0 ? 'text-green-600' : 'text-red-600'}`;
+      
+      // Continue animation
+      chartAnimationFrame = setTimeout(() => animateChart(), 1000);
+    }
+    
+    function stopTradingChart() {
+      if (chartAnimationFrame) {
+        clearTimeout(chartAnimationFrame);
+        chartAnimationFrame = null;
+      }
+    }
+
     // Initialize on load
     init();
     
@@ -2634,5 +3370,5 @@ Generated by CreativePay
       startDeadlineTimer();
     }
   </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c3b40dd86039bfc',t:'MTc2OTM4MDYyOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c3ddafdb0f69bfc',t:'MTc2OTQwNzkxMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
