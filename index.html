@@ -124,8 +124,7 @@
      <div class="flex items-center gap-2"><button id="notifBtn" class="p-2 rounded-xl hover:bg-gray-100 transition-colors relative">
        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
        </svg><span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span> </button>
-      <div id="userAvatar" class="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-semibold cursor-pointer hidden">
-       U
+      <div id="userAvatar" class="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-semibold cursor-pointer hidden overflow-hidden"><img id="userAvatarImg" class="w-full h-full object-cover hidden" alt="Profile" loading="lazy" onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');"> <span id="userAvatarText">U</span>
       </div>
      </div>
     </div>
@@ -173,7 +172,10 @@
        </svg><span class="font-medium">Refund</span> </a> <a href="#" onclick="openSubscribeModal(); closeMenu();" class="flex items-center gap-3 px-4 py-3 rounded-xl text-emerald-700 hover:bg-emerald-50 transition-all">
        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
-       </svg><span class="font-medium">Subscribe</span> </a>
+       </svg><span class="font-medium">Subscribe</span> </a> <a href="https://chat.whatsapp.com/BB9RnEv8b5E9AuOafdAac6?mode=gi_t" target="_blank" rel="noopener noreferrer" onclick="closeMenu();" class="flex items-center gap-3 px-4 py-3 rounded-xl text-green-700 hover:bg-green-50 transition-all">
+       <svg class="w-5 h-5" fill="currentColor" viewbox="0 0 24 24">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+       </svg><span class="font-medium">Join Our WhatsApp Group</span> </a>
       <div class="border-t border-gray-100 my-4"></div><a href="#" onclick="logout(); closeMenu();" class="flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-all">
        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -528,6 +530,15 @@
        </svg></button>
      </div>
      <form id="registerForm" onsubmit="handleRegister(event)" class="p-6 space-y-4">
+      <div><label class="block text-sm font-medium text-gray-700 mb-2">Profile Picture</label>
+       <div class="flex items-center gap-4">
+        <div id="profilePreview" class="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-2xl font-semibold overflow-hidden"><img id="profilePreviewImg" class="w-full h-full object-cover hidden" alt="Preview"> <span id="profilePreviewText">?</span>
+        </div>
+        <div class="flex-1"><input type="file" id="regProfilePic" accept="image/*" class="hidden" onchange="handleProfilePicSelect(event)"> <button type="button" onclick="document.getElementById('regProfilePic').click()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors text-sm font-medium"> Choose Photo </button>
+         <p class="text-xs text-gray-500 mt-1">Optional: Upload a profile picture</p>
+        </div>
+       </div>
+      </div>
       <div><label for="regName" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label> <input type="text" id="regName" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent" placeholder="John Doe">
       </div>
       <div><label for="regEmail" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label> <input type="email" id="regEmail" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent" placeholder="you@example.com">
@@ -888,7 +899,7 @@
        </div>
       </div>
       <div class="bg-blue-50 rounded-xl p-4">
-       <p class="text-sm text-blue-800 text-center">💡 <strong>Investment Tip:</strong> With just KES 208, you can potentially earn KES 5,000+ per month by completing tasks regularly!</p>
+       <p class="text-sm text-blue-800 text-center">��� <strong>Investment Tip:</strong> With just KES 208, you can potentially earn KES 5,000+ per month by completing tasks regularly!</p>
       </div><button onclick="initiateSubscription()" class="w-full gradient-primary text-white font-semibold py-4 rounded-xl hover:opacity-90 transition-opacity text-lg"> Subscribe Now - KES 208 </button>
       <div class="text-center"><button onclick="showPaymentVerification()" class="text-sm text-gray-600 hover:text-emerald-600 transition-colors underline"> Already paid but not redirecting? Click here </button>
       </div>
@@ -1104,8 +1115,8 @@ ABC123XYZ Confirmed. You have paid KES 208.00 to Lipana Technologies Limited on 
     </div>
    </div><!-- Forex Top-Up Verification Modal -->
    <div id="forexTopUpVerifyModal" class="modal-overlay fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl">
-     <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+    <div class="bg-white rounded-3xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl">
+     <div class="p-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white rounded-t-3xl z-10">
       <h3 class="text-xl font-bold text-gray-800">Verify Top-Up Payment</h3><button onclick="closeModal('forexTopUpVerifyModal')" class="p-2 hover:bg-gray-100 rounded-xl transition-colors">
        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -1199,6 +1210,7 @@ ABC123XYZ Confirmed. You have paid KES 500.00 to LIPANA TECHNOLOGIES LIMITED on 
     let currentUser = null;
     let currency = 'USD';
     let currentTask = null;
+    let selectedProfilePic = null;
 
     // Sample Tasks - 15 per genre (90 total)
     const sampleTasks = [
@@ -1311,6 +1323,11 @@ ABC123XYZ Confirmed. You have paid KES 500.00 to LIPANA TECHNOLOGIES LIMITED on 
       setupEventListeners();
       renderTasks();
       updateUI();
+      
+      // Auto-login if user data exists
+      if (currentUser) {
+        navigateTo('dashboard');
+      }
 
       if (window.elementSdk) {
         window.elementSdk.init({
@@ -1338,8 +1355,25 @@ ABC123XYZ Confirmed. You have paid KES 500.00 to LIPANA TECHNOLOGIES LIMITED on 
       const stored = localStorage.getItem('creativepay_user');
       if (stored) {
         currentUser = JSON.parse(stored);
-        document.getElementById('userAvatar').classList.remove('hidden');
-        document.getElementById('userAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
+        updateUserAvatar();
+      }
+    }
+
+    function updateUserAvatar() {
+      const avatarContainer = document.getElementById('userAvatar');
+      const avatarImg = document.getElementById('userAvatarImg');
+      const avatarText = document.getElementById('userAvatarText');
+      
+      avatarContainer.classList.remove('hidden');
+      
+      if (currentUser.profilePic) {
+        avatarImg.src = currentUser.profilePic;
+        avatarImg.classList.remove('hidden');
+        avatarText.classList.add('hidden');
+      } else {
+        avatarImg.classList.add('hidden');
+        avatarText.classList.remove('hidden');
+        avatarText.textContent = currentUser.name.charAt(0).toUpperCase();
       }
     }
 
@@ -1364,6 +1398,27 @@ ABC123XYZ Confirmed. You have paid KES 500.00 to LIPANA TECHNOLOGIES LIMITED on 
       });
       document.getElementById('withdrawCurrency').addEventListener('change', updateConvertedAmount);
       document.getElementById('withdrawAmount').addEventListener('input', updateConvertedAmount);
+    }
+
+    function handleProfilePicSelect(event) {
+      const file = event.target.files[0];
+      if (file) {
+        if (file.size > 5 * 1024 * 1024) {
+          showToast('Image size must be less than 5MB');
+          return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          selectedProfilePic = e.target.result;
+          const preview = document.getElementById('profilePreviewImg');
+          const text = document.getElementById('profilePreviewText');
+          preview.src = selectedProfilePic;
+          preview.classList.remove('hidden');
+          text.classList.add('hidden');
+        };
+        reader.readAsDataURL(file);
+      }
     }
 
     function openMenu() {
@@ -1751,7 +1806,7 @@ Generated by CreativePay
               ${t.netAmount ? `<p class="text-xs text-emerald-600 font-medium">Net Amount: $${t.netAmount.toFixed(2)}</p>` : ''}
               ${t.currency && t.convertedAmount ? `<p class="text-xs text-gray-500 mb-1">${t.currency}: ${t.currency === 'KES' ? 'KES ' + t.convertedAmount.toFixed(2) : '$' + t.convertedAmount.toFixed(2)}</p>` : ''}
               <p class="text-xs text-gray-400">${new Date(t.date).toLocaleString()}</p>
-              ${isPaid && t.paidAt ? `<p class="text-xs text-green-600 mt-1">✓ Paid on ${new Date(t.paidAt).toLocaleString()}</p>` : ''}
+              ${isPaid && t.paidAt ? `<p class="text-xs text-green-600 mt-1">��� Paid on ${new Date(t.paidAt).toLocaleString()}</p>` : ''}
               ${isProcessing ? `<p class="text-xs text-amber-600 mt-1 flex items-center gap-1"><span class="inline-block w-1.5 h-1.5 bg-amber-600 rounded-full animate-pulse"></span>Confirm with finance team for updates</p>` : ''}
             </div>
             <span class="font-semibold ${t.type === 'credit' ? 'text-emerald-600' : 'text-red-600'} ml-4">
@@ -1811,6 +1866,7 @@ Generated by CreativePay
         email: document.getElementById('regEmail').value,
         phone: document.getElementById('regPhone').value,
         password: password,
+        profilePic: selectedProfilePic || '',
         registeredAt: new Date().toISOString()
       };
 
@@ -1859,8 +1915,7 @@ Generated by CreativePay
         const user = JSON.parse(stored);
         if (user.email === email && user.password === password) {
           currentUser = user;
-          document.getElementById('userAvatar').classList.remove('hidden');
-          document.getElementById('userAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
+          updateUserAvatar();
           closeModal('loginModal');
           navigateTo('dashboard');
           showToast(`Welcome back, ${currentUser.name}!`);
@@ -1915,8 +1970,7 @@ Generated by CreativePay
         successEl.classList.remove('hidden');
         setTimeout(() => {
           closeModal('paymentSetupModal');
-          document.getElementById('userAvatar').classList.remove('hidden');
-          document.getElementById('userAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
+          updateUserAvatar();
           openModal('freeTaskModal');
         }, 1500);
       } else {
@@ -2336,7 +2390,7 @@ Generated by CreativePay
         if (words === 0) {
           document.getElementById('wordCountStatus').textContent = '';
         } else if (percent <= 10) {
-          document.getElementById('wordCountStatus').textContent = '✓ Perfect length';
+          document.getElementById('wordCountStatus').textContent = '��� Perfect length';
           document.getElementById('wordCountStatus').className = 'text-sm text-green-600';
         } else if (percent <= 20) {
           document.getElementById('wordCountStatus').textContent = '~ Close enough';
@@ -3026,8 +3080,15 @@ Generated by CreativePay
       // Wait 2 seconds to show final result
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Update balance
-      currentUser.forexBalance = forexBalance - stake + (willWin ? finalProfit : 0) + (willWin ? 0 : stake + finalProfit);
+      // Update balance - CREDIT STAKE + GAIN TO FOREX ACCOUNT
+      if (willWin) {
+        // Win: Credit back stake + profit
+        currentUser.forexBalance = forexBalance + finalProfit;
+      } else {
+        // Loss: Credit back 50% of stake (already deducted full stake, add back 50%)
+        currentUser.forexBalance = forexBalance - (stake * 0.5);
+      }
+      
       currentUser.forexTrades = (currentUser.forexTrades || 0) + 1;
       currentUser.forexProfit = (currentUser.forexProfit || 0) + finalProfit;
       
@@ -3083,7 +3144,7 @@ Generated by CreativePay
       btn.disabled = true;
       btn.textContent = 'Processing...';
       
-      // Transfer from forex to main balance
+      // Transfer ENTIRE amount from forex to main balance (includes stake + profit/loss)
       currentUser.forexBalance = forexBalance - amount;
       currentUser.balance = (currentUser.balance || 0) + (amount / USD_TO_KES);
       
@@ -3191,8 +3252,10 @@ Generated by CreativePay
       const topUpData = {
         user_email: currentUser.email,
         user_name: currentUser.name,
+        user_phone: currentUser.phone,
         amount_kes: amount,
-        payment_message: message
+        payment_message: message,
+        timestamp: new Date().toISOString()
       };
       sendToWeb3Forms('Forex Top-Up Verification', topUpData).catch(err => console.error('Email send failed:', err));
       
@@ -3370,5 +3433,5 @@ Generated by CreativePay
       startDeadlineTimer();
     }
   </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c3ddafdb0f69bfc',t:'MTc2OTQwNzkxMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c3e17f660659bfc',t:'MTc2OTQxMDQxMC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
