@@ -813,6 +813,30 @@
         ];
         
         const scheme = colorSchemes[index % colorSchemes.length];
+        const userTask = acceptedTasks.find(t => t.id === task.id) || submittedTasks.find(t => t.id === task.id);
+        const taskStatus = userTask ? (submittedTasks.find(t => t.id === task.id) ? submittedTasks.find(t => t.id === task.id).status : 'in-progress') : null;
+        
+        let statusBadge = '';
+        let actionButton = `<button onclick="acceptTask('${task.id}')" class="flex-1 px-4 py-2 btn-primary text-white text-sm font-medium rounded-xl">Accept</button>`;
+        
+        if (userTask) {
+          if (taskStatus === 'in-progress') {
+            statusBadge = `<span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">📝 In Progress</span>`;
+            actionButton = `<button onclick="goToSubmit('${task.id}')" class="flex-1 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700">Submit</button>`;
+          } else if (taskStatus === 'completed') {
+            statusBadge = `<span class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium">✅ Completed</span>`;
+            actionButton = `<button disabled class="flex-1 px-4 py-2 bg-gray-300 text-gray-600 text-sm font-medium rounded-xl cursor-not-allowed">Completed</button>`;
+          } else if (taskStatus === 'approved') {
+            statusBadge = `<span class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium">✅ Approved</span>`;
+            actionButton = `<button disabled class="flex-1 px-4 py-2 bg-gray-300 text-gray-600 text-sm font-medium rounded-xl cursor-not-allowed">Approved</button>`;
+          } else if (taskStatus === 'rejected') {
+            statusBadge = `<span class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">❌ Rejected</span>`;
+            actionButton = `<button onclick="acceptTask('${task.id}')" class="flex-1 px-4 py-2 btn-primary text-white text-sm font-medium rounded-xl">Try Again</button>`;
+          } else if (taskStatus === 'pending') {
+            statusBadge = `<span class="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium">⏳ Pending Review</span>`;
+            actionButton = `<button disabled class="flex-1 px-4 py-2 bg-gray-300 text-gray-600 text-sm font-medium rounded-xl cursor-not-allowed">Pending</button>`;
+          }
+        }
         
         return `
         <div class="task-card ${scheme.bg} rounded-2xl p-6 card-hover border-2 ${scheme.border} relative overflow-hidden group">
@@ -827,6 +851,7 @@
               <div class="flex items-center gap-2">
                 <span class="px-3 py-1 ${index % 3 === 0 ? 'bg-emerald-100 text-emerald-700' : index % 3 === 1 ? 'bg-teal-100 text-teal-700' : 'bg-cyan-100 text-cyan-700'} rounded-full text-xs font-medium">${task.genre}</span>
                 <span class="px-3 py-1 ${task.type === 'essay' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'} rounded-full text-xs font-medium">${task.type === 'essay' ? 'Essay' : 'Story'}</span>
+                ${statusBadge}
               </div>
               <span class="text-emerald-600 font-bold text-lg">${formatCurrency(calculatePayment(task.pages))}</span>
             </div>
@@ -848,9 +873,7 @@
               <button onclick="viewTaskDetails('${task.id}')" class="flex-1 px-4 py-2 bg-white text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-100 transition-colors border border-gray-300">
                 View Details
               </button>
-              <button onclick="acceptTask('${task.id}')" class="flex-1 px-4 py-2 btn-primary text-white text-sm font-medium rounded-xl">
-                Accept
-              </button>
+              ${actionButton}
             </div>
           </div>
         </div>
@@ -1041,8 +1064,14 @@
       const task = allTasks.find(t => t.id === taskId);
       if (!task) return;
 
+      // Check if task is already accepted or submitted
       if (acceptedTasks.find(t => t.id === taskId)) {
         showToast('You have already accepted this task', 'warning');
+        return;
+      }
+
+      if (submittedTasks.find(t => t.id === taskId)) {
+        showToast('You have already submitted this task', 'warning');
         return;
       }
 
@@ -1061,19 +1090,32 @@
         return;
       }
 
-      acceptedTasks.push({ ...task, acceptedAt: new Date().toISOString() });
+      // Add to accepted tasks with "in-progress" status
+      acceptedTasks.push({ 
+        ...task, 
+        acceptedAt: new Date().toISOString(),
+        status: 'in-progress'
+      });
+      
       if (!isSubscribed) {
         freeTaskUsed = true;
       }
+      
       activities.unshift({
         type: 'accepted',
-        description: `Accepted task: ${task.title}`,
+        description: `📝 Started: ${task.title}`,
         time: 'Just now',
         amount: null
       });
+      
       saveToLocalStorage();
       closeModal('taskModal');
-      showToast(freeTaskUsed && !isSubscribed ? 'Free task accepted! Subscribe for more tasks.' : `Task accepted! (${completedTasksThisMonth + 1}/${SUBSCRIBER_MONTHLY_TASK_LIMIT} this month)`, 'success');
+      showToast('✅ Task accepted! Status: In Progress', 'success');
+      
+      // Refresh the tasks view to show updated status
+      if (currentPage === 'tasks') {
+        renderPage();
+      }
     }
 
     function renderDashboardPage() {
@@ -3310,5 +3352,5 @@
 
     init();
   </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c4f4a0ba46473ad',t:'MTc2OTU5MDcxOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c4f5cd8873293d1',t:'MTc2OTU5MTQ4OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
