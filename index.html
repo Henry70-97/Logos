@@ -208,7 +208,11 @@
       <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
        </svg>
-      </div><span class="font-medium text-gray-700">Support</span> </a>
+      </div><span class="font-medium text-gray-700">Support</span> </a> <a onclick="navigateTo('subscribe')" class="flex items-center gap-3 p-3 rounded-xl hover:bg-emerald-50 cursor-pointer transition-colors">
+      <div class="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center">
+       <svg class="w-5 h-5 text-pink-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+       </svg>
+      </div><span class="font-medium text-gray-700">Premium Subscription</span> </a>
      <div class="border-t border-gray-100 my-3"></div><a onclick="logout()" class="flex items-center gap-3 p-3 rounded-xl hover:bg-red-50 cursor-pointer transition-colors">
       <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -304,7 +308,7 @@
     let isLoggedIn = false;
     let currentUser = null;
     let earnings = 0;
-    let bonusBalance = 0; // Non-withdrawable welcome bonus
+    let bonusBalance = 0.50; // Non-withdrawable welcome bonus - $0.50
     let activities = [];
     let acceptedTasks = [];
     let submittedTasks = [];
@@ -583,7 +587,7 @@
                 <h2 class="text-2xl font-bold text-gray-900">Create Account</h2>
                 <p class="text-gray-600 mt-2">Join and start earning from your writing</p>
                 <div class="mt-3 px-4 py-2 bg-emerald-100 rounded-xl text-emerald-700 text-sm font-medium">
-                  🎁 Get $5 Welcome Bonus on Registration!
+                  🎁 Get $0.50 Welcome Bonus on Registration!
                 </div>
               </div>
               <form id="registerForm" onsubmit="handleRegister(event)">
@@ -692,7 +696,7 @@
                 <p class="font-bold">${formatCurrency(earnings)}</p>
               </div>
               <div class="bg-white/20 rounded-xl p-3">
-                <p class="text-white/70 text-xs mb-1">Bonus (Unlock at ${formatCurrency(SUBSCRIPTION_PRICE_USD)})</p>
+                <p class="text-white/70 text-xs mb-1">Bonus Up To $5 (Subscribe to Unlock)</p>
                 <p class="font-bold">${formatCurrency(bonusBalance)}</p>
               </div>
             </div>
@@ -1725,7 +1729,7 @@
                     </p>
                   </div>
                   <textarea id="paymentMessage" placeholder="Example: KSH 310.00 received from John Doe 1234567890 on 15/01/2024 at 10:30 PM. Acc balance is 50,000KSH. New amount charged. Ref: ABC123XYZ..." rows="4" class="input-field w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none resize-none"></textarea>
-                  <button onclick="verifyPayment()" class="w-full py-3 btn-primary text-white font-bold rounded-xl">
+                  <button onclick="verifyQuickPayment()" class="w-full py-3 btn-primary text-white font-bold rounded-xl">
                     Verify Payment
                   </button>
                   <button onclick="hidePaymentVerify()" class="w-full py-2 bg-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-300 transition-colors">
@@ -1805,6 +1809,30 @@
       setTimeout(() => {
         showPaymentVerificationModal();
       }, 1000);
+    }
+
+    function verifyQuickPayment() {
+      const message = document.getElementById('paymentMessage').value.trim();
+      
+      if (!message) {
+        showToast('Please paste your M-Pesa confirmation message', 'error');
+        return;
+      }
+
+      if (!message.toUpperCase().includes('310')) {
+        showToast('Payment must be for KSH 310', 'error');
+        return;
+      }
+
+      if (!message.toUpperCase().includes('LIPANA') && !message.toUpperCase().includes('RECEIVED')) {
+        showToast('Please paste the complete M-Pesa confirmation message', 'error');
+        return;
+      }
+
+      showToast('✅ Payment verified! Activating subscription...', 'success');
+      setTimeout(() => {
+        activateSubscription();
+      }, 1500);
     }
 
     function showPaymentVerificationModal() {
@@ -2094,10 +2122,10 @@
         phone: formData.get('phone')
       };
       isLoggedIn = true;
-      bonusBalance = 5; // Welcome bonus (locked until subscription)
+      bonusBalance = 0.50; // Welcome bonus - $0.50 (locked until subscription)
       activities.unshift({
         type: 'earnings',
-        description: 'Welcome bonus credited! (Unlock by subscribing)',
+        description: 'Welcome bonus $0.50 credited! (Unlock by subscribing)',
         time: 'Just now',
         amount: null
       });
@@ -2158,17 +2186,18 @@
         phone: ''
       };
       isLoggedIn = true;
-      earnings = 5;
+      earnings = 0;
+      bonusBalance = 0.50; // Welcome bonus - $0.50
       activities.unshift({
         type: 'earnings',
-        description: 'Welcome bonus credited!',
+        description: 'Welcome bonus $0.50 credited!',
         time: 'Just now',
-        amount: 5
+        amount: null
       });
       saveToLocalStorage();
       button.innerHTML = originalText;
       button.disabled = false;
-      showToast('Welcome! $5 welcome bonus added!', 'success');
+      showToast('Welcome! $0.50 welcome bonus added!', 'success');
       navigateTo('home');
     }
 
@@ -3352,5 +3381,5 @@
 
     init();
   </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c4f5cd8873293d1',t:'MTc2OTU5MTQ4OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c4f8752877693d1',t:'MTc2OTU5MzIyOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
