@@ -162,8 +162,8 @@
    <div id="slideMenu" class="fixed top-0 left-0 h-full w-72 bg-white shadow-2xl z-50 slide-in">
     <div class="gradient-primary p-6">
      <div class="flex items-center justify-between">
-      <div class="flex items-center gap-3">
-       <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+      <div class="flex items-center gap-3"><img src="logo.png" alt="Creativepay Logo" class="w-12 h-12 rounded-xl object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+       <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center hidden" id="sidebarLogoFallback">
         <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
         </svg>
        </div>
@@ -221,8 +221,8 @@
      <div class="flex items-center gap-3"><button onclick="toggleMenu()" class="p-2 hover:bg-gray-100 rounded-xl transition-colors lg:hidden">
        <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
        </svg></button>
-      <div class="flex items-center gap-2">
-       <div class="w-10 h-10 gradient-primary rounded-xl flex items-center justify-center">
+      <div class="flex items-center gap-2"><img src="logo.png" alt="Creativepay Logo" class="w-10 h-10 rounded-xl object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+       <div class="w-10 h-10 gradient-primary rounded-xl flex items-center justify-center hidden" id="headerLogoFallback">
         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
         </svg>
        </div>
@@ -243,8 +243,8 @@
     <div class="max-w-6xl mx-auto px-4 py-12">
      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
       <div class="col-span-1 md:col-span-2">
-       <div class="flex items-center gap-2 mb-4">
-        <div class="w-10 h-10 gradient-primary rounded-xl flex items-center justify-center">
+       <div class="flex items-center gap-2 mb-4"><img src="logo.png" alt="Creativepay Logo" class="w-10 h-10 rounded-xl object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <div class="w-10 h-10 gradient-primary rounded-xl flex items-center justify-center hidden" id="footerLogoFallback">
          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
          </svg>
         </div>
@@ -803,39 +803,59 @@
     }
 
     function renderTaskCards(tasks) {
-      return tasks.map((task, index) => `
-        <div class="task-card rounded-2xl p-6 card-hover border border-gray-100/50">
-          <div class="flex items-start justify-between mb-4">
-            <div class="flex items-center gap-2">
-              <span class="px-3 py-1 ${index % 3 === 0 ? 'bg-emerald-100 text-emerald-700' : index % 3 === 1 ? 'bg-teal-100 text-teal-700' : 'bg-cyan-100 text-cyan-700'} rounded-full text-xs font-medium">${task.genre}</span>
-              <span class="px-3 py-1 ${task.type === 'essay' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'} rounded-full text-xs font-medium">${task.type === 'essay' ? 'Essay' : 'Short Story'}</span>
+      return tasks.map((task, index) => {
+        const colorSchemes = [
+          { bg: 'bg-gradient-to-br from-emerald-50 to-teal-50', border: 'border-emerald-200', accent: 'bg-emerald-500', icon: '✏️' },
+          { bg: 'bg-gradient-to-br from-blue-50 to-cyan-50', border: 'border-blue-200', accent: 'bg-blue-500', icon: '📖' },
+          { bg: 'bg-gradient-to-br from-purple-50 to-pink-50', border: 'border-purple-200', accent: 'bg-purple-500', icon: '📚' },
+          { bg: 'bg-gradient-to-br from-amber-50 to-orange-50', border: 'border-amber-200', accent: 'bg-amber-500', icon: '✨' },
+          { bg: 'bg-gradient-to-br from-rose-50 to-red-50', border: 'border-rose-200', accent: 'bg-rose-500', icon: '🎯' }
+        ];
+        
+        const scheme = colorSchemes[index % colorSchemes.length];
+        
+        return `
+        <div class="task-card ${scheme.bg} rounded-2xl p-6 card-hover border-2 ${scheme.border} relative overflow-hidden group">
+          <!-- Decorative corner element -->
+          <div class="absolute top-0 right-0 w-32 h-32 ${scheme.accent} opacity-5 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-300"></div>
+          
+          <!-- Icon badge -->
+          <div class="absolute top-4 right-4 text-3xl">${scheme.icon}</div>
+          
+          <div class="relative z-10">
+            <div class="flex items-start justify-between mb-4">
+              <div class="flex items-center gap-2">
+                <span class="px-3 py-1 ${index % 3 === 0 ? 'bg-emerald-100 text-emerald-700' : index % 3 === 1 ? 'bg-teal-100 text-teal-700' : 'bg-cyan-100 text-cyan-700'} rounded-full text-xs font-medium">${task.genre}</span>
+                <span class="px-3 py-1 ${task.type === 'essay' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'} rounded-full text-xs font-medium">${task.type === 'essay' ? 'Essay' : 'Story'}</span>
+              </div>
+              <span class="text-emerald-600 font-bold text-lg">${formatCurrency(calculatePayment(task.pages))}</span>
             </div>
-            <span class="text-emerald-600 font-bold text-lg">${formatCurrency(calculatePayment(task.pages))}</span>
-          </div>
-          <h3 class="font-bold text-gray-900 text-lg mb-2">${task.title}</h3>
-          <div class="space-y-1 mb-4">
-            <p class="text-sm text-gray-600"><span class="font-medium">Book:</span> ${task.book}</p>
-            <p class="text-sm text-gray-600"><span class="font-medium">Author:</span> ${task.author}</p>
-            <p class="text-sm text-gray-600"><span class="font-medium">Client:</span> ${task.client}</p>
-          </div>
-          <p class="text-sm text-gray-500 mb-4 line-clamp-2">${task.question.substring(0, 120)}...</p>
-          <div class="flex items-center gap-4 text-xs text-gray-500 mb-4">
-            <span class="flex items-center gap-1">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-              ${task.wordCount} words
-            </span>
-            <span>${task.pages} pages</span>
-          </div>
-          <div class="flex gap-3">
-            <button onclick="viewTaskDetails('${task.id}')" class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-200 transition-colors">
-              View Details
-            </button>
-            <button onclick="acceptTask('${task.id}')" class="flex-1 px-4 py-2 btn-primary text-white text-sm font-medium rounded-xl">
-              Accept
-            </button>
+            <h3 class="font-bold text-gray-900 text-lg mb-2">${task.title}</h3>
+            <div class="space-y-1 mb-4">
+              <p class="text-sm text-gray-700"><span class="font-medium">📕 Book:</span> ${task.book}</p>
+              <p class="text-sm text-gray-700"><span class="font-medium">✍️ Author:</span> ${task.author}</p>
+              <p class="text-sm text-gray-700"><span class="font-medium">🏢 Client:</span> ${task.client}</p>
+            </div>
+            <p class="text-sm text-gray-600 mb-4 line-clamp-2">${task.question.substring(0, 120)}...</p>
+            <div class="flex items-center gap-4 text-xs text-gray-600 mb-4">
+              <span class="flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                ${task.wordCount} words
+              </span>
+              <span>📄 ${task.pages} pages</span>
+            </div>
+            <div class="flex gap-3">
+              <button onclick="viewTaskDetails('${task.id}')" class="flex-1 px-4 py-2 bg-white text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-100 transition-colors border border-gray-300">
+                View Details
+              </button>
+              <button onclick="acceptTask('${task.id}')" class="flex-1 px-4 py-2 btn-primary text-white text-sm font-medium rounded-xl">
+                Accept
+              </button>
+            </div>
           </div>
         </div>
-      `).join('');
+      `;
+      }).join('');
     }
 
     function filterTasks(type) {
@@ -3290,5 +3310,5 @@
 
     init();
   </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c4f08bbb17193d1',t:'MTc2OTU4ODA0NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c4f4a0ba46473ad',t:'MTc2OTU5MDcxOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
