@@ -430,7 +430,7 @@
       </div><!-- Task Category Tabs -->
       <div class="flex gap-2 mb-6 overflow-x-auto pb-2"><button onclick="filterTasks('all')" class="task-tab px-4 py-2 rounded-full text-sm font-medium bg-gray-900 text-white whitespace-nowrap" data-tab="all"> All Tasks </button> <button onclick="filterTasks('short-story')" class="task-tab px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-600 whitespace-nowrap" data-tab="short-story"> Short Stories </button> <button onclick="filterTasks('essay')" class="task-tab px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-600 whitespace-nowrap" data-tab="essay"> Essays </button>
       </div><!-- Tasks List -->
-      <div id="tasks-list" class="space-y-4"><!-- Tasks will be populated by JavaScript -->
+      <div id="tasks-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"><!-- Tasks will be populated by JavaScript -->
       </div>
      </section><!-- Submit Section -->
      <section id="section-submit" class="dashboard-section hidden">
@@ -448,6 +448,14 @@
          <div class="flex justify-between text-sm"><span class="text-gray-600">Required Words:</span> <span class="font-semibold" id="display-task-words"></span>
          </div>
          <div class="flex justify-between text-sm"><span class="text-gray-600">Payment:</span> <span class="font-semibold text-green-600" id="display-task-payment"></span>
+         </div>
+         <div class="bg-orange-50 border-2 border-orange-200 rounded-lg p-3 mt-3">
+          <div class="flex items-center gap-2 mb-2">
+           <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+           </svg><span class="text-sm font-bold text-orange-900">Deadline:</span>
+          </div>
+          <p class="text-2xl font-black text-orange-600 mb-1" id="deadline-countdown">Loading...</p>
+          <p class="text-xs text-orange-700 font-semibold">⚠️ Late submission: 2% fine from your balance</p>
          </div>
         </div>
         <div><label class="block text-sm font-medium text-gray-700 mb-2">Upload Document (Optional)</label> <input type="file" accept=".doc,.docx,.txt,.pdf" id="file-upload" class="input-field w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 focus:outline-none">
@@ -651,13 +659,15 @@
          <h3 class="font-bold text-gray-900 mb-4">Already Paid?</h3>
          <p class="text-sm text-gray-600 mb-4">Paste your payment confirmation message below to verify your subscription</p>
          <form id="payment-confirmation-form" class="space-y-4">
-          <div><label class="block text-sm font-medium text-gray-700 mb-2">Payment Confirmation Message</label> <textarea name="confirmationMessage" required rows="4" class="input-field w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 focus:outline-none resize-none" placeholder="Paste the M-Pesa confirmation message here...
+          <div><label class="block text-sm font-medium text-gray-700 mb-2">Full M-Pesa Confirmation Message</label> <textarea name="confirmationMessage" id="mpesa-confirmation-text" required rows="6" class="input-field w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 focus:outline-none resize-none" placeholder="Paste the COMPLETE M-Pesa message here...
 
 Example:
-RP12ABC123 Confirmed. 
-You have received Ksh310.00 from..."></textarea>
+RP12ABC123 Confirmed. on 15/12/2024 at 2:45 PM Ksh310.00 sent to LIPANA TECHNOLOGIES LIMITED for account Subscription Payment. New M-PESA balance is Ksh2,500.00. Transaction cost, Ksh0.00."></textarea>
+           <p class="text-xs text-gray-500 mt-1">⚠️ Paste the entire message including transaction code, amount, recipient name, and date</p>
           </div>
-          <div><label class="block text-sm font-medium text-gray-700 mb-2">Transaction Code</label> <input type="text" name="transactionCode" required class="input-field w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 focus:outline-none" placeholder="e.g., RP12ABC123">
+          <div id="payment-validation-error" class="hidden bg-red-50 border border-red-200 rounded-xl p-3">
+           <p class="text-red-700 text-sm font-medium">❌ Validation Failed</p>
+           <p class="text-red-600 text-xs mt-1" id="validation-error-message"></p>
           </div><button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-bold transition-colors"> Verify Payment </button>
          </form>
         </div>
@@ -681,8 +691,13 @@ You have received Ksh310.00 from..."></textarea>
        <p class="text-3xl font-bold" id="withdraw-balance">$25.00</p>
       </div>
       <form id="withdraw-form" class="space-y-4">
-       <div><label class="block text-sm font-medium text-gray-700 mb-2">Withdraw Amount</label> <input type="number" name="amount" id="withdraw-amount-input" required min="0.01" step="0.01" class="input-field w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 focus:outline-none" placeholder="Enter amount">
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">Withdraw Amount (USD)</label> <input type="number" name="amount" id="withdraw-amount-input" required min="0.01" step="0.01" class="input-field w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 focus:outline-none" placeholder="Enter amount">
         <p class="text-xs text-gray-400 mt-1">No minimum withdrawal</p>
+       </div>
+       <div class="card-soft-1 rounded-xl p-4">
+        <div class="flex justify-between items-center"><span class="text-sm text-gray-600">You will receive (KES):</span> <span class="text-xl font-bold text-green-600" id="withdraw-kes-display">KES 0</span>
+        </div>
+        <p class="text-xs text-gray-500 mt-1">After deducting fees</p>
        </div>
        <div><label class="block text-sm font-medium text-gray-700 mb-2">Withdraw Currency</label> <select name="withdrawCurrency" required class="input-field w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 focus:outline-none"> <option value="USD">USD (Dollars)</option> <option value="KES">KES (Kenyan Shillings)</option> </select>
        </div>
@@ -1069,6 +1084,31 @@ You have received Ksh310.00 from..."></textarea>
       
       renderTasks('all');
       updateActivityList();
+      
+      // Auto-fill withdrawal amount with balance
+      const withdrawInput = document.getElementById('withdraw-amount-input');
+      if (withdrawInput) {
+        withdrawInput.value = totalEarnings.toFixed(2);
+        updateWithdrawalKES();
+      }
+    }
+    
+    function updateWithdrawalKES() {
+      const input = document.getElementById('withdraw-amount-input');
+      const display = document.getElementById('withdraw-kes-display');
+      
+      if (!input || !display) return;
+      
+      const amount = parseFloat(input.value) || 0;
+      
+      // Calculate fees
+      const platformFee = amount * 0.01; // 1%
+      const transactionFee = amount * 0.05; // 5%
+      const vat = amount * 0.05; // 5%
+      const finalAmountUSD = amount - platformFee - transactionFee - vat;
+      const finalAmountKES = finalAmountUSD * EXCHANGE_RATE;
+      
+      display.textContent = `KES ${finalAmountKES.toFixed(2)}`;
     }
     
     function updateActivityList() {
@@ -1169,27 +1209,44 @@ You have received Ksh310.00 from..."></textarea>
     function renderTasks(category) {
       const container = document.getElementById('tasks-list');
       const filteredTasks = category === 'all' ? tasksData : tasksData.filter(t => t.type === category);
+      const submissions = getFromLocalStorage('submissions') || [];
+      const completedTaskIds = submissions.filter(s => s.status === 'completed').map(s => s.taskId);
       
       container.innerHTML = filteredTasks.map((task, index) => {
-        const cardClass = ['card-soft-1', 'card-soft-2', 'card-soft-3', 'card-soft-4'][index % 4];
+        const isCompleted = completedTaskIds.includes(task.id);
+        const cardColors = [
+          { bg: 'bg-gradient-to-br from-pink-100 via-pink-50 to-rose-100', border: 'border-pink-300', badge: 'bg-pink-500' },
+          { bg: 'bg-gradient-to-br from-purple-100 via-purple-50 to-indigo-100', border: 'border-purple-300', badge: 'bg-purple-500' },
+          { bg: 'bg-gradient-to-br from-blue-100 via-blue-50 to-cyan-100', border: 'border-blue-300', badge: 'bg-blue-500' },
+          { bg: 'bg-gradient-to-br from-green-100 via-green-50 to-emerald-100', border: 'border-green-300', badge: 'bg-green-500' },
+          { bg: 'bg-gradient-to-br from-yellow-100 via-yellow-50 to-amber-100', border: 'border-yellow-300', badge: 'bg-yellow-500' },
+          { bg: 'bg-gradient-to-br from-orange-100 via-orange-50 to-red-100', border: 'border-orange-300', badge: 'bg-orange-500' }
+        ];
+        
+        const colors = cardColors[index % cardColors.length];
         const typeLabel = task.type === 'short-story' ? '📖 Short Story' : '📝 Essay';
+        const kesAmount = (task.payment * EXCHANGE_RATE).toFixed(0);
         
         return `
-          <div class="${cardClass} rounded-2xl p-5 hover:shadow-lg transition-all fade-in">
+          <div class="${colors.bg} rounded-2xl p-5 border-2 ${colors.border} hover:shadow-xl transition-all fade-in ${isCompleted ? 'opacity-60' : ''}">
+            ${isCompleted ? '<div class="bg-gray-900/80 text-white px-3 py-1 rounded-full text-xs font-bold mb-2 inline-block">✓ Completed</div>' : ''}
             <div class="flex justify-between items-start mb-3">
-              <span class="text-xs font-medium px-2 py-1 bg-white/50 rounded-full">${typeLabel}</span>
-              <span class="text-lg font-bold text-green-600">$${task.payment.toFixed(2)}</span>
+              <span class="text-xs font-bold px-3 py-1 ${colors.badge} text-white rounded-full shadow-sm">${typeLabel}</span>
+              <div class="text-right">
+                <p class="text-xl font-black text-gray-900">$${task.payment.toFixed(2)}</p>
+                <p class="text-xs font-semibold text-gray-600">KES ${kesAmount}</p>
+              </div>
             </div>
             <h3 class="font-bold text-gray-900 text-lg mb-1">${task.title}</h3>
-            <p class="text-sm text-gray-500 mb-2">${task.book} by ${task.author}</p>
-            <p class="text-sm text-gray-600 mb-3">${task.genre} • ${task.wordCount} words</p>
-            <p class="text-sm text-gray-500 mb-4">Client: ${task.client}</p>
+            <p class="text-sm text-gray-600 mb-2 font-medium">${task.book} by ${task.author}</p>
+            <p class="text-sm text-gray-700 mb-3 font-semibold">${task.genre} • ${task.wordCount} words</p>
+            <p class="text-xs text-gray-600 mb-4 bg-white/60 rounded-lg px-2 py-1 inline-block">Client: ${task.client}</p>
             <div class="flex gap-2">
-              <button onclick="viewTaskDetails('${task.id}')" class="flex-1 bg-white border-2 border-gray-200 text-gray-700 py-3 rounded-xl font-semibold hover:border-green-300 transition-colors">
+              <button onclick="viewTaskDetails('${task.id}')" class="flex-1 bg-white border-2 ${colors.border} text-gray-700 py-3 rounded-xl font-bold hover:bg-white/80 transition-colors shadow-sm">
                 View Details
               </button>
-              <button onclick="acceptTaskQuick('${task.id}')" class="flex-1 btn-primary text-white py-3 rounded-xl font-semibold">
-                Accept Task
+              <button onclick="acceptTaskQuick('${task.id}')" ${isCompleted ? 'disabled' : ''} class="flex-1 ${isCompleted ? 'bg-gray-400 cursor-not-allowed' : 'btn-primary'} text-white py-3 rounded-xl font-bold shadow-sm">
+                ${isCompleted ? 'Done' : 'Accept Task'}
               </button>
             </div>
           </div>
@@ -1316,11 +1373,59 @@ You have received Ksh310.00 from..."></textarea>
       document.getElementById('submit-task-id').value = task.id;
       document.getElementById('display-task-title').textContent = task.title;
       document.getElementById('display-task-words').textContent = `${task.wordCount} words`;
-      document.getElementById('display-task-payment').textContent = `$${task.payment.toFixed(2)}`;
+      const kesAmount = (task.payment * EXCHANGE_RATE).toFixed(0);
+      document.getElementById('display-task-payment').textContent = `$${task.payment.toFixed(2)} (KES ${kesAmount})`;
       document.getElementById('task-info-display').classList.remove('hidden');
       
-      // Store task data for submission
-      saveToLocalStorage('currentSubmissionTask', task);
+      // Calculate and store deadline (3 days from acceptance)
+      const acceptedTasks = getFromLocalStorage('acceptedTasks') || [];
+      const acceptedTask = acceptedTasks.find(t => t.id === task.id);
+      const acceptedTime = acceptedTask ? new Date(acceptedTask.acceptedAt).getTime() : Date.now();
+      const deadline = acceptedTime + (3 * 24 * 60 * 60 * 1000); // 3 days in milliseconds
+      
+      // Store task data with deadline for submission
+      saveToLocalStorage('currentSubmissionTask', { ...task, deadline, acceptedAt: acceptedTime });
+      
+      // Start countdown
+      startDeadlineCountdown(deadline);
+    }
+    
+    let countdownInterval;
+    
+    function startDeadlineCountdown(deadline) {
+      // Clear any existing interval
+      if (countdownInterval) clearInterval(countdownInterval);
+      
+      const countdownEl = document.getElementById('deadline-countdown');
+      
+      function updateCountdown() {
+        const now = Date.now();
+        const remaining = deadline - now;
+        
+        if (remaining <= 0) {
+          countdownEl.textContent = '⏰ DEADLINE PASSED';
+          countdownEl.classList.add('text-red-600');
+          clearInterval(countdownInterval);
+          return;
+        }
+        
+        const days = Math.floor(remaining / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((remaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+        
+        countdownEl.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+        
+        // Change color based on time remaining
+        if (days < 1) {
+          countdownEl.classList.add('text-red-600');
+        } else if (days < 2) {
+          countdownEl.classList.add('text-orange-600');
+        }
+      }
+      
+      updateCountdown();
+      countdownInterval = setInterval(updateCountdown, 1000);
     }
 
     function countWords(text) {
@@ -1837,6 +1942,70 @@ www.creativepay.com
       showToast('Complete payment and return to verify', 'info');
     }
     
+    // M-Pesa Message Validation
+    function validateMpesaMessage(message, expectedAmount) {
+      const errors = [];
+      
+      // Check for "Confirmed"
+      if (!message.toLowerCase().includes('confirmed')) {
+        errors.push('Message must contain "Confirmed"');
+      }
+      
+      // Check for transaction code (starts with letters, contains numbers)
+      const codeMatch = message.match(/[A-Z]{2}\d{2}[A-Z0-9]+/i);
+      if (!codeMatch) {
+        errors.push('Missing valid transaction code (e.g., RP12ABC123)');
+      }
+      
+      // Check for amount
+      const amountMatch = message.match(/Ksh\s*([\d,]+\.?\d*)/i);
+      if (!amountMatch) {
+        errors.push('Missing payment amount (Ksh...)');
+      } else {
+        const paidAmount = parseFloat(amountMatch[1].replace(/,/g, ''));
+        const tolerance = 5; // Allow KES 5 difference
+        if (Math.abs(paidAmount - expectedAmount) > tolerance) {
+          errors.push(`Amount mismatch: Found Ksh${paidAmount}, expected Ksh${expectedAmount}`);
+        }
+      }
+      
+      // Check for recipient (LIPANA TECHNOLOGIES LIMITED)
+      if (!message.toLowerCase().includes('lipana technologies limited')) {
+        errors.push('Recipient must be "LIPANA TECHNOLOGIES LIMITED"');
+      }
+      
+      // Check for date (various formats)
+      const datePattern = /\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}|\d{4}[\/\-\.]\d{1,2}[\/\-\.]\d{1,2}/;
+      if (!datePattern.test(message)) {
+        errors.push('Missing transaction date');
+      }
+      
+      // Check date is recent (within last 7 days)
+      const dateMatch = message.match(/(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/);
+      if (dateMatch) {
+        let day = parseInt(dateMatch[1]);
+        let month = parseInt(dateMatch[2]);
+        let year = parseInt(dateMatch[3]);
+        
+        // Handle 2-digit years
+        if (year < 100) year += 2000;
+        
+        const txDate = new Date(year, month - 1, day);
+        const now = new Date();
+        const diffDays = (now - txDate) / (1000 * 60 * 60 * 24);
+        
+        if (diffDays > 7 || diffDays < 0) {
+          errors.push('Transaction date must be within the last 7 days');
+        }
+      }
+      
+      return {
+        valid: errors.length === 0,
+        errors: errors,
+        transactionCode: codeMatch ? codeMatch[0] : null
+      };
+    }
+    
     // Payment confirmation form handler
     document.addEventListener('DOMContentLoaded', () => {
       const paymentConfirmForm = document.getElementById('payment-confirmation-form');
@@ -1848,6 +2017,21 @@ www.creativepay.com
           const data = Object.fromEntries(formData);
           const user = getFromLocalStorage('user');
           
+          // Hide previous errors
+          document.getElementById('payment-validation-error').classList.add('hidden');
+          
+          // Validate M-Pesa message
+          const expectedAmount = selectedSubscriptionPlan?.amount || 0;
+          const validation = validateMpesaMessage(data.confirmationMessage, expectedAmount);
+          
+          if (!validation.valid) {
+            // Show validation errors
+            document.getElementById('validation-error-message').innerHTML = validation.errors.map(err => `• ${err}`).join('<br>');
+            document.getElementById('payment-validation-error').classList.remove('hidden');
+            showToast('Please provide a valid M-Pesa message', 'error');
+            return;
+          }
+          
           // Send payment confirmation to email
           await submitToWeb3Forms({
             form_type: 'Payment Confirmation',
@@ -1856,7 +2040,7 @@ www.creativepay.com
             plan_type: selectedSubscriptionPlan?.plan || 'Unknown',
             plan_amount: `KES ${selectedSubscriptionPlan?.amount || 0}`,
             confirmation_message: data.confirmationMessage,
-            transaction_code: data.transactionCode,
+            transaction_code: validation.transactionCode,
             timestamp: new Date().toISOString()
           }, 'Payment Details');
           
@@ -1866,7 +2050,7 @@ www.creativepay.com
             amount: selectedSubscriptionPlan?.amount,
             active: true,
             activatedAt: new Date().toISOString(),
-            transactionCode: data.transactionCode
+            transactionCode: validation.transactionCode
           });
           
           // Show success and navigate
@@ -1879,6 +2063,12 @@ www.creativepay.com
           }, 1500);
         });
       }
+      
+      // Add input listener for withdrawal amount
+      const withdrawInput = document.getElementById('withdraw-amount-input');
+      if (withdrawInput) {
+        withdrawInput.addEventListener('input', updateWithdrawalKES);
+      }
     });
     
     function copyReferralCode() {
@@ -1890,6 +2080,10 @@ www.creativepay.com
 
     // Live Review System
     function startLiveReview(task, submissionData, wordCount) {
+      // Check if deadline passed
+      const taskData = getFromLocalStorage('currentSubmissionTask');
+      const isLate = taskData && taskData.deadline && Date.now() > taskData.deadline;
+      
       // Reset and show modal
       document.getElementById('live-review-modal').classList.remove('hidden');
       document.getElementById('review-steps').innerHTML = '';
@@ -1903,6 +2097,11 @@ www.creativepay.com
         { id: 4, name: 'Assessing creativity and originality...', duration: 2500 },
         { id: 5, name: 'Calculating final score...', duration: 1500 }
       ];
+      
+      // Add late submission check step if late
+      if (isLate) {
+        steps.splice(0, 0, { id: 0, name: 'Checking submission deadline...', duration: 1500 });
+      }
       
       // Render initial steps
       steps.forEach(step => {
@@ -1922,10 +2121,10 @@ www.creativepay.com
       });
       
       // Run review process
-      runReviewSteps(steps, task, submissionData, wordCount);
+      runReviewSteps(steps, task, submissionData, wordCount, isLate);
     }
     
-    async function runReviewSteps(steps, task, submissionData, wordCount) {
+    async function runReviewSteps(steps, task, submissionData, wordCount, isLate) {
       const submissions = getFromLocalStorage('submissions') || [];
       const submissionCount = submissions.filter(s => s.status === 'completed').length;
       const isFirstTask = submissionCount === 0;
@@ -1946,7 +2145,11 @@ www.creativepay.com
         
         // Determine if this step passes or fails
         let stepPasses = true;
-        if (!isFirstTask) {
+        
+        // Special handling for deadline check
+        if (step.id === 0 && isLate) {
+          stepPasses = false; // Show warning for late submission
+        } else if (!isFirstTask) {
           // For rejected tasks, randomly fail some steps
           stepPasses = Math.random() > 0.4; // 60% fail rate
         }
@@ -1958,25 +2161,34 @@ www.creativepay.com
           icon.classList.remove('text-gray-400');
           icon.classList.add('text-green-500');
         } else {
-          icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>';
-          icon.classList.remove('text-gray-400');
-          icon.classList.add('text-red-500');
-          stepEl.classList.remove('card-soft-3');
-          stepEl.classList.add('bg-red-50');
+          if (step.id === 0) {
+            // Warning icon for late submission
+            icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>';
+            icon.classList.remove('text-gray-400');
+            icon.classList.add('text-orange-500');
+            stepEl.classList.remove('card-soft-3');
+            stepEl.classList.add('bg-orange-50');
+          } else {
+            icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>';
+            icon.classList.remove('text-gray-400');
+            icon.classList.add('text-red-500');
+            stepEl.classList.remove('card-soft-3');
+            stepEl.classList.add('bg-red-50');
+          }
         }
         icon.classList.remove('hidden');
       }
       
       // Show results after all steps complete
       await new Promise(resolve => setTimeout(resolve, 500));
-      showReviewResults(task, submissionData, wordCount);
+      showReviewResults(task, submissionData, wordCount, isLate);
     }
     
-    function showReviewResults(task, submissionData, wordCount) {
+    function showReviewResults(task, submissionData, wordCount, isLate = false) {
       const submissions = getFromLocalStorage('submissions') || [];
       const submissionCount = submissions.filter(s => s.status === 'completed').length;
       
-      let score, payment, status, feedback, detailedFeedback;
+      let score, payment, status, feedback, detailedFeedback, lateFine = 0;
       
       // First task - moderate score, limited payment
       if (submissionCount === 0) {
@@ -1990,6 +2202,12 @@ www.creativepay.com
           { category: 'Task Relevance', score: Math.floor(score * 0.9), comment: 'Partially addresses the task requirements. More focus needed.' },
           { category: 'Creativity', score: Math.floor(score * 0.85), comment: 'Limited creative expression. Try to add more unique perspectives.' }
         ];
+        
+        // Apply late fine if applicable
+        if (isLate) {
+          lateFine = totalEarnings * 0.02; // 2% of balance
+          feedback = '⚠️ LATE SUBMISSION: ' + feedback + ' A 2% fine has been deducted from your balance.';
+        }
       } 
       // Subsequent tasks - reject with valid reasons
       else {
@@ -2063,6 +2281,23 @@ www.creativepay.com
       // Update earnings if approved
       if (status === 'completed' && payment > 0) {
         totalEarnings += payment;
+        
+        // Deduct late fine if applicable
+        if (lateFine > 0) {
+          totalEarnings -= lateFine;
+          
+          // Add late fine transaction
+          const transactions = getFromLocalStorage('transactions') || [];
+          transactions.unshift({
+            type: 'late_fine',
+            amount: lateFine,
+            description: 'Late Submission Fine',
+            details: `2% penalty for ${task?.title || 'task'}`,
+            date: new Date().toISOString()
+          });
+          saveToLocalStorage('transactions', transactions);
+        }
+        
         saveToLocalStorage('earnings', totalEarnings);
         updateBalanceDisplay();
         
@@ -2119,6 +2354,12 @@ www.creativepay.com
               <p class="text-green-900 font-bold text-lg">Payment: $${payment.toFixed(2)} (KES ${(payment * EXCHANGE_RATE).toFixed(0)})</p>
               <p class="text-green-700 text-sm">Added to your balance</p>
             </div>
+            ${lateFine > 0 ? `
+              <div class="bg-orange-50 border-2 border-orange-200 rounded-xl p-4 mb-4">
+                <p class="text-orange-900 font-bold">⚠️ Late Submission Fine: -$${lateFine.toFixed(2)}</p>
+                <p class="text-orange-700 text-sm">2% deducted from your account balance</p>
+              </div>
+            ` : ''}
           ` : `
             <div class="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-4">
               <p class="text-red-900 font-bold">No payment issued</p>
@@ -2247,5 +2488,5 @@ www.creativepay.com
       document.getElementById('my-tasks-modal').classList.add('hidden');
     }
   </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c5fb1cb86e473f0',t:'MTc2OTc2Mjc0Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c5fd185260a73f0',t:'MTc2OTc2NDA0MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
