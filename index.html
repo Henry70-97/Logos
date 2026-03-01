@@ -1,1986 +1,642 @@
-<!doctype html>
-<html lang="en" class="h-full">
- <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CreativepayAcademy</title>
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
-  <script src="/_sdk/element_sdk.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
-  <style>
-    * { font-family: 'DM Sans', sans-serif; }
-    h1, h2, h3, .logo-text { font-family: 'Space Grotesk', sans-serif; }
-    .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-    .card-shadow { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-    .hover-lift { transition: transform 0.3s, box-shadow 0.3s; }
-    .hover-lift:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.12); }
-    .modal-overlay { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
-    .spin-wheel { transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99); }
-    .slide-in { animation: slideIn 0.3s ease-out; }
-    @keyframes slideIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    .fade-in { animation: fadeIn 0.4s ease-out; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .spinner { animation: spin 1s linear infinite; }
-    .task-card:nth-child(odd) { background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); }
-    .task-card:nth-child(even) { background: linear-gradient(135deg, #fef3f2 0%, #fce7f3 100%); }
-    .section-alt:nth-child(odd) { background: #f8fafc; }
-    .section-alt:nth-child(even) { background: #ffffff; }
-    .balance-card { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); }
-    .menu-link { transition: all 0.2s; }
-    .menu-link:hover { background: rgba(102,126,234,0.1); transform: translateX(4px); }
-    .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-    .btn-primary:hover { background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%); }
-    input:focus, textarea:focus, select:focus { outline: none; ring: 2px; ring-color: #667eea; }
-  </style>
-  <style>body { box-sizing: border-box; }</style>
-  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
- </head>
- <body class="h-full bg-gray-50 overflow-auto">
-  <div id="app" class="min-h-full"><!-- Loading Spinner Overlay -->
-   <div id="loadingOverlay" class="fixed inset-0 bg-white bg-opacity-90 z-50 flex items-center justify-center hidden">
-    <div class="text-center">
-     <div class="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full spinner mx-auto"></div>
-     <p id="loadingText" class="mt-4 text-gray-600 font-medium">Loading...</p>
-    </div>
-   </div><!-- Header -->
-   <header id="header" class="bg-white shadow-sm sticky top-0 z-40">
-    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-     <div class="flex items-center gap-3 cursor-pointer" onclick="navigateTo('landing')"><img src="logo.png" alt="NextGen" class="w-10 h-10 rounded-lg object-contain" onerror="this.style.display='none'"> <span class="logo-text text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">CreativepayAcademy</span>
-     </div><button id="menuBtn" class="lg:hidden p-2 rounded-lg hover:bg-gray-100" onclick="toggleMobileMenu()">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-      </svg></button>
-     <nav id="desktopNav" class="hidden lg:flex items-center gap-4"><button onclick="showModal('login')" class="px-4 py-2 text-gray-700 hover:text-purple-600 font-medium">Login</button> <button onclick="showModal('register')" class="px-6 py-2 btn-primary text-white rounded-full font-medium">Join Free</button>
-     </nav>
-     <nav id="dashboardNav" class="hidden lg:flex items-center gap-4"><span id="userEmailDisplay" class="text-sm text-gray-600"></span> <button onclick="handleLogout()" class="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg font-medium">Logout</button>
-     </nav>
-    </div>
-   </header><!-- Mobile Menu -->
-   <div id="mobileMenu" class="fixed inset-0 z-50 hidden">
-    <div class="absolute inset-0 bg-black bg-opacity-50" onclick="toggleMobileMenu()"></div>
-    <div class="absolute left-0 top-0 bottom-0 w-72 bg-white shadow-xl slide-in">
-     <div class="p-4 border-b flex items-center justify-between">
-      <div class="flex items-center gap-2"><img src="logo.png" alt="NextGen" class="w-8 h-8 rounded-lg object-contain" onerror="this.style.display='none'"> <span class="logo-text font-bold text-purple-600">CreativepayAcademy</span>
-      </div><button onclick="toggleMobileMenu()" class="p-2 rounded-lg hover:bg-gray-100">
-       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-       </svg></button>
-     </div>
-     <div id="mobileMenuContent" class="p-4"><!-- Dynamic menu items -->
-     </div>
-    </div>
-   </div><!-- Main Content Area -->
-   <main id="mainContent"><!-- Landing Page -->
-    <section id="landingPage" class="fade-in"><!-- Hero -->
-     <div class="gradient-bg text-white py-20 px-4">
-      <div class="max-w-4xl mx-auto text-center">
-       <h1 id="heroHeadline" class="text-4xl md:text-6xl font-bold mb-6">Write. Submit. Earn.</h1>
-       <p class="text-xl md:text-2xl opacity-90 mb-8">Turn your creative writing skills into real income. Join thousands of writers earning from stories, poetry, and opinions.</p>
-       <div class="flex flex-col sm:flex-row gap-4 justify-center"><button onclick="showModal('register')" class="px-8 py-4 bg-white text-purple-600 rounded-full font-bold text-lg hover:bg-gray-100 transition">Join as Writer</button> <button onclick="scrollToSection('about')" class="px-8 py-4 border-2 border-white text-white rounded-full font-bold text-lg hover:bg-white hover:text-purple-600 transition">About CreativepayAcademy</button>
-       </div>
-      </div>
-     </div><!-- How It Works -->
-     <div id="about" class="py-16 px-4 bg-white">
-      <div class="max-w-6xl mx-auto">
-       <h2 class="text-3xl font-bold text-center mb-12 text-gray-800">How Creative Pay Works</h2>
-       <div class="grid md:grid-cols-3 gap-8">
-        <div class="text-center p-6 rounded-2xl bg-gradient-to-br from-purple-50 to-pink-50 hover-lift card-shadow">
-         <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4"><span class="text-3xl">📝</span>
-         </div>
-         <h3 class="text-xl font-bold mb-2 text-gray-800">1. Choose Tasks</h3>
-         <p class="text-gray-600">Browse creative writing tasks in stories, poetry, opinions, and history categories.</p>
-        </div>
-        <div class="text-center p-6 rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 hover-lift card-shadow">
-         <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4"><span class="text-3xl">✍️</span>
-         </div>
-         <h3 class="text-xl font-bold mb-2 text-gray-800">2. Submit Work</h3>
-         <p class="text-gray-600">Write and submit your creative content. Upload files or paste directly.</p>
-        </div>
-        <div class="text-center p-6 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-50 hover-lift card-shadow">
-         <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"><span class="text-3xl">💰</span>
-         </div>
-         <h3 class="text-xl font-bold mb-2 text-gray-800">3. Get Paid</h3>
-         <p class="text-gray-600">Earn money for approved submissions. Withdraw to your preferred method.</p>
-        </div>
-       </div>
-      </div>
-     </div><!-- Featured Tasks Preview -->
-     <div class="py-16 px-4 bg-gray-50">
-      <div class="max-w-6xl mx-auto">
-       <h2 class="text-3xl font-bold text-center mb-12 text-gray-800">Featured Writing Tasks</h2>
-       <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div class="bg-white rounded-2xl p-6 hover-lift card-shadow">
-         <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-4">
-          📚
-         </div>
-         <h3 class="font-bold text-lg mb-2">Short Stories</h3>
-         <p class="text-gray-600 text-sm mb-3">Creative fiction writing with prompts and starters</p><span class="text-purple-600 font-bold">$0.50 - $2.00</span>
-        </div>
-        <div class="bg-white rounded-2xl p-6 hover-lift card-shadow">
-         <div class="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center mb-4">
-          🎭
-         </div>
-         <h3 class="font-bold text-lg mb-2">Poetry</h3>
-         <p class="text-gray-600 text-sm mb-3">Express emotions through verses and rhymes</p><span class="text-pink-600 font-bold">$0.30 - $1.50</span>
-        </div>
-        <div class="bg-white rounded-2xl p-6 hover-lift card-shadow">
-         <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
-          💬
-         </div>
-         <h3 class="font-bold text-lg mb-2">OpenPoll Opinion</h3>
-         <p class="text-gray-600 text-sm mb-3">Share your views on trending topics</p><span class="text-blue-600 font-bold">$0.25 - $1.00</span>
-        </div>
-        <div class="bg-white rounded-2xl p-6 hover-lift card-shadow">
-         <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mb-4">
-          🏛️
-         </div>
-         <h3 class="font-bold text-lg mb-2">History</h3>
-         <p class="text-gray-600 text-sm mb-3">Research and write about historical events</p><span class="text-amber-600 font-bold">$0.40 - $1.75</span>
-        </div>
-       </div>
-       <div class="text-center mt-8"><button onclick="showModal('register')" class="px-8 py-3 btn-primary text-white rounded-full font-bold hover:shadow-lg transition">Start Earning Today</button>
-       </div>
-      </div>
-     </div><!-- Footer -->
-     <footer class="bg-gray-900 text-white py-12 px-4">
-      <div class="max-w-6xl mx-auto text-center">
-       <div class="flex items-center justify-center gap-2 mb-4"><img src="logo.png" alt="NextGen" class="w-8 h-8 rounded-lg object-contain" onerror="this.style.display='none'"> <span class="logo-text text-xl font-bold">CreativepayAcademy</span>
-       </div>
-       <p class="text-gray-400 mb-4">© 2024 CreativepayAcademy. All rights reserved.</p><button onclick="showModal('support')" class="text-purple-400 hover:text-purple-300">Contact Support</button>
-      </div>
-     </footer>
-    </section><!-- Dashboard Page -->
-    <section id="dashboardPage" class="hidden fade-in">
-     <div class="max-w-7xl mx-auto px-4 py-6"><!-- Balance Card -->
-      <div class="balance-card rounded-3xl p-6 mb-6 text-white card-shadow">
-       <div class="flex items-center justify-between mb-4">
-        <div>
-         <p class="text-gray-300 text-sm">Total Balance</p>
-         <h2 id="balanceDisplay" class="text-4xl font-bold">$0.00</h2>
-         <p id="balanceKsh" class="text-gray-400 text-sm">KSH 0.00</p>
-        </div>
-        <div class="flex gap-2"><button onclick="toggleCurrency()" class="px-3 py-1 bg-white bg-opacity-20 rounded-full text-sm"> <span id="currencyToggle">USD</span> ↔ </button>
-        </div>
-       </div>
-       <div class="flex gap-3"><button onclick="showModal('addFunds')" class="flex-1 py-3 bg-white bg-opacity-20 rounded-xl font-medium hover:bg-opacity-30 transition">+ Add Funds</button> <button onclick="handleWithdraw()" class="flex-1 py-3 bg-green-500 rounded-xl font-medium hover:bg-green-600 transition">Withdraw</button>
-       </div>
-      </div><!-- Stats Cards -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-       <div class="bg-white rounded-2xl p-4 card-shadow">
-        <p class="text-gray-500 text-sm">Level</p>
-        <p id="userLevelDisplay" class="text-2xl font-bold text-purple-600">1</p>
-       </div>
-       <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-4 card-shadow">
-        <p class="text-gray-500 text-sm">Tasks Done</p>
-        <p id="tasksDoneDisplay" class="text-2xl font-bold text-purple-600">0</p>
-       </div>
-       <div class="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-4 card-shadow">
-        <p class="text-gray-500 text-sm">Total Earned</p>
-        <p id="totalEarnedDisplay" class="text-2xl font-bold text-blue-600">$0.00</p>
-       </div>
-       <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-4 card-shadow">
-        <p class="text-gray-500 text-sm">Pending</p>
-        <p id="pendingDisplay" class="text-2xl font-bold text-green-600">$0.00</p>
-       </div>
-      </div><!-- Recent Activity -->
-      <div class="bg-white rounded-2xl p-6 card-shadow mb-6">
-       <h3 class="text-xl font-bold mb-4 text-gray-800">Recent Activity</h3>
-       <div id="activityList" class="space-y-3">
-        <p class="text-gray-500 text-center py-4">No activity yet. Start completing tasks!</p>
-       </div>
-      </div><!-- Quick Actions -->
-      <div class="grid md:grid-cols-2 gap-4"><button onclick="navigateTo('tasks')" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl p-6 text-left hover-lift card-shadow"> <h3 class="text-xl font-bold mb-2">Browse Tasks</h3><p class="opacity-90">Find writing tasks and start earning</p></button> <button onclick="navigateTo('level')" class="bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-2xl p-6 text-left hover-lift card-shadow"> <h3 class="text-xl font-bold mb-2">Your Level</h3><p class="opacity-90">Track progress and unlock new levels</p></button>
-      </div>
-     </div>
-    </section><!-- Tasks Page -->
-    <section id="tasksPage" class="hidden fade-in">
-     <div class="max-w-7xl mx-auto px-4 py-6">
-      <h2 class="text-2xl font-bold mb-6 text-gray-800">Writing Tasks</h2><!-- Task Categories Tabs -->
-      <div class="flex flex-wrap gap-2 mb-6"><button onclick="filterTasks('all')" class="task-tab px-4 py-2 rounded-full font-medium bg-purple-600 text-white" data-category="all">All Tasks</button> <button onclick="filterTasks('stories')" class="task-tab px-4 py-2 rounded-full font-medium bg-gray-200 text-gray-700 hover:bg-purple-100" data-category="stories">📚 Short Stories</button> <button onclick="filterTasks('poetry')" class="task-tab px-4 py-2 rounded-full font-medium bg-gray-200 text-gray-700 hover:bg-purple-100" data-category="poetry">🎭 Poetry</button> <button onclick="filterTasks('opinion')" class="task-tab px-4 py-2 rounded-full font-medium bg-gray-200 text-gray-700 hover:bg-purple-100" data-category="opinion">💬 OpenPoll</button> <button onclick="filterTasks('history')" class="task-tab px-4 py-2 rounded-full font-medium bg-gray-200 text-gray-700 hover:bg-purple-100" data-category="history">🏛️ History</button>
-      </div><!-- Level Lock Notice -->
-      <div id="levelLockNotice" class="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6 hidden">
-       <p class="text-amber-800">🔒 Complete Level 1 training tasks first to unlock all tasks. You need to complete 2 tasks from each category.</p>
-      </div><!-- Tasks Grid -->
-      <div id="tasksGrid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4"><!-- Tasks will be rendered here -->
-      </div>
-     </div>
-    </section><!-- Level Page -->
-    <section id="levelPage" class="hidden fade-in">
-     <div class="max-w-4xl mx-auto px-4 py-6">
-      <h2 class="text-2xl font-bold mb-6 text-gray-800">Your Level Progress</h2><!-- Level Cards -->
-      <div class="space-y-6"><!-- Level 1 -->
-       <div class="bg-white rounded-2xl p-6 card-shadow">
-        <div class="flex items-center justify-between mb-4">
-         <div class="flex items-center gap-3">
-          <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center"><span class="text-2xl">🌱</span>
-          </div>
-          <div>
-           <h3 class="text-xl font-bold text-gray-800">Level 1 - Training</h3>
-           <p class="text-gray-500 text-sm">Complete 2 tasks from each category</p>
-          </div>
-         </div><span id="level1Status" class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium">In Progress</span>
-        </div>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-         <div class="bg-gray-50 rounded-xl p-3 text-center">
-          <p class="text-xs text-gray-500">Stories</p>
-          <p id="level1Stories" class="font-bold text-purple-600">0/2</p>
-         </div>
-         <div class="bg-gray-50 rounded-xl p-3 text-center">
-          <p class="text-xs text-gray-500">Poetry</p>
-          <p id="level1Poetry" class="font-bold text-pink-600">0/2</p>
-         </div>
-         <div class="bg-gray-50 rounded-xl p-3 text-center">
-          <p class="text-xs text-gray-500">Opinion</p>
-          <p id="level1Opinion" class="font-bold text-blue-600">0/2</p>
-         </div>
-         <div class="bg-gray-50 rounded-xl p-3 text-center">
-          <p class="text-xs text-gray-500">History</p>
-          <p id="level1History" class="font-bold text-amber-600">0/2</p>
-         </div>
-        </div>
-        <div class="w-full bg-gray-200 rounded-full h-2">
-         <div id="level1Progress" class="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all" style="width: 0%"></div>
-        </div>
-       </div><!-- Level 2 -->
-       <div id="level2Card" class="bg-white rounded-2xl p-6 card-shadow opacity-50">
-        <div class="flex items-center justify-between mb-4">
-         <div class="flex items-center gap-3">
-          <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center"><span class="text-2xl">🚀</span>
-          </div>
-          <div>
-           <h3 class="text-xl font-bold text-gray-800">Level 2 - Professional</h3>
-           <p class="text-gray-500 text-sm">Unlock withdrawals &amp; premium tasks</p>
-          </div>
-         </div><span id="level2Status" class="px-3 py-1 bg-gray-100 text-gray-500 rounded-full text-sm font-medium">🔒 Locked</span>
-        </div>
-        <div id="level2Content" class="hidden">
-         <p class="text-gray-600 mb-4">To access Level 2, you need to purchase the Level 2 Kit.</p>
-         <div class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 mb-4">
-          <p class="text-center text-2xl font-bold text-purple-600 mb-2">$357.00</p>
-          <p class="text-center text-gray-500 text-sm">One-time Level 2 Kit Purchase</p>
-         </div><button onclick="handleLevelPurchase()" class="w-full py-3 btn-primary text-white rounded-xl font-medium mb-3">Purchase Level 2 Kit</button> <button onclick="showModal('confirmPurchase')" class="w-full py-3 border-2 border-purple-200 text-purple-600 rounded-xl font-medium hover:bg-purple-50">Already Purchased? Confirm Manually</button>
-        </div>
-       </div>
-      </div>
-     </div>
-    </section><!-- Wallet Page -->
-    <section id="walletPage" class="hidden fade-in">
-     <div class="max-w-4xl mx-auto px-4 py-6">
-      <h2 class="text-2xl font-bold mb-6 text-gray-800">Wallet</h2><!-- Balance Card -->
-      <div class="balance-card rounded-3xl p-6 mb-6 text-white card-shadow">
-       <p class="text-gray-300 text-sm">Available Balance</p>
-       <h2 id="walletBalance" class="text-4xl font-bold mb-1">$0.00</h2>
-       <p id="walletBalanceKsh" class="text-gray-400">KSH 0.00</p>
-      </div><!-- Transaction History -->
-      <div class="bg-white rounded-2xl p-6 card-shadow">
-       <h3 class="text-xl font-bold mb-4 text-gray-800">Transaction History</h3>
-       <div id="transactionList" class="space-y-3">
-        <p class="text-gray-500 text-center py-4">No transactions yet</p>
-       </div>
-      </div>
-     </div>
-    </section><!-- Task History Page -->
-    <section id="taskHistoryPage" class="hidden fade-in">
-     <div class="max-w-4xl mx-auto px-4 py-6">
-      <h2 class="text-2xl font-bold mb-6 text-gray-800">Task History</h2>
-      <div id="taskHistoryList" class="space-y-4">
-       <p class="text-gray-500 text-center py-8">No submitted tasks yet</p>
-      </div>
-     </div>
-    </section><!-- Active Tasks Page -->
-    <section id="activeTasksPage" class="hidden fade-in">
-     <div class="max-w-4xl mx-auto px-4 py-6">
-      <h2 class="text-2xl font-bold mb-6 text-gray-800">Active Tasks</h2>
-      <div id="activeTasksList" class="space-y-4">
-       <p class="text-gray-500 text-center py-8">No active tasks. Browse tasks to get started!</p>
-      </div>
-     </div>
-    </section>
-   </main><!-- Modals Container -->
-   <div id="modalsContainer"><!-- Register Modal -->
-    <div id="registerModal" class="fixed inset-0 z-50 hidden">
-     <div class="modal-overlay absolute inset-0" onclick="closeModal('register')"></div>
-     <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md bg-gradient-to-br from-white to-purple-50 rounded-3xl p-6 overflow-auto max-h-full">
-      <div class="flex justify-between items-center mb-6">
-       <h3 class="text-2xl font-bold text-gray-800">Join CreativepayAcademy</h3><button onclick="closeModal('register')" class="p-2 hover:bg-gray-100 rounded-full">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
-         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg></button>
-      </div>
-      <form id="registerForm" onsubmit="handleRegister(event)">
-       <div class="space-y-4">
-        <div><label for="regName" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label> <input type="text" id="regName" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-        </div>
-        <div><label for="regEmail" class="block text-sm font-medium text-gray-700 mb-1">Email</label> <input type="email" id="regEmail" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-        </div>
-        <div><label for="regPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label> <input type="password" id="regPassword" required minlength="6" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-        </div><button type="submit" class="w-full py-3 btn-primary text-white rounded-xl font-medium">Create Account</button>
-        <div class="relative my-4">
-         <div class="absolute inset-0 flex items-center">
-          <div class="w-full border-t border-gray-300"></div>
-         </div>
-         <div class="relative flex justify-center text-sm">
-          <span class="px-2 bg-white text-gray-500">or</span>
-         </div>
-        </div><button type="button" onclick="handleGoogleSignIn()" class="w-full py-3 border-2 border-gray-300 rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-gray-50">
-         <svg class="w-5 h-5" viewbox="0 0 24 24">
-          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" /><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" /><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" /><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-         </svg> Continue with Google </button>
-       </div>
-      </form>
-      <p class="text-center text-sm text-gray-600 mt-4">Already have an account? <button onclick="closeModal('register'); showModal('login')" class="text-purple-600 font-medium">Login</button></p>
-     </div>
-    </div><!-- Login Modal -->
-    <div id="loginModal" class="fixed inset-0 z-50 hidden">
-     <div class="modal-overlay absolute inset-0" onclick="closeModal('login')"></div>
-     <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md bg-gradient-to-br from-white to-blue-50 rounded-3xl p-6 overflow-auto max-h-full">
-      <div class="flex justify-between items-center mb-6">
-       <h3 class="text-2xl font-bold text-gray-800">Welcome Back</h3><button onclick="closeModal('login')" class="p-2 hover:bg-gray-100 rounded-full">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
-         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg></button>
-      </div>
-      <form id="loginForm" onsubmit="handleLogin(event)">
-       <div class="space-y-4">
-        <div><label for="loginEmail" class="block text-sm font-medium text-gray-700 mb-1">Email</label> <input type="email" id="loginEmail" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-        </div>
-        <div><label for="loginPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label> <input type="password" id="loginPassword" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-        </div><button type="submit" class="w-full py-3 btn-primary text-white rounded-xl font-medium">Login</button>
-        <div class="relative my-4">
-         <div class="absolute inset-0 flex items-center">
-          <div class="w-full border-t border-gray-300"></div>
-         </div>
-         <div class="relative flex justify-center text-sm">
-          <span class="px-2 bg-white text-gray-500">or</span>
-         </div>
-        </div><button type="button" onclick="handleGoogleSignIn()" class="w-full py-3 border-2 border-gray-300 rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-gray-50">
-         <svg class="w-5 h-5" viewbox="0 0 24 24">
-          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" /><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" /><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" /><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-         </svg> Continue with Google </button>
-       </div>
-      </form>
-      <p class="text-center text-sm text-gray-600 mt-4">Don't have an account? <button onclick="closeModal('login'); showModal('register')" class="text-purple-600 font-medium">Register</button></p>
-     </div>
-    </div><!-- Email Verification Modal -->
-    <div id="verificationModal" class="fixed inset-0 z-50 hidden">
-     <div class="modal-overlay absolute inset-0"></div>
-     <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md bg-gradient-to-br from-white to-green-50 rounded-3xl p-6 text-center">
-      <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"><span class="text-4xl">✉️</span>
-      </div>
-      <h3 class="text-2xl font-bold text-gray-800 mb-2">Verify Your Email</h3>
-      <p class="text-gray-600 mb-6">We've sent a verification link to your email. Please check your inbox and click the link to verify your account.</p><button onclick="checkEmailVerification()" class="w-full py-3 btn-primary text-white rounded-xl font-medium mb-3">I've Verified My Email</button> <button onclick="resendVerification()" class="text-purple-600 font-medium text-sm">Resend Verification Email</button>
-     </div>
-    </div><!-- Payment Setup Modal -->
-    <div id="paymentSetupModal" class="fixed inset-0 z-50 hidden">
-     <div class="modal-overlay absolute inset-0"></div>
-     <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md bg-gradient-to-br from-white to-cyan-50 rounded-3xl p-6 overflow-auto max-h-full">
-      <h3 class="text-2xl font-bold text-gray-800 mb-2">Payment Setup</h3>
-      <p class="text-gray-600 mb-6">Set up how you'd like to receive your earnings</p>
-      <form id="paymentSetupForm" onsubmit="handlePaymentSetup(event)">
-       <div class="space-y-4">
-        <div><label for="paymentMethod" class="block text-sm font-medium text-gray-700 mb-1">Payment Method</label> <select id="paymentMethod" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500"> <option value="">Select method</option> <option value="mpesa">M-Pesa</option> <option value="paypal">PayPal</option> <option value="bank">Bank Transfer</option> </select>
-        </div>
-        <div id="mpesaFields" class="hidden"><label for="mpesaNumber" class="block text-sm font-medium text-gray-700 mb-1">M-Pesa Number</label> <input type="tel" id="mpesaNumber" placeholder="254..." class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500">
-        </div>
-        <div id="paypalFields" class="hidden"><label for="paypalEmail" class="block text-sm font-medium text-gray-700 mb-1">PayPal Email</label> <input type="email" id="paypalEmail" placeholder="your@email.com" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500">
-        </div>
-        <div id="bankFields" class="hidden space-y-3">
-         <div><label for="bankName" class="block text-sm font-medium text-gray-700 mb-1">Bank Name</label> <input type="text" id="bankName" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500">
-         </div>
-         <div><label for="accountNumber" class="block text-sm font-medium text-gray-700 mb-1">Account Number</label> <input type="text" id="accountNumber" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500">
-         </div>
-        </div><button type="submit" class="w-full py-3 btn-primary text-white rounded-xl font-medium">Continue</button>
-       </div>
-      </form>
-     </div>
-    </div><!-- Spin Wheel Modal -->
-    <div id="spinWheelModal" class="fixed inset-0 z-50 hidden">
-     <div class="modal-overlay absolute inset-0"></div>
-     <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md bg-gradient-to-br from-purple-100 to-pink-100 rounded-3xl p-6 text-center">
-      <h3 class="text-2xl font-bold text-gray-800 mb-2">🎉 Welcome Bonus!</h3>
-      <p class="text-gray-600 mb-6">Spin the wheel to win your welcome bonus!</p>
-      <div class="relative w-64 h-64 mx-auto mb-6">
-       <svg id="spinWheel" class="w-full h-full spin-wheel" viewbox="0 0 200 200"><circle cx="100" cy="100" r="95" fill="#f3e8ff" stroke="#a855f7" stroke-width="4" /> <path d="M100,100 L100,5 A95,95 0 0,1 195,100 Z" fill="#c084fc" /> <path d="M100,100 L195,100 A95,95 0 0,1 100,195 Z" fill="#a855f7" /> <path d="M100,100 L100,195 A95,95 0 0,1 5,100 Z" fill="#8b5cf6" /> <path d="M100,100 L5,100 A95,95 0 0,1 100,5 Z" fill="#7c3aed" /> <text x="140" y="60" fill="white" font-size="12" font-weight="bold">
-         $0.01
-        </text> <text x="145" y="140" fill="white" font-size="12" font-weight="bold">
-         $1
-        </text> <text x="45" y="145" fill="white" font-size="12" font-weight="bold">
-         $3
-        </text> <text x="40" y="65" fill="white" font-size="12" font-weight="bold">
-         $5
-        </text> <circle cx="100" cy="100" r="15" fill="#1e1b4b" />
-       </svg>
-       <div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2">
-        <div class="w-0 h-0 border-l-8 border-r-8 border-t-12 border-l-transparent border-r-transparent border-t-red-500"></div>
-       </div>
-      </div><button id="spinBtn" onclick="spinWheel()" class="px-8 py-3 btn-primary text-white rounded-full font-bold text-lg">SPIN NOW!</button>
-     </div>
-    </div><!-- Bonus Result Modal -->
-    <div id="bonusResultModal" class="fixed inset-0 z-50 hidden">
-     <div class="modal-overlay absolute inset-0"></div>
-     <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md bg-gradient-to-br from-green-100 to-emerald-100 rounded-3xl p-6 text-center">
-      <div class="w-20 h-20 bg-green-200 rounded-full flex items-center justify-center mx-auto mb-4"><span class="text-4xl">🎊</span>
-      </div>
-      <h3 class="text-2xl font-bold text-gray-800 mb-2">Congratulations!</h3>
-      <p class="text-gray-600 mb-2">You won:</p>
-      <p id="bonusAmount" class="text-4xl font-bold text-green-600 mb-6">$0.01</p><button onclick="showBonusWithdrawModal()" class="w-full py-3 btn-primary text-white rounded-xl font-medium mb-3">Withdraw Bonus Now</button> <button onclick="skipBonusWithdraw()" class="text-gray-500 text-sm">Skip for now</button>
-     </div>
-    </div><!-- Bonus Withdraw Modal -->
-    <div id="bonusWithdrawModal" class="fixed inset-0 z-50 hidden">
-     <div class="modal-overlay absolute inset-0"></div>
-     <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md bg-gradient-to-br from-amber-50 to-orange-50 rounded-3xl p-6">
-      <h3 class="text-2xl font-bold text-gray-800 mb-4">Withdraw Welcome Bonus</h3>
-      <div class="bg-white rounded-xl p-4 mb-4">
-       <p class="text-sm text-gray-500">Your Bonus</p>
-       <p id="bonusWithdrawAmount" class="text-2xl font-bold text-green-600">$0.01 (KSH 1.29)</p>
-      </div>
-      <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
-       <p class="text-amber-800 text-sm">⚠️ Minimum withdrawal is KSH 10. The difference (KSH <span id="debitAmount">8.71</span>) will be debited from your account balance.</p>
-      </div>
-      <div class="mb-4"><label class="block text-sm font-medium text-gray-700 mb-1">Withdrawal Amount (KSH)</label> <input type="number" id="bonusWithdrawInput" value="10" min="10" class="w-full px-4 py-3 border border-gray-300 rounded-xl" readonly>
-      </div><button onclick="processBonusWithdraw()" class="w-full py-3 btn-primary text-white rounded-xl font-medium mb-3">Confirm Withdrawal</button> <button onclick="closeBonusWithdrawModal()" class="w-full py-2 text-gray-500 text-sm">Skip</button>
-     </div>
-    </div><!-- Withdraw Modal -->
-    <div id="withdrawModal" class="fixed inset-0 z-50 hidden">
-     <div class="modal-overlay absolute inset-0" onclick="closeModal('withdraw')"></div>
-     <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md bg-gradient-to-br from-white to-green-50 rounded-3xl p-6">
-      <div class="flex justify-between items-center mb-6">
-       <h3 class="text-2xl font-bold text-gray-800">Withdraw Funds</h3><button onclick="closeModal('withdraw')" class="p-2 hover:bg-gray-100 rounded-full">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
-         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg></button>
-      </div>
-      <div class="bg-gray-100 rounded-xl p-4 mb-4">
-       <p class="text-sm text-gray-500">Available Balance</p>
-       <p id="withdrawAvailable" class="text-2xl font-bold text-gray-800">$0.00</p>
-      </div>
-      <form id="withdrawForm" onsubmit="handleWithdrawSubmit(event)">
-       <div class="space-y-4">
-        <div><label for="withdrawAmount" class="block text-sm font-medium text-gray-700 mb-1">Amount (USD)</label> <input type="number" id="withdrawAmount" step="0.01" min="1" required class="w-full px-4 py-3 border border-gray-300 rounded-xl">
-         <p class="text-xs text-gray-500 mt-1">Minimum: $1.00 (KSH 129)</p>
-        </div><button type="submit" class="w-full py-3 btn-primary text-white rounded-xl font-medium">Request Withdrawal</button>
-       </div>
-      </form>
-     </div>
-    </div><!-- Add Funds Modal -->
-    <div id="addFundsModal" class="fixed inset-0 z-50 hidden">
-     <div class="modal-overlay absolute inset-0" onclick="closeModal('addFunds')"></div>
-     <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md bg-gradient-to-br from-white to-blue-50 rounded-3xl p-6">
-      <div class="flex justify-between items-center mb-6">
-       <h3 class="text-2xl font-bold text-gray-800">Add Funds</h3><button onclick="closeModal('addFunds')" class="p-2 hover:bg-gray-100 rounded-full">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
-         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg></button>
-      </div>
-      <p class="text-gray-600 mb-4">Fund your account to maintain a positive balance.</p>
-      <div class="grid grid-cols-3 gap-3 mb-4"><button onclick="setFundAmount(5)" class="py-3 border-2 border-purple-200 rounded-xl font-medium hover:bg-purple-50">$5</button> <button onclick="setFundAmount(10)" class="py-3 border-2 border-purple-200 rounded-xl font-medium hover:bg-purple-50">$10</button> <button onclick="setFundAmount(20)" class="py-3 border-2 border-purple-200 rounded-xl font-medium hover:bg-purple-50">$20</button>
-      </div>
-      <div class="mb-4"><label for="fundAmount" class="block text-sm font-medium text-gray-700 mb-1">Custom Amount</label> <input type="number" id="fundAmount" min="1" class="w-full px-4 py-3 border border-gray-300 rounded-xl">
-      </div><button onclick="handleAddFunds()" class="w-full py-3 btn-primary text-white rounded-xl font-medium">Proceed to Payment</button>
-     </div>
-    </div><!-- Task Details Modal -->
-    <div id="taskDetailsModal" class="fixed inset-0 z-50 hidden">
-     <div class="modal-overlay absolute inset-0" onclick="closeModal('taskDetails')"></div>
-     <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl bg-white rounded-3xl p-6 overflow-auto max-h-[90%]">
-      <div class="flex justify-between items-start mb-6">
-       <div class="flex items-center gap-3"><img src="logo.png" alt="Company" id="taskCompanyLogo" class="w-12 h-12 rounded-xl object-contain bg-gray-100 p-2" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22><rect fill=%22%23e5e7eb%22 width=%2240%22 height=%2240%22/><text x=%2220%22 y=%2225%22 text-anchor=%22middle%22 fill=%22%239ca3af%22 font-size=%2214%22>📝</text></svg>'">
-        <div>
-         <h3 id="taskDetailTitle" class="text-xl font-bold text-gray-800">Task Title</h3>
-         <p id="taskDetailCompany" class="text-sm text-gray-500">Company Name</p>
-        </div>
-       </div><button onclick="closeModal('taskDetails')" class="p-2 hover:bg-gray-100 rounded-full">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
-         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg></button>
-      </div>
-      <div id="taskDetailContent" class="space-y-4"><!-- Task details will be rendered here -->
-      </div>
-      <div class="mt-6 pt-4 border-t"><button id="startTaskBtn" onclick="startTask()" class="w-full py-3 btn-primary text-white rounded-xl font-medium">Start This Task</button>
-      </div>
-     </div>
-    </div><!-- Submit Task Modal -->
-    <div id="submitTaskModal" class="fixed inset-0 z-50 hidden">
-     <div class="modal-overlay absolute inset-0" onclick="closeModal('submitTask')"></div>
-     <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl bg-gradient-to-br from-white to-purple-50 rounded-3xl p-6 overflow-auto max-h-[90%]">
-      <div class="flex justify-between items-center mb-6">
-       <h3 class="text-2xl font-bold text-gray-800">Submit Task</h3><button onclick="closeModal('submitTask')" class="p-2 hover:bg-gray-100 rounded-full">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
-         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg></button>
-      </div>
-      <div id="submitTaskInfo" class="bg-gray-100 rounded-xl p-4 mb-4">
-       <p id="submitTaskTitle" class="font-medium text-gray-800">Task Title</p>
-       <p id="submitTaskReward" class="text-sm text-green-600">Reward: $0.00</p>
-      </div>
-      <form id="submitTaskForm" onsubmit="handleTaskSubmit(event)">
-       <div class="space-y-4">
-        <div><label class="block text-sm font-medium text-gray-700 mb-2">Submission Method</label>
-         <div class="flex gap-3"><button type="button" onclick="setSubmitMethod('paste')" class="flex-1 py-2 px-4 border-2 border-purple-500 bg-purple-50 text-purple-700 rounded-xl font-medium submit-method-btn" data-method="paste">Paste Text</button> <button type="button" onclick="setSubmitMethod('upload')" class="flex-1 py-2 px-4 border-2 border-gray-300 text-gray-700 rounded-xl font-medium submit-method-btn" data-method="upload">Upload File</button>
-         </div>
-        </div>
-        <div id="pasteSection"><label for="submissionText" class="block text-sm font-medium text-gray-700 mb-1">Your Submission</label> <textarea id="submissionText" rows="8" class="w-full px-4 py-3 border border-gray-300 rounded-xl resize-none" placeholder="Paste your work here..."></textarea>
-        </div>
-        <div id="uploadSection" class="hidden"><label class="block text-sm font-medium text-gray-700 mb-1">Upload File</label>
-         <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center"><input type="file" id="submissionFile" class="hidden" accept=".txt,.doc,.docx,.pdf"> <button type="button" onclick="document.getElementById('submissionFile').click()" class="px-4 py-2 bg-gray-100 rounded-lg font-medium hover:bg-gray-200">Choose File</button>
-          <p id="selectedFileName" class="text-sm text-gray-500 mt-2">No file selected</p>
-         </div>
-        </div><button type="submit" class="w-full py-3 btn-primary text-white rounded-xl font-medium">Submit Task</button>
-       </div>
-      </form>
-     </div>
-    </div><!-- Level Upgrade Modal -->
-    <div id="levelUpgradeModal" class="fixed inset-0 z-50 hidden">
-     <div class="modal-overlay absolute inset-0"></div>
-     <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md bg-gradient-to-br from-purple-100 to-pink-100 rounded-3xl p-6 text-center">
-      <div class="w-20 h-20 bg-purple-200 rounded-full flex items-center justify-center mx-auto mb-4"><span class="text-4xl">🎓</span>
-      </div>
-      <h3 class="text-2xl font-bold text-gray-800 mb-2">Level 1 Complete!</h3>
-      <p class="text-gray-600 mb-6">Congratulations! You've completed all Level 1 training tasks. Upgrade to Level 2 to unlock withdrawals and premium tasks.</p><button onclick="navigateTo('level'); closeModal('levelUpgrade')" class="w-full py-3 btn-primary text-white rounded-xl font-medium">View Level 2 Details</button>
-     </div>
-    </div><!-- Confirm Purchase Modal -->
-    <div id="confirmPurchaseModal" class="fixed inset-0 z-50 hidden">
-     <div class="modal-overlay absolute inset-0" onclick="closeModal('confirmPurchase')"></div>
-     <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md bg-gradient-to-br from-white to-green-50 rounded-3xl p-6">
-      <div class="flex justify-between items-center mb-6">
-       <h3 class="text-2xl font-bold text-gray-800">Confirm Purchase</h3><button onclick="closeModal('confirmPurchase')" class="p-2 hover:bg-gray-100 rounded-full">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
-         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg></button>
-      </div>
-      <p class="text-gray-600 mb-4">If you've already paid for Level 2, paste your payment confirmation message below:</p>
-      <form id="confirmPurchaseForm" onsubmit="handleConfirmPurchase(event)">
-       <div class="space-y-4">
-        <div><label for="paymentMessage" class="block text-sm font-medium text-gray-700 mb-1">Payment Message</label> <textarea id="paymentMessage" rows="4" required class="w-full px-4 py-3 border border-gray-300 rounded-xl resize-none" placeholder="Paste your M-Pesa or payment confirmation message here..."></textarea>
-        </div><button type="submit" class="w-full py-3 btn-primary text-white rounded-xl font-medium">Submit for Verification</button>
-       </div>
-      </form>
-     </div>
-    </div><!-- Level 2 Required Modal -->
-    <div id="level2RequiredModal" class="fixed inset-0 z-50 hidden">
-     <div class="modal-overlay absolute inset-0"></div>
-     <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md bg-gradient-to-br from-purple-100 to-pink-100 rounded-3xl p-6 text-center">
-      <div class="w-20 h-20 bg-purple-200 rounded-full flex items-center justify-center mx-auto mb-4"><span class="text-4xl">🚀</span>
-      </div>
-      <h3 class="text-2xl font-bold text-gray-800 mb-2">Great Progress!</h3>
-      <p class="text-gray-600 mb-6">You've completed 10 tasks! To continue earning and access more premium features, you need to upgrade to Level 2.</p>
-      <div class="bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl p-4 mb-6 border-2 border-purple-300">
-       <p class="text-center text-2xl font-bold text-purple-600 mb-2">KSH 357.00</p>
-       <p class="text-center text-gray-600 text-sm">One-time Level 2 Kit Purchase</p>
-      </div><button onclick="handleLevel2Purchase()" class="w-full py-3 btn-primary text-white rounded-xl font-medium mb-3">Purchase Level 2 Now</button> <button onclick="showModal('level2PurchaseConfirm'); closeModal('level2Required')" class="w-full py-2 text-purple-600 text-sm font-medium hover:underline">Already Purchased? Verify Here</button>
-     </div>
-    </div><!-- Level 2 Purchase Confirmation Modal -->
-    <div id="level2PurchaseConfirmModal" class="fixed inset-0 z-50 hidden">
-     <div class="modal-overlay absolute inset-0" onclick="closeModal('level2PurchaseConfirm')"></div>
-     <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md bg-gradient-to-br from-white to-green-50 rounded-3xl p-6">
-      <div class="flex justify-between items-center mb-6">
-       <h3 class="text-2xl font-bold text-gray-800">Verify Level 2 Payment</h3><button onclick="closeModal('level2PurchaseConfirm')" class="p-2 hover:bg-gray-100 rounded-full">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
-         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg></button>
-      </div>
-      <p class="text-gray-600 mb-4">If you've already paid KSH 357 for Level 2, paste your M-Pesa payment message below for verification:</p>
-      <form id="level2ConfirmForm" onsubmit="handleLevel2PaymentConfirm(event)">
-       <div class="space-y-4">
-        <div><label for="level2PaymentMessage" class="block text-sm font-medium text-gray-700 mb-1">M-Pesa Payment Message</label> <textarea id="level2PaymentMessage" rows="4" required class="w-full px-4 py-3 border border-gray-300 rounded-xl resize-none" placeholder="Paste your M-Pesa confirmation message here..."></textarea>
-         <p class="text-xs text-gray-500 mt-1">Example: You have sent KSH 357.00 to LIPANA TECHNOLOGIES LIMITED on 15/01/2024 at 2:30 PM...</p>
-        </div><button type="submit" class="w-full py-3 btn-primary text-white rounded-xl font-medium">Submit for Verification</button>
-       </div>
-      </form>
-     </div>
-    </div><!-- Support Modal -->
-    <div id="supportModal" class="fixed inset-0 z-50 hidden">
-     <div class="modal-overlay absolute inset-0" onclick="closeModal('support')"></div>
-     <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md bg-gradient-to-br from-white to-cyan-50 rounded-3xl p-6">
-      <div class="flex justify-between items-center mb-6">
-       <h3 class="text-2xl font-bold text-gray-800">Contact Support</h3><button onclick="closeModal('support')" class="p-2 hover:bg-gray-100 rounded-full">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
-         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg></button>
-      </div>
-      <form id="supportForm" onsubmit="handleSupportSubmit(event)">
-       <div class="space-y-4">
-        <div><label for="supportSubject" class="block text-sm font-medium text-gray-700 mb-1">Subject</label> <input type="text" id="supportSubject" required class="w-full px-4 py-3 border border-gray-300 rounded-xl">
-        </div>
-        <div><label for="supportMessage" class="block text-sm font-medium text-gray-700 mb-1">Message</label> <textarea id="supportMessage" rows="4" required class="w-full px-4 py-3 border border-gray-300 rounded-xl resize-none"></textarea>
-        </div><button type="submit" class="w-full py-3 btn-primary text-white rounded-xl font-medium">Send Message</button>
-       </div>
-      </form>
-     </div>
-    </div><!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-4 right-4 z-50 hidden">
-     <div id="toastContent" class="bg-gray-800 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3"><span id="toastIcon">✓</span> <span id="toastMessage">Success!</span>
-     </div>
-    </div>
-   </div>
-  </div>
-  <script>
-    // Firebase Configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyChk2JA68-I5s1D0S10r9WK71LgTNi4hRQ",
-      authDomain: "nextgen-5fb6f.firebaseapp.com",
-      projectId: "nextgen-5fb6f",
-      storageBucket: "nextgen-5fb6f.firebasestorage.app",
-      messagingSenderId: "100132076455",
-      appId: "1:100132076455:web:c5aea1f6e1a5ebbea99482"
-    };
-
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-
-    // Constants
-    const USD_TO_KSH = 129;
-    const MIN_WITHDRAWAL_KSH = 10;
-    const MIN_WITHDRAWAL_USD = 1;
-    const LEVEL_2_PRICE = 357;
-    const WEB3FORMS_KEY = 'a0a5e898-8dde-43eb-8d36-e0c1757a3219';
-    const SUPPORT_EMAIL = 'hankwane1@gmail.com';
-
-    // State
-    let currentUser = null;
-    let userData = null;
-    let currentTask = null;
-    let currentPage = 'landing';
-    let submitMethod = 'paste';
-
-    // Task Data
-    const tasks = {
-      stories: [
-        { id: 's1', title: 'The Midnight Train', prompt: 'Write a story that begins with a character boarding a train at midnight to an unknown destination.', starter: '"The station clock struck twelve as Sarah stepped onto the platform..."', requirements: ['500-1000 words', 'Include at least 2 characters', 'Create suspense'], reward: 0.75, company: 'StoryTime Inc.', level: 1 },
-        { id: 's2', title: 'Lost & Found', prompt: 'A character finds something unexpected that changes their life forever.', starter: 'The dusty box had been sitting in the attic for decades...', requirements: ['400-800 words', 'Include dialogue', 'Emotional arc'], reward: 0.60, company: 'Creative Writers Hub', level: 1 },
-        { id: 's3', title: 'The Last Letter', prompt: 'Write about someone who receives a letter from a person they thought they would never hear from again.', ending: '...and as I folded the letter, I knew what I had to do next.', requirements: ['600-1000 words', 'First person narrative', 'Include flashbacks'], reward: 0.85, company: 'Narrative Arts', level: 1 },
-        { id: 's4', title: 'Echoes of Tomorrow', prompt: 'A scientist discovers a message from the future. What does it say and what happens next?', requirements: ['700-1200 words', 'Sci-fi elements', 'Plot twist'], reward: 1.00, company: 'FutureTales', level: 1 },
-        { id: 's5', title: 'The Forgotten Garden', prompt: 'An abandoned garden holds secrets from the past.', starter: 'The iron gate had not been opened in fifty years...', requirements: ['500-900 words', 'Descriptive imagery', 'Mystery element'], reward: 0.70, company: 'Green Ink Publishing', level: 1 },
-        { id: 's6', title: 'Shadows in the Mirror', prompt: 'Write a psychological thriller about a person who sees something different in their reflection.', requirements: ['800-1500 words', 'Build tension gradually', 'Unreliable narrator'], reward: 1.20, company: 'Dark Pages Media', level: 2 },
-        { id: 's7', title: 'The Inheritance', prompt: 'A young person inherits a mysterious shop from a relative they never knew existed.', requirements: ['600-1000 words', 'World-building', 'Magical realism'], reward: 0.90, company: 'Magic Quill Press', level: 2 },
-        { id: 's8', title: 'Underwater City', prompt: 'Describe a day in the life of someone living in an underwater civilization.', requirements: ['700-1100 words', 'Detailed setting', 'Unique culture'], reward: 0.95, company: 'Deep Sea Stories', level: 2 },
-        { id: 's9', title: 'The Time Capsule', prompt: 'A group of friends open a time capsule they buried 20 years ago.', starter: 'The metal box was rusted but intact...', requirements: ['500-800 words', 'Multiple POVs', 'Nostalgia theme'], reward: 0.65, company: 'Memory Lane Publishing', level: 1 },
-        { id: 's10', title: 'Storm Chaser', prompt: 'Write about a meteorologist who discovers something supernatural in a tornado.', requirements: ['800-1200 words', 'Action sequences', 'Scientific details'], reward: 1.10, company: 'Weather Tales Inc.', level: 2 },
-        { id: 's11', title: 'The Bookshop Mystery', prompt: 'A rare book dealer finds a manuscript that should not exist.', requirements: ['600-1000 words', 'Historical elements', 'Cliffhanger ending'], reward: 0.80, company: 'Bibliophile Press', level: 1 },
-        { id: 's12', title: 'Digital Ghost', prompt: 'Someone discovers their deceased loved one is somehow communicating through social media.', requirements: ['700-1000 words', 'Modern setting', 'Emotional depth'], reward: 0.85, company: 'Tech Tales Media', level: 2 },
-        { id: 's13', title: 'The Lighthouse Keeper', prompt: 'Write about the last lighthouse keeper and the night everything changed.', ending: '...the light went out, but I finally understood why I was here.', requirements: ['500-900 words', 'Atmospheric writing', 'Symbolism'], reward: 0.75, company: 'Coastal Stories', level: 1 },
-        { id: 's14', title: 'Parallel Lives', prompt: 'Two strangers discover they have been living mirror lives in different cities.', requirements: ['800-1300 words', 'Dual narrative', 'Coincidence theme'], reward: 1.00, company: 'Twin Cities Press', level: 2 },
-        { id: 's15', title: 'The Music Box', prompt: 'An antique music box plays a tune that triggers forgotten memories.', starter: 'The melody was hauntingly familiar...', requirements: ['400-700 words', 'Sensory details', 'Bittersweet tone'], reward: 0.55, company: 'Melody Stories', level: 1 },
-        { id: 's16', title: 'Space Station Diary', prompt: 'Write entries from a diary found on an abandoned space station.', requirements: ['700-1100 words', 'Diary format', 'Mystery reveal'], reward: 0.95, company: 'Orbit Publishing', level: 2 },
-        { id: 's17', title: 'The Bridge Between', prompt: 'A bridge connects two worlds that should never meet.', requirements: ['600-1000 words', 'Fantasy elements', 'Consequences'], reward: 0.85, company: 'Fantasy Realms', level: 2 },
-        { id: 's18', title: 'Kitchen Stories', prompt: 'Write about a family secret revealed through an old recipe.', starter: 'The recipe card was yellowed with age, the handwriting barely legible...', requirements: ['500-800 words', 'Family dynamics', 'Food descriptions'], reward: 0.65, company: 'Homestyle Tales', level: 1 },
-        { id: 's19', title: 'The Night Market', prompt: 'Describe a magical night market that appears only once a year.', requirements: ['700-1200 words', 'Vivid descriptions', 'Multiple vendors'], reward: 1.00, company: 'Moonlight Press', level: 2 },
-        { id: 's20', title: 'Last Train Home', prompt: 'Write about the longest journey someone has ever taken to get home.', ending: '...home looked different now, or maybe I was the one who had changed.', requirements: ['600-1000 words', 'Journey narrative', 'Character growth'], reward: 0.80, company: 'Journey Stories', level: 1 }
-      ],
-      poetry: [
-        { id: 'p1', title: 'Morning Light', topic: 'The first moments of dawn', themes: ['hope', 'renewal', 'peace'], keywords: ['sunrise', 'golden', 'whisper', 'awakening'], requirements: ['12-24 lines', 'Any form', 'Vivid imagery'], reward: 0.40, company: 'Dawn Poems Collective', level: 1 },
-        { id: 'p2', title: 'City Heartbeat', topic: 'The rhythm of urban life', themes: ['energy', 'chaos', 'connection'], keywords: ['concrete', 'neon', 'crowds', 'pulse'], requirements: ['16-30 lines', 'Free verse', 'Sound devices'], reward: 0.50, company: 'Urban Poetry Press', level: 1 },
-        { id: 'p3', title: 'Roots and Wings', topic: 'The tension between staying and leaving', themes: ['home', 'freedom', 'identity'], keywords: ['anchor', 'horizon', 'soil', 'sky'], requirements: ['14-28 lines', 'Include metaphors', 'Personal voice'], reward: 0.45, company: 'Journey Verse', level: 1 },
-        { id: 'p4', title: 'Ocean\'s Memory', topic: 'What the sea remembers', themes: ['time', 'loss', 'eternity'], keywords: ['waves', 'salt', 'depths', 'shore'], requirements: ['20-35 lines', 'Lyrical style', 'Water imagery'], reward: 0.55, company: 'Tidal Poems', level: 1 },
-        { id: 'p5', title: 'Silent Conversations', topic: 'Words left unspoken between people', themes: ['regret', 'love', 'silence'], keywords: ['pause', 'eyes', 'distance', 'echo'], requirements: ['10-20 lines', 'Dialogue elements', 'Emotional depth'], reward: 0.35, company: 'Whisper Words', level: 1 },
-        { id: 'p6', title: 'Digital Dreams', topic: 'Life in the age of technology', themes: ['connection', 'isolation', 'progress'], keywords: ['screen', 'code', 'virtual', 'human'], requirements: ['18-32 lines', 'Modern language', 'Contrast'], reward: 0.60, company: 'Tech Verse Studios', level: 2 },
-        { id: 'p7', title: 'Grandmother\'s Hands', topic: 'The wisdom passed through generations', themes: ['heritage', 'aging', 'love'], keywords: ['wrinkles', 'stories', 'warmth', 'legacy'], requirements: ['12-24 lines', 'Sensory details', 'Respect'], reward: 0.45, company: 'Heritage Poems', level: 1 },
-        { id: 'p8', title: 'Storm Inside', topic: 'Internal emotional turmoil', themes: ['anxiety', 'strength', 'calm'], keywords: ['thunder', 'chaos', 'breath', 'clear'], requirements: ['16-28 lines', 'Extended metaphor', 'Resolution'], reward: 0.50, company: 'Inner Voice Poetry', level: 2 },
-        { id: 'p9', title: 'Garden of Time', topic: 'How seasons reflect life stages', themes: ['growth', 'change', 'cycles'], keywords: ['bloom', 'wither', 'seed', 'harvest'], requirements: ['20-36 lines', 'Nature imagery', 'Four parts'], reward: 0.65, company: 'Seasonal Verses', level: 2 },
-        { id: 'p10', title: 'Midnight Philosophy', topic: 'Thoughts that come in the quiet hours', themes: ['existence', 'wonder', 'solitude'], keywords: ['stars', 'silence', 'questions', 'universe'], requirements: ['14-26 lines', 'Contemplative tone', 'Open questions'], reward: 0.55, company: 'Night Thoughts Press', level: 1 },
-        { id: 'p11', title: 'Street Music', topic: 'The sounds of everyday life as music', themes: ['rhythm', 'community', 'joy'], keywords: ['footsteps', 'laughter', 'horns', 'melody'], requirements: ['18-30 lines', 'Musical structure', 'Urban setting'], reward: 0.50, company: 'Street Beats Poetry', level: 2 },
-        { id: 'p12', title: 'Mirror Talk', topic: 'A conversation with your reflection', themes: ['self-discovery', 'truth', 'acceptance'], keywords: ['glass', 'eyes', 'truth', 'mask'], requirements: ['12-22 lines', 'Dialogue format', 'Introspection'], reward: 0.40, company: 'Reflection Verse', level: 1 },
-        { id: 'p13', title: 'Immigrant Song', topic: 'The experience of leaving one\'s homeland', themes: ['belonging', 'sacrifice', 'hope'], keywords: ['border', 'memory', 'dream', 'roots'], requirements: ['20-35 lines', 'Personal or observed', 'Cultural elements'], reward: 0.70, company: 'Global Voices Poetry', level: 2 },
-        { id: 'p14', title: 'Kitchen Alchemy', topic: 'The magic of cooking and family meals', themes: ['love', 'tradition', 'nourishment'], keywords: ['spice', 'recipe', 'table', 'hands'], requirements: ['14-24 lines', 'Sensory rich', 'Warm tone'], reward: 0.45, company: 'Hearth & Home Poems', level: 1 },
-        { id: 'p15', title: 'Concrete Jungle', topic: 'Finding nature in urban spaces', themes: ['resilience', 'beauty', 'survival'], keywords: ['crack', 'green', 'grey', 'grow'], requirements: ['16-28 lines', 'Contrast imagery', 'Hope element'], reward: 0.55, company: 'Urban Nature Verse', level: 2 },
-        { id: 'p16', title: 'First Snow', topic: 'The transformation that snow brings', themes: ['purity', 'silence', 'wonder'], keywords: ['white', 'hush', 'crystal', 'blanket'], requirements: ['10-20 lines', 'Winter imagery', 'Peaceful tone'], reward: 0.35, company: 'Winter Words Press', level: 1 },
-        { id: 'p17', title: 'Dancing Shadows', topic: 'The stories shadows tell', themes: ['mystery', 'play', 'fear'], keywords: ['dark', 'light', 'form', 'dance'], requirements: ['14-26 lines', 'Visual imagery', 'Movement'], reward: 0.50, company: 'Shadow Verse', level: 1 },
-        { id: 'p18', title: 'Language of Flowers', topic: 'What different flowers communicate', themes: ['love', 'memory', 'beauty'], keywords: ['petal', 'bloom', 'scent', 'gift'], requirements: ['18-32 lines', 'Multiple flowers', 'Symbolic'], reward: 0.60, company: 'Floral Poetry Co.', level: 2 },
-        { id: 'p19', title: 'Old Photographs', topic: 'Stories captured in vintage photos', themes: ['nostalgia', 'time', 'family'], keywords: ['sepia', 'faces', 'moment', 'forgotten'], requirements: ['12-24 lines', 'Narrative elements', 'Wistful'], reward: 0.45, company: 'Memory Frame Poems', level: 1 },
-        { id: 'p20', title: 'Revolution', topic: 'The power of collective action', themes: ['change', 'courage', 'unity'], keywords: ['voice', 'rise', 'together', 'power'], requirements: ['20-36 lines', 'Strong voice', 'Call to action'], reward: 0.75, company: 'Movement Verse', level: 2 }
-      ],
-      opinion: [
-        { id: 'o1', title: 'Remote Work Revolution', caseStudy: 'Since 2020, remote work has transformed from a perk to a standard. Companies like Twitter and Spotify have adopted permanent remote policies, while others like Goldman Sachs insist on office returns. This shift has affected urban real estate, work-life balance, and career opportunities globally.', question: 'Should remote work become the default for all jobs that can be done remotely? Discuss the implications for workers, companies, and society.', requirements: ['300-600 words', 'Consider multiple perspectives', 'Include personal stance'], reward: 0.35, company: 'WorkLife Insights', level: 1 },
-        { id: 'o2', title: 'AI in Education', caseStudy: 'ChatGPT and similar AI tools have entered classrooms worldwide. Some schools ban them entirely, while others integrate them into curriculum. Students use AI for everything from homework help to essay writing, raising questions about learning, creativity, and academic integrity.', question: 'How should educational institutions approach AI tools? Should they be embraced, regulated, or banned?', requirements: ['350-650 words', 'Address both benefits and risks', 'Propose solutions'], reward: 0.40, company: 'EduFuture Poll', level: 1 },
-        { id: 'o3', title: 'Social Media Age Limits', caseStudy: 'Countries like France and Australia are considering or implementing laws to restrict social media access for children under 13-16. Studies show links between teen social media use and mental health issues, but also highlight benefits of online communities for marginalized youth.', question: 'Should governments enforce minimum age requirements for social media? What are the trade-offs?', requirements: ['300-550 words', 'Consider enforcement challenges', 'Include evidence'], reward: 0.35, company: 'Digital Society Research', level: 1 },
-        { id: 'o4', title: 'The Gig Economy Debate', caseStudy: 'Uber, DoorDash, and similar platforms have created millions of flexible jobs but face criticism over worker classification. California\'s Prop 22 and EU regulations attempt to balance worker protections with business model flexibility. Workers report both freedom and exploitation.', question: 'Should gig workers be classified as employees with full benefits, or should the flexible model be preserved?', requirements: ['350-600 words', 'Include worker perspective', 'Consider economic impact'], reward: 0.45, company: 'Labor Rights Institute', level: 2 },
-        { id: 'o5', title: 'Universal Basic Income', caseStudy: 'Pilot programs in Finland, Kenya, and several US cities have tested UBI with mixed results. Some show improved mental health and job seeking, while critics worry about inflation and work disincentives. As automation threatens jobs, the debate intensifies.', question: 'Is Universal Basic Income a viable solution for modern economic challenges? What conditions would make it work?', requirements: ['400-700 words', 'Reference pilot data', 'Address criticisms'], reward: 0.50, company: 'Economic Futures Poll', level: 2 },
-        { id: 'o6', title: 'Cancel Culture Impact', caseStudy: 'Public figures from all fields have faced consequences for past statements or actions, from losing jobs to public rehabilitation. Some see this as accountability, others as mob justice. The line between holding people accountable and destroying livelihoods remains debated.', question: 'Has "cancel culture" gone too far, or is it a necessary tool for social accountability? Where should the line be drawn?', requirements: ['350-600 words', 'Provide examples', 'Nuanced position'], reward: 0.40, company: 'Social Discourse Hub', level: 1 },
-        { id: 'o7', title: 'Cryptocurrency Future', caseStudy: 'Bitcoin hit $69,000 then crashed below $20,000. El Salvador adopted it as legal tender with mixed results. Environmental concerns clash with financial inclusion promises. Central banks develop their own digital currencies while regulators struggle to keep pace.', question: 'Will cryptocurrency become mainstream finance or remain a speculative asset? What role should regulation play?', requirements: ['350-650 words', 'Technical understanding', 'Future prediction'], reward: 0.45, company: 'FinTech Forum', level: 2 },
-        { id: 'o8', title: 'Mental Health at Work', caseStudy: 'Post-pandemic workplace discussions include mental health days, therapy benefits, and burnout prevention. Companies like Bumble gave company-wide mental health weeks. Yet stigma persists, and some argue businesses shouldn\'t be responsible for employee mental health.', question: 'To what extent should employers be responsible for employee mental health? What policies actually help?', requirements: ['300-550 words', 'Personal or observed examples', 'Practical suggestions'], reward: 0.35, company: 'Workplace Wellness Poll', level: 1 },
-        { id: 'o9', title: 'Fast Fashion Ethics', caseStudy: 'Shein\'s rise to become the world\'s largest fashion retailer highlights tensions between affordable clothing and sustainability. The average garment is worn 7 times before disposal. Workers in manufacturing countries face harsh conditions while consumers demand cheap, trendy clothes.', question: 'Should consumers bear responsibility for fast fashion\'s harms? What would ethical fashion consumption look like?', requirements: ['350-600 words', 'Consider economic factors', 'Actionable conclusions'], reward: 0.40, company: 'Sustainable Style Survey', level: 1 },
-        { id: 'o10', title: 'Space Exploration Priority', caseStudy: 'Billionaires race to space while Earth faces climate crisis. NASA\'s Artemis program aims for the Moon, SpaceX targets Mars. Critics argue the billions spent could solve terrestrial problems; supporters cite technological spinoffs and humanity\'s need to become multi-planetary.', question: 'Should space exploration be a priority when Earth faces pressing problems? How do we balance both?', requirements: ['400-700 words', 'Long-term perspective', 'Resource allocation'], reward: 0.50, company: 'Future Frontiers Poll', level: 2 },
-        { id: 'o11', title: 'Meat Alternatives', caseStudy: 'Beyond Meat and Impossible Foods are in mainstream supermarkets. Lab-grown meat received FDA approval. Traditional farmers worry about their future while environmentalists celebrate reduced emissions. Taste and price remain barriers to mass adoption.', question: 'Will plant-based and lab-grown meat replace traditional meat? Should it?', requirements: ['300-550 words', 'Health considerations', 'Cultural factors'], reward: 0.35, company: 'Food Future Forum', level: 1 },
-        { id: 'o12', title: 'Dating App Impact', caseStudy: 'Tinder, Bumble, and Hinge have changed how people meet. Studies show declining in-person meetings, algorithm-driven matching, and new relationship dynamics. Some find love; others report burnout and superficiality. The multi-billion industry keeps growing.', question: 'Have dating apps improved or harmed how we form relationships? What could make them healthier?', requirements: ['350-600 words', 'Personal or observed', 'Social analysis'], reward: 0.40, company: 'Modern Love Survey', level: 1 },
-        { id: 'o13', title: 'Influencer Marketing', caseStudy: 'Child influencers earn millions while their parents manage accounts. Regulations vary globally - France banned child influencing; others have no rules. Questions arise about consent, childhood exploitation, and the psychological impact of growing up online.', question: 'Should child influencer content be regulated or banned? Who should protect these children\'s interests?', requirements: ['350-650 words', 'Child welfare focus', 'Legal considerations'], reward: 0.45, company: 'Digital Kids Watch', level: 2 },
-        { id: 'o14', title: 'Four-Day Work Week', caseStudy: 'Trials in UK, Iceland, and Spain show 4-day weeks maintain or improve productivity while boosting worker wellbeing. Companies report lower turnover and higher satisfaction. Critics question applicability across industries and potential economic impacts.', question: 'Should the four-day work week become standard? What industries could or couldn\'t adopt it?', requirements: ['300-550 words', 'Industry analysis', 'Implementation challenges'], reward: 0.35, company: 'Future Work Institute', level: 1 },
-        { id: 'o15', title: 'Online Privacy Trade-offs', caseStudy: 'Free services like Google and Facebook rely on data collection. Users enjoy convenience while surrendering privacy. GDPR and similar laws attempt regulation, but enforcement varies. The average person has data held by hundreds of companies.', question: 'Is trading personal data for free services a fair exchange? How much privacy should we expect online?', requirements: ['350-600 words', 'Technical awareness', 'Rights perspective'], reward: 0.40, company: 'Privacy Rights Poll', level: 2 },
-        { id: 'o16', title: 'Gentrification Dilemma', caseStudy: 'Brooklyn, Nairobi, and many cities see neighborhoods transform as wealthier residents move in. Coffee shops replace corner stores; rents rise. Long-term residents are displaced, but areas also see reduced crime and improved infrastructure.', question: 'Is gentrification ultimately harmful or beneficial? How can neighborhoods develop without displacing residents?', requirements: ['350-650 words', 'Local examples', 'Policy suggestions'], reward: 0.45, company: 'Urban Change Research', level: 2 },
-        { id: 'o17', title: 'Screen Time for Kids', caseStudy: 'The WHO recommends no screen time for children under 2, limited for older kids. Yet educational apps promise learning benefits, and screens provide working parents relief. Research shows both cognitive benefits and attention problems from device use.', question: 'How much screen time is appropriate for children of different ages? Should parents strictly limit devices?', requirements: ['300-500 words', 'Age-specific', 'Research-based'], reward: 0.30, company: 'Parenting Today Poll', level: 1 },
-        { id: 'o18', title: 'Tipping Culture', caseStudy: 'Tipping has expanded beyond restaurants to coffee shops, takeout, and even self-checkout. Workers depend on tips while customers feel pressure. Other countries pay living wages without tipping. Debates rage about fair compensation models.', question: 'Should tipping be replaced with higher wages, or is it a valid compensation model? What\'s fairest for workers?', requirements: ['300-550 words', 'International comparison', 'Worker consideration'], reward: 0.35, company: 'Service Industry Forum', level: 1 },
-        { id: 'o19', title: 'College Degree Value', caseStudy: 'Student debt exceeds $1.7 trillion in the US. Companies like Google and Apple no longer require degrees for many roles. Trade jobs pay well while college graduates struggle. Yet degree holders still earn more on average over their lifetimes.', question: 'Is a college degree still worth the investment? What alternatives should be more accepted?', requirements: ['350-600 words', 'Career path analysis', 'Economic factors'], reward: 0.40, company: 'Education Value Survey', level: 1 },
-        { id: 'o20', title: 'Electric Vehicle Transition', caseStudy: 'Norway leads with 80% EV sales; most countries lag far behind. Infrastructure, range anxiety, and costs remain barriers. The environmental benefit is clear, but battery production and electricity sources complicate the picture.', question: 'How quickly should the transition to electric vehicles happen? What barriers need addressing first?', requirements: ['350-650 words', 'Infrastructure focus', 'Timeline proposal'], reward: 0.45, company: 'Green Transport Poll', level: 2 }
-      ],
-      history: [
-        { id: 'h1', title: 'The Silk Road\'s Legacy', topic: 'The ancient trade network that connected East and West', period: '130 BCE - 1453 CE', requirements: ['500-800 words', 'Cultural exchange focus', 'Include specific goods traded'], reward: 0.60, company: 'Ancient Routes Research', level: 1 },
-        { id: 'h2', title: 'The Black Death', topic: 'How the plague reshaped European society', period: '1347-1351', requirements: ['600-900 words', 'Social changes', 'Medical understanding'], reward: 0.70, company: 'Medieval Studies Institute', level: 1 },
-        { id: 'h3', title: 'The Printing Revolution', topic: 'Gutenberg\'s invention and its impact on knowledge', period: '1440 onwards', requirements: ['500-800 words', 'Information spread', 'Religious impact'], reward: 0.65, company: 'Innovation History Press', level: 1 },
-        { id: 'h4', title: 'The Atlantic Slave Trade', topic: 'The triangular trade and its lasting consequences', period: '1500-1900', requirements: ['700-1000 words', 'Economic analysis', 'Human cost', 'Legacy today'], reward: 0.85, company: 'Diaspora Studies Center', level: 2 },
-        { id: 'h5', title: 'The French Revolution', topic: 'From monarchy to republic: causes and effects', period: '1789-1799', requirements: ['600-900 words', 'Social classes', 'Political ideology'], reward: 0.75, company: 'Revolution Research', level: 1 },
-        { id: 'h6', title: 'Industrial Revolution Impact', topic: 'How mechanization transformed society', period: '1760-1840', requirements: ['600-1000 words', 'Working conditions', 'Technological changes'], reward: 0.80, company: 'Progress History Lab', level: 2 },
-        { id: 'h7', title: 'The Scramble for Africa', topic: 'European colonization and its consequences', period: '1881-1914', requirements: ['700-1000 words', 'Berlin Conference', 'African resistance', 'Modern impact'], reward: 0.90, company: 'Colonial Studies Institute', level: 2 },
-        { id: 'h8', title: 'World War I Causes', topic: 'The complex web of alliances and events', period: '1914-1918', requirements: ['600-900 words', 'Alliance system', 'Assassination impact'], reward: 0.75, company: 'Great War Research', level: 1 },
-        { id: 'h9', title: 'The Roaring Twenties', topic: 'Cultural explosion between the wars', period: '1920-1929', requirements: ['500-800 words', 'Jazz Age', 'Women\'s rights', 'Economic boom'], reward: 0.65, company: 'Modern Era Studies', level: 1 },
-        { id: 'h10', title: 'The Great Depression', topic: 'Economic collapse and global response', period: '1929-1939', requirements: ['600-900 words', 'Causes', 'Government responses', 'Social impact'], reward: 0.75, company: 'Economic History Forum', level: 2 },
-        { id: 'h11', title: 'World War II Pacific Theater', topic: 'The war in Asia and the Pacific', period: '1941-1945', requirements: ['700-1000 words', 'Key battles', 'Civilian impact', 'Atomic decision'], reward: 0.85, company: 'Pacific War Institute', level: 2 },
-        { id: 'h12', title: 'The Cold War Begins', topic: 'How allies became enemies', period: '1945-1955', requirements: ['600-900 words', 'Ideological divide', 'Early conflicts'], reward: 0.75, company: 'Cold War Archive', level: 1 },
-        { id: 'h13', title: 'African Independence Movements', topic: 'The wave of decolonization', period: '1950-1970', requirements: ['700-1000 words', 'Key leaders', 'Different paths', 'Challenges faced'], reward: 0.85, company: 'Liberation History Project', level: 2 },
-        { id: 'h14', title: 'The Civil Rights Movement', topic: 'The struggle for equality in America', period: '1954-1968', requirements: ['600-900 words', 'Key events', 'Leadership', 'Legislative changes'], reward: 0.80, company: 'Civil Rights Archive', level: 1 },
-        { id: 'h15', title: 'The Space Race', topic: 'Competition that reached the moon', period: '1957-1975', requirements: ['500-800 words', 'Key missions', 'Political context', 'Scientific legacy'], reward: 0.70, company: 'Space History Institute', level: 1 },
-        { id: 'h16', title: 'The Vietnam War', topic: 'America\'s longest war and its lessons', period: '1955-1975', requirements: ['700-1000 words', 'Escalation', 'Home front', 'Legacy'], reward: 0.85, company: 'Vietnam Studies Center', level: 2 },
-        { id: 'h17', title: 'The Fall of the Berlin Wall', topic: 'The end of the Cold War division', period: '1989', requirements: ['500-800 words', 'Events leading up', 'Night of fall', 'Aftermath'], reward: 0.70, company: 'Cold War Endings Project', level: 1 },
-        { id: 'h18', title: 'Apartheid and Its End', topic: 'South Africa\'s racial system and liberation', period: '1948-1994', requirements: ['700-1000 words', 'System description', 'Resistance', 'Transition'], reward: 0.90, company: 'Southern African Studies', level: 2 },
-        { id: 'h19', title: 'The Digital Revolution', topic: 'How computers changed everything', period: '1970-2000', requirements: ['600-900 words', 'Key inventions', 'Social changes', 'Economic impact'], reward: 0.80, company: 'Tech History Archive', level: 2 },
-        { id: 'h20', title: 'Ancient Egyptian Civilization', topic: 'The culture that built the pyramids', period: '3100 BCE - 30 BCE', requirements: ['600-900 words', 'Society structure', 'Achievements', 'Religious beliefs'], reward: 0.75, company: 'Ancient Civilizations Research', level: 1 }
-      ]
-    };
-
-    // Initialize Element SDK
-    const defaultConfig = {
-      site_title: 'CreativepayAcademy',
-      hero_headline: 'Write. Submit. Earn.',
-      primary_color: '#667eea',
-      secondary_color: '#764ba2',
-      background_color: '#f8fafc',
-      text_color: '#1e293b',
-      accent_color: '#10b981'
-    };
-
-    if (window.elementSdk) {
-      window.elementSdk.init({
-        defaultConfig,
-        onConfigChange: async (config) => {
-          document.getElementById('heroHeadline').textContent = config.hero_headline || defaultConfig.hero_headline;
-        },
-        mapToCapabilities: (config) => ({
-          recolorables: [
-            { get: () => config.primary_color || defaultConfig.primary_color, set: (v) => window.elementSdk.setConfig({ primary_color: v }) },
-            { get: () => config.background_color || defaultConfig.background_color, set: (v) => window.elementSdk.setConfig({ background_color: v }) },
-            { get: () => config.text_color || defaultConfig.text_color, set: (v) => window.elementSdk.setConfig({ text_color: v }) }
-          ],
-          borderables: [],
-          fontEditable: undefined,
-          fontSizeable: undefined
-        }),
-        mapToEditPanelValues: (config) => new Map([
-          ['site_title', config.site_title || defaultConfig.site_title],
-          ['hero_headline', config.hero_headline || defaultConfig.hero_headline]
-        ])
-      });
-    }
-
-    // Utility Functions
-    function showLoading(text = 'Loading...') {
-      document.getElementById('loadingText').textContent = text;
-      document.getElementById('loadingOverlay').classList.remove('hidden');
-    }
-
-    function hideLoading() {
-      document.getElementById('loadingOverlay').classList.add('hidden');
-    }
-
-    function showToast(message, type = 'success') {
-      const toast = document.getElementById('toast');
-      const toastContent = document.getElementById('toastContent');
-      const toastIcon = document.getElementById('toastIcon');
-      const toastMessage = document.getElementById('toastMessage');
-      
-      toastIcon.textContent = type === 'success' ? '✓' : type === 'error' ? '✗' : 'ℹ';
-      toastContent.className = `${type === 'success' ? 'bg-green-600' : type === 'error' ? 'bg-red-600' : 'bg-blue-600'} text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3`;
-      toastMessage.textContent = message;
-      toast.classList.remove('hidden');
-      
-      setTimeout(() => toast.classList.add('hidden'), 3000);
-    }
-
-    function formatCurrency(amount, currency = 'USD') {
-      if (currency === 'KSH') {
-        return `KSH ${(amount * USD_TO_KSH).toFixed(2)}`;
-      }
-      return `$${amount.toFixed(2)}`;
-    }
-
-    // Local Storage Functions
-    function saveUserData() {
-      if (userData) {
-        localStorage.setItem('nextgen_userData', JSON.stringify(userData));
-      }
-    }
-
-    function loadUserData() {
-      const saved = localStorage.getItem('nextgen_userData');
-      if (saved) {
-        userData = JSON.parse(saved);
-      }
-    }
-
-    function initializeUserData(user) {
-      userData = {
-        uid: user.uid,
-        email: user.email,
-        name: user.displayName || '',
-        balance: 0,
-        level: 1,
-        level2Purchased: false,
-        paymentSetup: false,
-        paymentMethod: null,
-        paymentDetails: null,
-        welcomeBonusReceived: false,
-        welcomeBonus: 0,
-        taskProgress: {
-          stories: 0,
-          poetry: 0,
-          opinion: 0,
-          history: 0
-        },
-        completedTasks: [],
-        activeTasks: [],
-        transactions: [],
-        totalEarned: 0,
-        createdAt: new Date().toISOString()
-      };
-      saveUserData();
-    }
-
-    // Navigation Functions
-    function navigateTo(page) {
-      currentPage = page;
-      
-      // Hide all pages
-      document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
-      
-      // Show target page
-      const pageMap = {
-        'landing': 'landingPage',
-        'dashboard': 'dashboardPage',
-        'tasks': 'tasksPage',
-        'level': 'levelPage',
-        'wallet': 'walletPage',
-        'taskHistory': 'taskHistoryPage',
-        'activeTasks': 'activeTasksPage'
-      };
-      
-      const targetPage = document.getElementById(pageMap[page]);
-      if (targetPage) {
-        targetPage.classList.remove('hidden');
-        targetPage.classList.add('fade-in');
-      }
-      
-      // Update UI based on page
-      if (page === 'dashboard') updateDashboard();
-      if (page === 'tasks') renderTasks();
-      if (page === 'level') updateLevelPage();
-      if (page === 'wallet') updateWalletPage();
-      if (page === 'taskHistory') renderTaskHistory();
-      if (page === 'activeTasks') renderActiveTasks();
-      
-      toggleMobileMenu(false);
-    }
-
-    function scrollToSection(id) {
-      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-    }
-
-    // Mobile Menu
-    function toggleMobileMenu(show) {
-      const menu = document.getElementById('mobileMenu');
-      const shouldShow = show !== undefined ? show : menu.classList.contains('hidden');
-      
-      if (shouldShow) {
-        menu.classList.remove('hidden');
-        updateMobileMenuContent();
-      } else {
-        menu.classList.add('hidden');
-      }
-    }
-
-    function updateMobileMenuContent() {
-      const content = document.getElementById('mobileMenuContent');
-      
-      if (currentUser && userData) {
-        content.innerHTML = `
-          <div class="space-y-2">
-            <p class="text-sm text-gray-500 mb-4">${userData.email}</p>
-            <button onclick="navigateTo('dashboard')" class="menu-link w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3">📊 Dashboard</button>
-            <button onclick="navigateTo('tasks')" class="menu-link w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3">📝 Tasks</button>
-            <button onclick="navigateTo('activeTasks')" class="menu-link w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3">⏳ Active Tasks</button>
-            <button onclick="navigateTo('taskHistory')" class="menu-link w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3">📋 Task History</button>
-            <button onclick="navigateTo('level')" class="menu-link w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3">🎯 Level</button>
-            <button onclick="navigateTo('wallet')" class="menu-link w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3">💰 Wallet</button>
-            <button onclick="showModal('support')" class="menu-link w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3">💬 Support</button>
-            <hr class="my-2">
-            <button onclick="handleLogout()" class="menu-link w-full text-left px-4 py-3 rounded-xl font-medium flex items-center gap-3 text-red-600">🚪 Logout</button>
-          </div>
-        `;
-      } else {
-        content.innerHTML = `
-          <div class="space-y-2">
-            <button onclick="showModal('login'); toggleMobileMenu(false)" class="menu-link w-full text-left px-4 py-3 rounded-xl font-medium">Login</button>
-            <button onclick="showModal('register'); toggleMobileMenu(false)" class="menu-link w-full text-left px-4 py-3 rounded-xl font-medium bg-purple-100 text-purple-700">Join Free</button>
-          </div>
-        `;
-      }
-    }
-
-    // Modal Functions
-    function showModal(modalName) {
-      document.getElementById(`${modalName}Modal`)?.classList.remove('hidden');
-    }
-
-    function closeModal(modalName) {
-      document.getElementById(`${modalName}Modal`)?.classList.add('hidden');
-    }
-
-    // Auth Functions
-    async function handleRegister(event) {
-      event.preventDefault();
-      showLoading('Creating your account...');
-      
-      const name = document.getElementById('regName').value;
-      const email = document.getElementById('regEmail').value;
-      const password = document.getElementById('regPassword').value;
-      
-      try {
-        const result = await auth.createUserWithEmailAndPassword(email, password);
-        await result.user.updateProfile({ displayName: name });
-        await result.user.sendEmailVerification();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creativepay | Academic Hub</title>
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
         
-        hideLoading();
-        closeModal('register');
-        showModal('verification');
-        
-        // Store pending registration
-        localStorage.setItem('pendingRegistration', JSON.stringify({ uid: result.user.uid, email, name }));
-        
-      } catch (error) {
-        hideLoading();
-        showToast(error.message, 'error');
-      }
-    }
-
-    async function handleLogin(event) {
-      event.preventDefault();
-      showLoading('Logging in...');
-      
-      const email = document.getElementById('loginEmail').value;
-      const password = document.getElementById('loginPassword').value;
-      
-      try {
-        const result = await auth.signInWithEmailAndPassword(email, password);
-        
-        if (!result.user.emailVerified) {
-          hideLoading();
-          showToast('Please verify your email first', 'error');
-          await auth.signOut();
-          return;
+        /* Intro Overlay - refined metallic */
+        .intro-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 40% 40%, #c5b8a4, #9b8f7a, #6a6256, #3e3a34);
+            background-size: 250% 250%;
+            animation: subtleShift 5s ease infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            transition: opacity 1.2s cubic-bezier(0.65, 0, 0.35, 1);
+            opacity: 1;
+            pointer-events: none;
         }
         
-        hideLoading();
-        closeModal('login');
-        handleAuthenticatedUser(result.user);
-        
-      } catch (error) {
-        hideLoading();
-        showToast(error.message, 'error');
-      }
-    }
-
-    async function handleGoogleSignIn() {
-      showLoading('Signing in with Google...');
-      
-      try {
-        const provider = new firebase.auth.GoogleAuthProvider();
-        const result = await auth.signInWithPopup(provider);
-        
-        hideLoading();
-        closeModal('register');
-        closeModal('login');
-        
-        // Check if new user
-        const existingData = localStorage.getItem('nextgen_userData');
-        if (existingData) {
-          const parsed = JSON.parse(existingData);
-          if (parsed.uid === result.user.uid) {
-            userData = parsed;
-            handleAuthenticatedUser(result.user);
-            return;
-          }
+        @keyframes subtleShift {
+            0% { background-position: 0% 0%; }
+            50% { background-position: 100% 100%; }
+            100% { background-position: 0% 0%; }
         }
         
-        // New Google user
-        initializeUserData(result.user);
-        showModal('paymentSetup');
-        
-      } catch (error) {
-        hideLoading();
-        showToast(error.message, 'error');
-      }
-    }
-
-    async function checkEmailVerification() {
-      showLoading('Checking verification...');
-      
-      try {
-        await auth.currentUser?.reload();
-        
-        if (auth.currentUser?.emailVerified) {
-          hideLoading();
-          closeModal('verification');
-          
-          // Complete registration
-          initializeUserData(auth.currentUser);
-          localStorage.removeItem('pendingRegistration');
-          showModal('paymentSetup');
-        } else {
-          hideLoading();
-          showToast('Email not verified yet. Please check your inbox.', 'error');
+        .intro-content {
+            text-align: center;
+            color: #fff;
+            text-shadow: 0 4px 30px rgba(0,0,0,0.6);
+            transform: translateY(0);
+            animation: professionalFloat 3s ease-in-out infinite;
         }
-      } catch (error) {
-        hideLoading();
-        showToast('Please log in again to continue', 'error');
-        closeModal('verification');
-      }
-    }
+        
+        @keyframes professionalFloat {
+            0% { transform: translateY(0px); filter: drop-shadow(0 0 5px #e9d19b); }
+            50% { transform: translateY(-8px); filter: drop-shadow(0 0 20px #dbb45c); }
+            100% { transform: translateY(0px); filter: drop-shadow(0 0 5px #ccb16b); }
+        }
+        
+        .intro-content h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #f5e9d8, #e9d2a8, #dbb67b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.75rem;
+            animation: fadeReveal 1.8s ease;
+        }
+        
+        .intro-content p {
+            font-size: 1.5rem;
+            font-weight: 400;
+            background: linear-gradient(135deg, #eedbbc, #e2c895);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            border-right: 3px solid #e1c16e;
+            white-space: nowrap;
+            overflow: hidden;
+            width: 0;
+            animation: typewriter 2.8s steps(40, end) forwards, cursorBlink 0.8s step-end infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes typewriter {
+            from { width: 0; }
+            to { width: 100%; }
+        }
+        
+        @keyframes cursorBlink {
+            from, to { border-color: transparent; }
+            50% { border-color: #eac25c; }
+        }
+        
+        @keyframes fadeReveal {
+            0% { opacity: 0; letter-spacing: 6px; filter: blur(8px); }
+            100% { opacity: 1; letter-spacing: -0.02em; filter: blur(0); }
+        }
+        
+        .intro-overlay.fade-out {
+            opacity: 0;
+        }
+        
+        /* Main background - elegant metallic neutral */
+        body {
+            background: linear-gradient(145deg, #dbd0bd 0%, #b8aa92 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            position: relative;
+        }
+        
+        /* Professional card - clean, elevated, subtle metallic */
+        .auth-card {
+            background: rgba(255, 251, 242, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 32px;
+            padding: 2.75rem 2.5rem;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 
+                0 30px 60px -20px rgba(40, 30, 10, 0.5),
+                0 0 0 1px rgba(210, 180, 140, 0.25) inset,
+                0 0 0 1px rgba(255, 245, 220, 0.7);
+            border: 1px solid rgba(230, 210, 170, 0.4);
+            transition: transform 0.3s ease;
+        }
+        
+        .auth-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 40px 70px -20px #3d3429, 0 0 0 1px #dac292 inset;
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .logo h1 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            background: linear-gradient(150deg, #9c824e, #b79b60, #cbb178);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+        
+        /* Tabs - clean, professional */
+        .tabs {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+            background: #efeadb;
+            padding: 0.4rem;
+            border-radius: 48px;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 0.85rem 0.5rem;
+            border: none;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 1rem;
+            background: transparent;
+            color: #655a4a;
+            cursor: pointer;
+            transition: all 0.25s;
+            border: 1px solid transparent;
+        }
+        
+        .tab.active {
+            background: #ffffff;
+            color: #413a2c;
+            box-shadow: 0 6px 14px rgba(160, 130, 70, 0.2);
+            border: 1px solid #eedbba;
+            font-weight: 600;
+        }
+        
+        /* Forms */
+        .form { display: block; }
+        .form.hidden { display: none; }
+        
+        .input-group {
+            margin-bottom: 1.25rem;
+        }
+        
+        .input-group input, 
+        .input-group select {
+            width: 100%;
+            padding: 1rem 1.2rem;
+            border-radius: 60px;
+            border: 1.5px solid #e0d3be;
+            background: #fffdf8;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            color: #2f2a21;
+        }
+        
+        .input-group input:focus {
+            border-color: #c8aa6b;
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(200, 170, 107, 0.15);
+            background: #ffffff;
+        }
+        
+        .input-group input::placeholder {
+            color: #aaa08b;
+            font-weight: 300;
+        }
+        
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.25s;
+            letter-spacing: 0.2px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(115deg, #ad8f56, #c7aa70);
+            color: #232018;
+            border: 1px solid #e7cf99;
+            box-shadow: 0 10px 18px -10px #7a653d;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(115deg, #b5985c, #d2b67b);
+            box-shadow: 0 14px 22px -8px #8d7443;
+            transform: scale(1.01);
+        }
+        
+        .btn-google {
+            background: #ffffff;
+            color: #413a2e;
+            border: 1.5px solid #dad0bc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-google:hover {
+            background: #fcf8f0;
+            border-color: #c5ae82;
+        }
+        
+        .divider {
+            text-align: center;
+            margin: 1.8rem 0;
+            position: relative;
+        }
+        
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #cbb48b, transparent);
+        }
+        
+        .divider span {
+            background: rgba(255, 251, 242, 0.95);
+            padding: 0 1.2rem;
+            position: relative;
+            color: #7e6e51;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        
+        .link {
+            text-align: center;
+            margin-top: 1rem;
+        }
+        
+        .link a {
+            color: #9d853e;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.9rem;
+            border-bottom: 1px dashed #d4b985;
+        }
+        
+        .info-text {
+            text-align: center;
+            color: #796b51;
+            margin: 1.2rem 0 0;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.3rem;
+        }
+        
+        /* Referrer message refined */
+        .referrer-message {
+            background: #f6efe2;
+            border-left: 4px solid #c5a159;
+            padding: 1rem 1.2rem;
+            margin-bottom: 1.8rem;
+            border-radius: 60px;
+            font-size: 0.95rem;
+            color: #3a3326;
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            box-shadow: 0 3px 10px rgba(170, 140, 70, 0.1);
+        }
+        
+        .bonus-badge {
+            background: #d8b87a;
+            color: #2f2a1f;
+            padding: 0.2rem 0.8rem;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-left: 0.6rem;
+            letter-spacing: 0.3px;
+        }
+        
+        /* alert dialog */
+        .alert-dialog {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fffcf2;
+            padding: 2rem;
+            border-radius: 32px;
+            box-shadow: 0 40px 70px -20px #2f2a20;
+            z-index: 2000;
+            max-width: 380px;
+            width: 90%;
+            text-align: center;
+            display: none;
+            border: 1px solid #ecdbbd;
+        }
+        .alert-dialog.show { display: block; }
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(25, 20, 10, 0.5);
+            z-index: 1999;
+            display: none;
+        }
+        .overlay.show { display: block; }
+        
+        /* verify message */
+        #verifyMessage h3 { color: #3d3425; }
+    </style>
+</head>
+<body>
+    <div class="intro-overlay" id="introOverlay">
+        <div class="intro-content">
+            <h1>Creativepay</h1>
+            <p>hub of academic writers</p>
+        </div>
+    </div>
 
-    async function resendVerification() {
-      showLoading('Sending verification email...');
-      
-      try {
-        await auth.currentUser?.sendEmailVerification();
-        hideLoading();
-        showToast('Verification email sent!');
-      } catch (error) {
-        hideLoading();
-        showToast(error.message, 'error');
-      }
-    }
-
-    function handleAuthenticatedUser(user) {
-      currentUser = user;
-      loadUserData();
-      
-      if (!userData || userData.uid !== user.uid) {
-        initializeUserData(user);
-        showModal('paymentSetup');
-        return;
-      }
-      
-      if (!userData.paymentSetup) {
-        showModal('paymentSetup');
-        return;
-      }
-      
-      if (!userData.welcomeBonusReceived) {
-        showModal('spinWheel');
-        return;
-      }
-      
-      // Check if user needs Level 2 upgrade after 10 tasks
-      if (userData.completedTasks.length >= 10 && !userData.level2Purchased && userData.level === 1) {
-        showModal('level2Required');
-        updateUIForLoggedInUser();
-        return;
-      }
-      
-      updateUIForLoggedInUser();
-      navigateTo('dashboard');
-    }
-
-    async function handleLogout() {
-      showLoading('Logging out...');
-      
-      try {
-        await auth.signOut();
-        currentUser = null;
-        hideLoading();
-        updateUIForLoggedOutUser();
-        navigateTo('landing');
-        showToast('Logged out successfully');
-      } catch (error) {
-        hideLoading();
-        showToast(error.message, 'error');
-      }
-    }
-
-    function updateUIForLoggedInUser() {
-      document.getElementById('desktopNav').classList.add('hidden');
-      document.getElementById('dashboardNav').classList.remove('hidden');
-      document.getElementById('userEmailDisplay').textContent = userData?.email || '';
-    }
-
-    function updateUIForLoggedOutUser() {
-      document.getElementById('desktopNav').classList.remove('hidden');
-      document.getElementById('dashboardNav').classList.add('hidden');
-    }
-
-    // Payment Setup
-    function handlePaymentSetup(event) {
-      event.preventDefault();
-      showLoading('Setting up payment...');
-      
-      const method = document.getElementById('paymentMethod').value;
-      let details = {};
-      
-      if (method === 'mpesa') {
-        details = { number: document.getElementById('mpesaNumber').value };
-      } else if (method === 'paypal') {
-        details = { email: document.getElementById('paypalEmail').value };
-      } else if (method === 'bank') {
-        details = {
-          bankName: document.getElementById('bankName').value,
-          accountNumber: document.getElementById('accountNumber').value
-        };
-      }
-      
-      userData.paymentSetup = true;
-      userData.paymentMethod = method;
-      userData.paymentDetails = details;
-      saveUserData();
-      
-      hideLoading();
-      closeModal('paymentSetup');
-      showModal('spinWheel');
-    }
-
-    // Payment method field visibility
-    document.getElementById('paymentMethod')?.addEventListener('change', function() {
-      const method = this.value;
-      document.getElementById('mpesaFields').classList.toggle('hidden', method !== 'mpesa');
-      document.getElementById('paypalFields').classList.toggle('hidden', method !== 'paypal');
-      document.getElementById('bankFields').classList.toggle('hidden', method !== 'bank');
-    });
-
-    // Spin Wheel
-    function spinWheel() {
-      const wheel = document.getElementById('spinWheel');
-      const btn = document.getElementById('spinBtn');
-      
-      btn.disabled = true;
-      btn.textContent = 'Spinning...';
-      
-      // Always land on $0.01 (first segment, 0-90 degrees)
-      // Need to rotate to land on top (270 degrees offset for pointer at top)
-      const baseRotation = 360 * 5; // 5 full rotations
-      const targetAngle = 45; // Middle of first segment ($0.01)
-      const finalRotation = baseRotation + (360 - targetAngle) + 270;
-      
-      wheel.style.transform = `rotate(${finalRotation}deg)`;
-      
-      setTimeout(() => {
-        userData.welcomeBonus = 0.01;
-        userData.welcomeBonusReceived = true;
-        userData.balance += 0.01;
-        userData.totalEarned += 0.01;
-        userData.transactions.push({
-          id: Date.now(),
-          type: 'bonus',
-          amount: 0.01,
-          description: 'Welcome Bonus',
-          date: new Date().toISOString()
+    <div class="auth-card">
+        <div class="logo">
+            <h1>◈ Creativepay</h1>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('login')">Log in</button>
+            <button class="tab" onclick="switchTab('register')">Register</button>
+        </div>
+        
+        <div id="referrerMessageContainer"></div>
+        
+        <!-- Login Form -->
+        <div id="loginForm" class="form">
+            <div class="input-group">
+                <input type="email" id="loginEmail" placeholder="Email address">
+            </div>
+            <div class="input-group">
+                <input type="password" id="loginPassword" placeholder="Password">
+            </div>
+            <button class="btn btn-primary" onclick="handleLogin()">Sign in</button>
+            
+            <div class="divider">
+                <span>or continue with</span>
+            </div>
+            
+            <button class="btn btn-google" onclick="handleGoogleLogin()">
+                <i class="fab fa-google"></i> Google
+            </button>
+        </div>
+        
+        <!-- Register Form -->
+        <div id="registerForm" class="form hidden">
+            <div class="input-group">
+                <input type="text" id="regName" placeholder="Full name">
+            </div>
+            <div class="input-group">
+                <input type="email" id="regEmail" placeholder="Email address">
+            </div>
+            <div class="input-group">
+                <input type="password" id="regPassword" placeholder="Password (min. 6 characters)">
+            </div>
+            <div class="input-group">
+                <input type="tel" id="regPhone" placeholder="Phone number (optional)">
+            </div>
+            <button class="btn btn-primary" onclick="handleRegister()">Create account</button>
+            <div class="info-text">
+                <i class="fas fa-envelope fa-sm"></i> Verification email will be sent
+            </div>
+        </div>
+        
+        <!-- Verify Email Message -->
+        <div id="verifyMessage" class="form hidden">
+            <div style="text-align: center;">
+                <i class="fas fa-envelope-open-text" style="font-size: 3rem; color: #b4945a; margin-bottom: 1rem;"></i>
+                <h3 style="margin-bottom: 0.75rem; font-weight: 600;">Verify your email</h3>
+                <p style="color: #6b5e48; margin-bottom: 2rem;">We've sent a link to <strong id="verifyEmail"></strong></p>
+                <button class="btn btn-primary" onclick="checkVerification()">I've verified — continue</button>
+                <div class="link" style="margin-top: 1.5rem;">
+                    <a onclick="resendVerification()">Resend email</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Alert Dialog -->
+    <div class="overlay" id="overlay" onclick="hideAlert()"></div>
+    <div class="alert-dialog" id="alertDialog">
+        <i class="fas" id="alertIcon"></i>
+        <h3 id="alertTitle"></h3>
+        <p id="alertMessage"></p>
+        <button class="btn btn-primary" style="width: auto; padding: 0.75rem 2rem;" onclick="hideAlert()">OK</button>
+    </div>
+    
+    <script>
+        // Fade out intro after animation
+        window.addEventListener('load', function() {
+            const intro = document.getElementById('introOverlay');
+            setTimeout(() => {
+                intro.classList.add('fade-out');
+                setTimeout(() => intro.style.display = 'none', 1200);
+            }, 4200); // gives enough time for typewriter
         });
-        saveUserData();
-        
-        closeModal('spinWheel');
-        document.getElementById('bonusAmount').textContent = '$0.01';
-        showModal('bonusResult');
-      }, 4500);
-    }
 
-    function showBonusWithdrawModal() {
-      closeModal('bonusResult');
-      
-      const bonusUSD = 0.01;
-      const bonusKSH = bonusUSD * USD_TO_KSH;
-      const minWithdraw = MIN_WITHDRAWAL_KSH;
-      const debitAmount = minWithdraw - bonusKSH;
-      
-      document.getElementById('bonusWithdrawAmount').textContent = `$${bonusUSD.toFixed(2)} (KSH ${bonusKSH.toFixed(2)})`;
-      document.getElementById('debitAmount').textContent = debitAmount.toFixed(2);
-      
-      showModal('bonusWithdraw');
-    }
-
-    function processBonusWithdraw() {
-      showLoading('Processing withdrawal...');
-      
-      const bonusUSD = 0.01;
-      const bonusKSH = bonusUSD * USD_TO_KSH;
-      const minWithdrawKSH = MIN_WITHDRAWAL_KSH;
-      const debitKSH = minWithdrawKSH - bonusKSH;
-      const debitUSD = debitKSH / USD_TO_KSH;
-      
-      // Debit the difference from balance
-      userData.balance -= debitUSD;
-      userData.transactions.push({
-        id: Date.now(),
-        type: 'withdrawal',
-        amount: -0.01,
-        description: 'Bonus Withdrawal (KSH 10)',
-        date: new Date().toISOString()
-      });
-      userData.transactions.push({
-        id: Date.now() + 1,
-        type: 'debit',
-        amount: -debitUSD,
-        description: `Minimum withdrawal fee (KSH ${debitKSH.toFixed(2)})`,
-        date: new Date().toISOString()
-      });
-      saveUserData();
-      
-      hideLoading();
-      closeModal('bonusWithdraw');
-      updateUIForLoggedInUser();
-      navigateTo('dashboard');
-      showToast('Withdrawal request submitted! Your balance has been adjusted.');
-    }
-
-    function closeBonusWithdrawModal() {
-      closeModal('bonusWithdraw');
-      skipBonusWithdraw();
-    }
-
-    function skipBonusWithdraw() {
-      closeModal('bonusResult');
-      updateUIForLoggedInUser();
-      navigateTo('dashboard');
-    }
-
-    // Dashboard Functions
-    function updateDashboard() {
-      if (!userData) return;
-      
-      document.getElementById('balanceDisplay').textContent = formatCurrency(userData.balance);
-      document.getElementById('balanceKsh').textContent = formatCurrency(userData.balance, 'KSH');
-      document.getElementById('userLevelDisplay').textContent = userData.level;
-      document.getElementById('tasksDoneDisplay').textContent = userData.completedTasks.length;
-      document.getElementById('totalEarnedDisplay').textContent = formatCurrency(userData.totalEarned);
-      document.getElementById('pendingDisplay').textContent = formatCurrency(0);
-      
-      renderActivityList();
-    }
-
-    function renderActivityList() {
-      const container = document.getElementById('activityList');
-      
-      if (!userData || userData.transactions.length === 0) {
-        container.innerHTML = '<p class="text-gray-500 text-center py-4">No activity yet. Start completing tasks!</p>';
-        return;
-      }
-      
-      const recentTransactions = userData.transactions.slice(-5).reverse();
-      container.innerHTML = recentTransactions.map(t => `
-        <div class="flex items-center justify-between p-3 rounded-xl ${t.amount >= 0 ? 'bg-green-50' : 'bg-red-50'}">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full flex items-center justify-center ${t.amount >= 0 ? 'bg-green-100' : 'bg-red-100'}">
-              ${t.type === 'bonus' ? '🎁' : t.type === 'earning' ? '💰' : t.type === 'withdrawal' ? '💸' : '📤'}
-            </div>
-            <div>
-              <p class="font-medium text-gray-800">${t.description}</p>
-              <p class="text-xs text-gray-500">${new Date(t.date).toLocaleDateString()}</p>
-            </div>
-          </div>
-          <span class="${t.amount >= 0 ? 'text-green-600' : 'text-red-600'} font-bold">
-            ${t.amount >= 0 ? '+' : ''}${formatCurrency(t.amount)}
-          </span>
-        </div>
-      `).join('');
-    }
-
-    function toggleCurrency() {
-      const toggle = document.getElementById('currencyToggle');
-      const balanceDisplay = document.getElementById('balanceDisplay');
-      const balanceKsh = document.getElementById('balanceKsh');
-      
-      if (toggle.textContent === 'USD') {
-        toggle.textContent = 'KSH';
-        balanceDisplay.textContent = formatCurrency(userData.balance, 'KSH');
-        balanceKsh.textContent = formatCurrency(userData.balance);
-      } else {
-        toggle.textContent = 'USD';
-        balanceDisplay.textContent = formatCurrency(userData.balance);
-        balanceKsh.textContent = formatCurrency(userData.balance, 'KSH');
-      }
-    }
-
-    // Tasks Functions
-    function renderTasks(category = 'all') {
-      const container = document.getElementById('tasksGrid');
-      let allTasks = [];
-      
-      if (category === 'all') {
-        allTasks = [
-          ...tasks.stories.map(t => ({ ...t, category: 'stories' })),
-          ...tasks.poetry.map(t => ({ ...t, category: 'poetry' })),
-          ...tasks.opinion.map(t => ({ ...t, category: 'opinion' })),
-          ...tasks.history.map(t => ({ ...t, category: 'history' }))
-        ];
-      } else {
-        allTasks = tasks[category].map(t => ({ ...t, category }));
-      }
-      
-      // Filter based on level
-      const isLevel1Complete = checkLevel1Complete();
-      if (!isLevel1Complete && !userData?.level2Purchased) {
-        document.getElementById('levelLockNotice').classList.remove('hidden');
-        // Show only level 1 tasks
-        allTasks = allTasks.filter(t => t.level === 1);
-      } else {
-        document.getElementById('levelLockNotice').classList.add('hidden');
-      }
-      
-      container.innerHTML = allTasks.map((task, index) => {
-        const isCompleted = userData?.completedTasks.includes(task.id);
-        const isActive = userData?.activeTasks.some(t => t.id === task.id);
-        const categoryIcons = { stories: '📚', poetry: '🎭', opinion: '💬', history: '🏛️' };
-        const categoryColors = { stories: 'purple', poetry: 'pink', opinion: 'blue', history: 'amber' };
-        
-        return `
-          <div class="task-card rounded-2xl p-5 hover-lift card-shadow ${isCompleted ? 'opacity-60' : ''}">
-            <div class="flex items-center justify-between mb-3">
-              <span class="text-2xl">${categoryIcons[task.category]}</span>
-              <span class="px-2 py-1 bg-${categoryColors[task.category]}-100 text-${categoryColors[task.category]}-700 rounded-full text-xs font-medium">
-                Level ${task.level}
-              </span>
-            </div>
-            <h4 class="font-bold text-gray-800 mb-2">${task.title}</h4>
-            <p class="text-sm text-gray-600 mb-3 line-clamp-2">${task.prompt || task.topic || task.caseStudy?.substring(0, 100) + '...'}</p>
-            <div class="flex items-center justify-between">
-              <span class="text-${categoryColors[task.category]}-600 font-bold">${formatCurrency(task.reward)}</span>
-              ${isCompleted ? 
-                '<span class="text-green-600 text-sm">✓ Completed</span>' : 
-                isActive ?
-                '<span class="text-blue-600 text-sm">⏳ In Progress</span>' :
-                `<button onclick="viewTaskDetails('${task.category}', '${task.id}')" class="text-sm text-purple-600 font-medium hover:underline">View Details →</button>`
-              }
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function filterTasks(category) {
-      // Update tab styles
-      document.querySelectorAll('.task-tab').forEach(tab => {
-        if (tab.dataset.category === category) {
-          tab.className = 'task-tab px-4 py-2 rounded-full font-medium bg-purple-600 text-white';
-        } else {
-          tab.className = 'task-tab px-4 py-2 rounded-full font-medium bg-gray-200 text-gray-700 hover:bg-purple-100';
-        }
-      });
-      
-      renderTasks(category);
-    }
-
-    function viewTaskDetails(category, taskId) {
-      const task = tasks[category].find(t => t.id === taskId);
-      if (!task) return;
-      
-      currentTask = { ...task, category };
-      
-      document.getElementById('taskDetailTitle').textContent = task.title;
-      document.getElementById('taskDetailCompany').textContent = task.company;
-      
-      let detailsHTML = '';
-      
-      if (category === 'stories') {
-        detailsHTML = `
-          <div class="bg-purple-50 rounded-xl p-4">
-            <h4 class="font-bold text-purple-800 mb-2">Story Prompt</h4>
-            <p class="text-gray-700">${task.prompt}</p>
-          </div>
-          ${task.starter ? `
-            <div class="bg-blue-50 rounded-xl p-4">
-              <h4 class="font-bold text-blue-800 mb-2">Story Starter</h4>
-              <p class="text-gray-700 italic">"${task.starter}"</p>
-            </div>
-          ` : ''}
-          ${task.ending ? `
-            <div class="bg-green-50 rounded-xl p-4">
-              <h4 class="font-bold text-green-800 mb-2">Story Ending</h4>
-              <p class="text-gray-700 italic">"${task.ending}"</p>
-            </div>
-          ` : ''}
-        `;
-      } else if (category === 'poetry') {
-        detailsHTML = `
-          <div class="bg-pink-50 rounded-xl p-4">
-            <h4 class="font-bold text-pink-800 mb-2">Topic</h4>
-            <p class="text-gray-700">${task.topic}</p>
-          </div>
-          <div class="bg-purple-50 rounded-xl p-4">
-            <h4 class="font-bold text-purple-800 mb-2">Themes</h4>
-            <div class="flex flex-wrap gap-2">
-              ${task.themes.map(t => `<span class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">${t}</span>`).join('')}
-            </div>
-          </div>
-          <div class="bg-blue-50 rounded-xl p-4">
-            <h4 class="font-bold text-blue-800 mb-2">Keywords to Include</h4>
-            <div class="flex flex-wrap gap-2">
-              ${task.keywords.map(k => `<span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">${k}</span>`).join('')}
-            </div>
-          </div>
-        `;
-      } else if (category === 'opinion') {
-        detailsHTML = `
-          <div class="bg-blue-50 rounded-xl p-4">
-            <h4 class="font-bold text-blue-800 mb-2">Case Study</h4>
-            <p class="text-gray-700">${task.caseStudy}</p>
-          </div>
-          <div class="bg-amber-50 rounded-xl p-4">
-            <h4 class="font-bold text-amber-800 mb-2">Question to Address</h4>
-            <p class="text-gray-700 font-medium">${task.question}</p>
-          </div>
-        `;
-      } else if (category === 'history') {
-        detailsHTML = `
-          <div class="bg-amber-50 rounded-xl p-4">
-            <h4 class="font-bold text-amber-800 mb-2">Topic</h4>
-            <p class="text-gray-700">${task.topic}</p>
-          </div>
-          <div class="bg-gray-100 rounded-xl p-4">
-            <h4 class="font-bold text-gray-800 mb-2">Time Period</h4>
-            <p class="text-gray-700">${task.period}</p>
-          </div>
-        `;
-      }
-      
-      detailsHTML += `
-        <div class="bg-gray-50 rounded-xl p-4">
-          <h4 class="font-bold text-gray-800 mb-2">Requirements</h4>
-          <ul class="space-y-1">
-            ${task.requirements.map(r => `<li class="text-gray-700 flex items-center gap-2"><span class="text-green-500">✓</span> ${r}</li>`).join('')}
-          </ul>
-        </div>
-        <div class="bg-green-50 rounded-xl p-4">
-          <h4 class="font-bold text-green-800 mb-2">Reward</h4>
-          <p class="text-2xl font-bold text-green-600">${formatCurrency(task.reward)}</p>
-        </div>
-      `;
-      
-      document.getElementById('taskDetailContent').innerHTML = detailsHTML;
-      
-      // Update button based on status
-      const btn = document.getElementById('startTaskBtn');
-      if (userData?.completedTasks.includes(taskId)) {
-        btn.textContent = 'Already Completed';
-        btn.disabled = true;
-        btn.className = 'w-full py-3 bg-gray-300 text-gray-600 rounded-xl font-medium cursor-not-allowed';
-      } else if (userData?.activeTasks.some(t => t.id === taskId)) {
-        btn.textContent = 'Continue Task';
-        btn.disabled = false;
-        btn.className = 'w-full py-3 btn-primary text-white rounded-xl font-medium';
-      } else {
-        btn.textContent = 'Start This Task';
-        btn.disabled = false;
-        btn.className = 'w-full py-3 btn-primary text-white rounded-xl font-medium';
-      }
-      
-      showModal('taskDetails');
-    }
-
-    function startTask() {
-      if (!currentTask) return;
-      
-      // Add to active tasks if not already there
-      if (!userData.activeTasks.some(t => t.id === currentTask.id)) {
-        userData.activeTasks.push({
-          ...currentTask,
-          startedAt: new Date().toISOString()
-        });
-        saveUserData();
-      }
-      
-      closeModal('taskDetails');
-      
-      // Open submit modal
-      document.getElementById('submitTaskTitle').textContent = currentTask.title;
-      document.getElementById('submitTaskReward').textContent = `Reward: ${formatCurrency(currentTask.reward)}`;
-      showModal('submitTask');
-    }
-
-    function setSubmitMethod(method) {
-      submitMethod = method;
-      
-      document.querySelectorAll('.submit-method-btn').forEach(btn => {
-        if (btn.dataset.method === method) {
-          btn.className = 'flex-1 py-2 px-4 border-2 border-purple-500 bg-purple-50 text-purple-700 rounded-xl font-medium submit-method-btn';
-        } else {
-          btn.className = 'flex-1 py-2 px-4 border-2 border-gray-300 text-gray-700 rounded-xl font-medium submit-method-btn';
-        }
-      });
-      
-      document.getElementById('pasteSection').classList.toggle('hidden', method !== 'paste');
-      document.getElementById('uploadSection').classList.toggle('hidden', method !== 'upload');
-    }
-
-    // File upload handling
-    document.getElementById('submissionFile')?.addEventListener('change', function() {
-      const fileName = this.files[0]?.name || 'No file selected';
-      document.getElementById('selectedFileName').textContent = fileName;
-    });
-
-    function handleTaskSubmit(event) {
-      event.preventDefault();
-      showLoading('Submitting your task...');
-      
-      let submission = '';
-      if (submitMethod === 'paste') {
-        submission = document.getElementById('submissionText').value;
-      } else {
-        const file = document.getElementById('submissionFile').files[0];
-        submission = file ? file.name : '';
-      }
-      
-      if (!submission) {
-        hideLoading();
-        showToast('Please provide your submission', 'error');
-        return;
-      }
-      
-      // Complete task
-      userData.completedTasks.push(currentTask.id);
-      userData.activeTasks = userData.activeTasks.filter(t => t.id !== currentTask.id);
-      userData.balance += currentTask.reward;
-      userData.totalEarned += currentTask.reward;
-      
-      // Update task progress
-      userData.taskProgress[currentTask.category]++;
-      
-      // Add transaction
-      userData.transactions.push({
-        id: Date.now(),
-        type: 'earning',
-        amount: currentTask.reward,
-        description: `Completed: ${currentTask.title}`,
-        date: new Date().toISOString()
-      });
-      
-      saveUserData();
-      
-      setTimeout(() => {
-        hideLoading();
-        closeModal('submitTask');
-        showToast(`Task completed! You earned ${formatCurrency(currentTask.reward)}`);
-        
-        // Check if level 1 is complete
-        if (checkLevel1Complete() && userData.level === 1 && !userData.level2Purchased) {
-          setTimeout(() => showModal('levelUpgrade'), 1000);
-        }
-        
-        // Reset form
-        document.getElementById('submissionText').value = '';
-        document.getElementById('selectedFileName').textContent = 'No file selected';
-        
-        updateDashboard();
-      }, 1500);
-    }
-
-    function checkLevel1Complete() {
-      if (!userData) return false;
-      return userData.taskProgress.stories >= 2 &&
-             userData.taskProgress.poetry >= 2 &&
-             userData.taskProgress.opinion >= 2 &&
-             userData.taskProgress.history >= 2;
-    }
-
-    // Level Page
-    function updateLevelPage() {
-      if (!userData) return;
-      
-      document.getElementById('level1Stories').textContent = `${Math.min(userData.taskProgress.stories, 2)}/2`;
-      document.getElementById('level1Poetry').textContent = `${Math.min(userData.taskProgress.poetry, 2)}/2`;
-      document.getElementById('level1Opinion').textContent = `${Math.min(userData.taskProgress.opinion, 2)}/2`;
-      document.getElementById('level1History').textContent = `${Math.min(userData.taskProgress.history, 2)}/2`;
-      
-      const totalRequired = 8;
-      const totalDone = Math.min(userData.taskProgress.stories, 2) +
-                       Math.min(userData.taskProgress.poetry, 2) +
-                       Math.min(userData.taskProgress.opinion, 2) +
-                       Math.min(userData.taskProgress.history, 2);
-      const progress = (totalDone / totalRequired) * 100;
-      
-      document.getElementById('level1Progress').style.width = `${progress}%`;
-      
-      const isLevel1Complete = checkLevel1Complete();
-      document.getElementById('level1Status').textContent = isLevel1Complete ? '✓ Complete' : 'In Progress';
-      document.getElementById('level1Status').className = `px-3 py-1 ${isLevel1Complete ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'} rounded-full text-sm font-medium`;
-      
-      // Level 2 card
-      const level2Card = document.getElementById('level2Card');
-      const level2Content = document.getElementById('level2Content');
-      const level2Status = document.getElementById('level2Status');
-      
-      if (userData.level2Purchased) {
-        level2Card.classList.remove('opacity-50');
-        level2Status.textContent = '✓ Active';
-        level2Status.className = 'px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium';
-        level2Content.innerHTML = '<p class="text-green-600 font-medium">You have access to all Level 2 tasks and can withdraw your earnings!</p>';
-        level2Content.classList.remove('hidden');
-      } else if (isLevel1Complete) {
-        level2Card.classList.remove('opacity-50');
-        level2Status.textContent = '🔓 Available';
-        level2Status.className = 'px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium';
-        level2Content.classList.remove('hidden');
-      }
-    }
-
-    function handleLevelPurchase() {
-      // Redirect to payment
-      window.open('https://payment.com', '_blank');
-    }
-
-    function handleLevel2Purchase() {
-      // Redirect to payment for Level 2
-      window.open('https://payment.com', '_blank');
-    }
-
-    function handleLevel2PaymentConfirm(event) {
-      event.preventDefault();
-      showLoading('Sending Level 2 verification request...');
-      
-      const message = document.getElementById('level2PaymentMessage').value;
-      
-      // Send to Web3Forms with today's date
-      const today = new Date();
-      const formattedDate = today.toLocaleDateString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit' });
-      
-      fetch('https://api.web3forms.com/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          access_key: WEB3FORMS_KEY,
-          to: SUPPORT_EMAIL,
-          subject: 'Level 2 Purchase Verification - M-Pesa Receipt Review Required',
-          message: `User Email: ${userData.email}\nUser Name: ${userData.name}\nVerification Date: ${formattedDate}\n\nRequired Amount: KSH 357.00\nRecipient: LIPANA TECHNOLOGIES LIMITED\n\nM-Pesa Message:\n${message}`,
-          from_name: userData.name || userData.email
-        })
-      })
-      .then(response => response.json())
-      .then(data => {
-        hideLoading();
-        closeModal('level2PurchaseConfirm');
-        closeModal('level2Required');
-        showToast('Level 2 verification submitted! We\'ll review your payment and update your account shortly.');
-        document.getElementById('level2PaymentMessage').value = '';
-      })
-      .catch(error => {
-        hideLoading();
-        showToast('Failed to submit verification. Please try again.', 'error');
-      });
-    }
-
-    function handleConfirmPurchase(event) {
-      event.preventDefault();
-      showLoading('Sending verification request...');
-      
-      const message = document.getElementById('paymentMessage').value;
-      
-      // Send to Web3Forms with today's date
-      const today = new Date();
-      const formattedDate = today.toLocaleDateString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit' });
-      
-      fetch('https://api.web3forms.com/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          access_key: WEB3FORMS_KEY,
-          to: SUPPORT_EMAIL,
-          subject: 'Level 2 Purchase Verification - M-Pesa Receipt Review Required',
-          message: `User Email: ${userData.email}\nUser Name: ${userData.name}\nVerification Date: ${formattedDate}\n\nRequired Amount: KSH 357.00\nRecipient: LIPANA TECHNOLOGIES LIMITED\n\nM-Pesa Message:\n${message}`,
-          from_name: userData.name || userData.email
-        })
-      })
-      .then(response => response.json())
-      .then(data => {
-        hideLoading();
-        closeModal('confirmPurchase');
-        showToast('Verification request sent! We\'ll review and update your account shortly.');
-        document.getElementById('paymentMessage').value = '';
-      })
-      .catch(error => {
-        hideLoading();
-        showToast('Failed to send request. Please try again.', 'error');
-      });
-    }
-
-    // Wallet Functions
-    function updateWalletPage() {
-      if (!userData) return;
-      
-      document.getElementById('walletBalance').textContent = formatCurrency(userData.balance);
-      document.getElementById('walletBalanceKsh').textContent = formatCurrency(userData.balance, 'KSH');
-      
-      // Calculate stats
-      const totalWithdrawn = userData.transactions
-        .filter(t => t.type === 'withdrawal')
-        .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-      
-      const totalEarnings = userData.transactions
-        .filter(t => t.type === 'earning' || t.type === 'bonus')
-        .reduce((sum, t) => sum + t.amount, 0);
-      
-      document.getElementById('walletTotalEarned').textContent = formatCurrency(totalEarnings);
-      document.getElementById('walletTotalWithdrawn').textContent = formatCurrency(totalWithdrawn);
-      document.getElementById('walletPending').textContent = '$0.00';
-      document.getElementById('walletTransactionCount').textContent = userData.transactions.length;
-      
-      renderTransactionList();
-    }
-
-    function renderTransactionList() {
-      const container = document.getElementById('transactionList');
-      
-      if (!userData || userData.transactions.length === 0) {
-        container.innerHTML = '<p class="text-gray-500 text-center py-8">No transactions yet. Start earning!</p>';
-        return;
-      }
-      
-      container.innerHTML = userData.transactions.slice().reverse().map(t => {
-        const typeIcons = {
-          earning: '💰',
-          bonus: '🎁',
-          withdrawal: '💸',
-          debit: '📤',
-          credit: '📥'
+        // Firebase Config (unchanged, functional)
+        const firebaseConfig = {
+            apiKey: "AIzaSyChk2JA68-I5s1D0S10r9WK71LgTNi4hRQ",
+            authDomain: "nextgen-5fb6f.firebaseapp.com",
+            projectId: "nextgen-5fb6f",
+            storageBucket: "nextgen-5fb6f.firebasestorage.app",
+            messagingSenderId: "100132076455",
+            appId: "1:100132076455:web:c5aea1f6e1a5ebbea99482"
         };
         
-        return `
-          <div class="flex items-center justify-between p-4 rounded-xl border-l-4 ${t.amount >= 0 ? 'bg-green-50 border-l-green-500' : 'bg-red-50 border-l-red-500'}">
-            <div class="flex items-center gap-3">
-              <div class="text-2xl">${typeIcons[t.type] || '📋'}</div>
-              <div>
-                <p class="font-medium text-gray-800">${t.description}</p>
-                <p class="text-xs text-gray-500">${new Date(t.date).toLocaleDateString()} at ${new Date(t.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
-              </div>
-            </div>
-            <span class="${t.amount >= 0 ? 'text-green-600' : 'text-red-600'} font-bold text-lg">
-              ${t.amount >= 0 ? '+' : ''}${formatCurrency(Math.abs(t.amount))}
-            </span>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function handleWithdraw() {
-      if (!userData.level2Purchased && !checkLevel1Complete()) {
-        showToast('Complete Level 1 and upgrade to Level 2 to withdraw', 'error');
-        return;
-      }
-      
-      if (!userData.level2Purchased) {
-        showToast('Purchase Level 2 to enable withdrawals', 'error');
-        navigateTo('level');
-        return;
-      }
-      
-      document.getElementById('withdrawAvailable').textContent = formatCurrency(userData.balance);
-      showModal('withdraw');
-    }
-
-    function handleWithdrawSubmit(event) {
-      event.preventDefault();
-      
-      const amount = parseFloat(document.getElementById('withdrawAmount').value);
-      
-      if (amount < MIN_WITHDRAWAL_USD) {
-        showToast(`Minimum withdrawal is ${formatCurrency(MIN_WITHDRAWAL_USD)}`, 'error');
-        return;
-      }
-      
-      if (amount > userData.balance) {
-        showToast('Insufficient balance', 'error');
-        return;
-      }
-      
-      showLoading('Processing withdrawal...');
-      
-      userData.balance -= amount;
-      userData.transactions.push({
-        id: Date.now(),
-        type: 'withdrawal',
-        amount: -amount,
-        description: `Withdrawal to ${userData.paymentMethod}`,
-        date: new Date().toISOString()
-      });
-      saveUserData();
-      
-      setTimeout(() => {
-        hideLoading();
-        closeModal('withdraw');
-        showToast('Withdrawal request submitted!');
-        updateDashboard();
-        updateWalletPage();
-      }, 1500);
-    }
-
-    function setFundAmount(amount) {
-      document.getElementById('fundAmount').value = amount;
-    }
-
-    function handleAddFunds() {
-      const amount = document.getElementById('fundAmount').value;
-      if (!amount || amount <= 0) {
-        showToast('Please enter an amount', 'error');
-        return;
-      }
-      window.open('https://payment.com', '_blank');
-      closeModal('addFunds');
-    }
-
-    // Task History
-    function renderTaskHistory() {
-      const container = document.getElementById('taskHistoryList');
-      
-      if (!userData || userData.completedTasks.length === 0) {
-        container.innerHTML = '<p class="text-gray-500 text-center py-8">No submitted tasks yet. Complete and submit tasks to see history!</p>';
-        return;
-      }
-      
-      const completedTaskDetails = [];
-      userData.completedTasks.forEach(taskId => {
-        for (const category of ['stories', 'poetry', 'opinion', 'history']) {
-          const task = tasks[category].find(t => t.id === taskId);
-          if (task) {
-            completedTaskDetails.push({ ...task, category });
-            break;
-          }
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        
+        function generateReferralCode(userId) {
+            return userId.substring(0, 8).toUpperCase();
         }
-      });
-      
-      // Update stats
-      document.getElementById('historyTasksCount').textContent = userData.completedTasks.length;
-      document.getElementById('historyTotalEarned').textContent = formatCurrency(userData.totalEarned);
-      const avg = userData.completedTasks.length > 0 ? userData.totalEarned / userData.completedTasks.length : 0;
-      document.getElementById('historyAverageReward').textContent = formatCurrency(avg);
-      
-      const categoryIcons = { stories: '📚', poetry: '🎭', opinion: '💬', history: '🏛️' };
-      const categoryColors = { stories: 'purple', poetry: 'pink', opinion: 'blue', history: 'amber' };
-      
-      container.innerHTML = completedTaskDetails.map((task, index) => `
-        <div class="bg-white rounded-2xl p-5 card-shadow hover-lift transition">
-          <div class="flex items-start justify-between mb-3">
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 bg-${categoryColors[task.category]}-100 rounded-xl flex items-center justify-center text-2xl">
-                ${categoryIcons[task.category]}
-              </div>
-              <div>
-                <h4 class="font-bold text-gray-800">${task.title}</h4>
-                <p class="text-sm text-gray-500">${task.company}</p>
-              </div>
-            </div>
-            <div class="text-right">
-              <p class="text-${categoryColors[task.category]}-600 font-bold text-lg">${formatCurrency(task.reward)}</p>
-              <p class="text-xs text-green-500">✓ Completed</p>
-            </div>
-          </div>
-          <div class="flex gap-2">
-            <span class="text-xs px-2 py-1 bg-${categoryColors[task.category]}-100 text-${categoryColors[task.category]}-700 rounded-full">
-              Task #${index + 1}
-            </span>
-            <span class="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-full">
-              Level ${task.level}
-            </span>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    // Active Tasks
-    function renderActiveTasks() {
-      const container = document.getElementById('activeTasksList');
-      
-      if (!userData || userData.activeTasks.length === 0) {
-        container.innerHTML = '<p class="text-gray-500 text-center py-8">No active tasks. Browse tasks to get started!</p>';
-        return;
-      }
-      
-      // Update stats
-      document.getElementById('activeTasksCount').textContent = `${userData.activeTasks.length} task${userData.activeTasks.length !== 1 ? 's' : ''}`;
-      const totalValue = userData.activeTasks.reduce((sum, t) => sum + t.reward, 0);
-      document.getElementById('activeTasksValue').textContent = formatCurrency(totalValue);
-      
-      const categoryIcons = { stories: '📚', poetry: '🎭', opinion: '💬', history: '🏛️' };
-      const categoryColors = { stories: 'purple', poetry: 'pink', opinion: 'blue', history: 'amber' };
-      
-      container.innerHTML = userData.activeTasks.map((task, index) => `
-        <div class="bg-white rounded-2xl p-5 card-shadow hover-lift transition border-l-4 border-l-${categoryColors[task.category]}-500">
-          <div class="flex items-start justify-between mb-4">
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 bg-${categoryColors[task.category]}-100 rounded-xl flex items-center justify-center text-2xl">
-                ${categoryIcons[task.category]}
-              </div>
-              <div>
-                <h4 class="font-bold text-gray-800">${task.title}</h4>
-                <p class="text-sm text-gray-500">Started: ${new Date(task.startedAt).toLocaleDateString()}</p>
-              </div>
-            </div>
-            <span class="text-${categoryColors[task.category]}-600 font-bold text-lg">${formatCurrency(task.reward)}</span>
-          </div>
-          <div class="flex gap-2 mb-3">
-            <span class="text-xs px-2 py-1 bg-${categoryColors[task.category]}-100 text-${categoryColors[task.category]}-700 rounded-full">
-              Level ${task.level}
-            </span>
-            <span class="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full">
-              ⏱️ In Progress
-            </span>
-          </div>
-          <button onclick="viewTaskDetails('${task.category}', '${task.id}')" class="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-medium hover:shadow-lg transition">
-            Continue Task →
-          </button>
-        </div>
-      `).join('');
-    }
-
-    // Support
-    function handleSupportSubmit(event) {
-      event.preventDefault();
-      showLoading('Sending message...');
-      
-      const subject = document.getElementById('supportSubject').value;
-      const message = document.getElementById('supportMessage').value;
-      
-      fetch('https://api.web3forms.com/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          access_key: WEB3FORMS_KEY,
-          to: SUPPORT_EMAIL,
-          subject: `Support: ${subject}`,
-          message: `From: ${userData?.email || 'Guest'}\n\n${message}`,
-          from_name: userData?.name || 'CreativepayUser'
-        })
-      })
-      .then(response => response.json())
-      .then(data => {
-        hideLoading();
-        closeModal('support');
-        showToast('Message sent! We\'ll get back to you soon.');
-        document.getElementById('supportForm').reset();
-      })
-      .catch(error => {
-        hideLoading();
-        showToast('Failed to send message. Please try again.', 'error');
-      });
-    }
-
-    // Auth State Observer
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        if (user.emailVerified || user.providerData[0]?.providerId === 'google.com') {
-          handleAuthenticatedUser(user);
+        
+        function getReferralCodeFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const queryRef = urlParams.get('ref');
+            if (queryRef) return queryRef;
+            const path = window.location.pathname;
+            const match = path.match(/\/(?:register|join|signup|ref|r)\/([a-zA-Z0-9_-]+)/i);
+            if (match && match[1]) return match[1];
+            if (path.split('/').length === 2 && path !== '/') {
+                const code = path.substring(1);
+                if (code.length >= 4 && code.length <= 20 && /^[a-zA-Z0-9_-]+$/.test(code)) return code;
+            }
+            return null;
         }
-      } else {
-        currentUser = null;
-        updateUIForLoggedOutUser();
-      }
-    });
-
-    // Initialize
-    document.addEventListener('DOMContentLoaded', () => {
-      loadUserData();
-      updateMobileMenuContent();
-    });
-  </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9d1815af53a962f4',t:'MTc3MTY5NjIxMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+        
+        async function checkForReferrer() {
+            const refCode = getReferralCodeFromUrl();
+            if (!refCode) return;
+            sessionStorage.setItem('pendingReferral', refCode);
+            try {
+                const snapshot = await db.collection('users').get();
+                let found = false;
+                for (const doc of snapshot.docs) {
+                    if (generateReferralCode(doc.id) === refCode) {
+                        const name = doc.data().displayName || 'a NextGen user';
+                        showReferrerMessage(name);
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) showReferrerMessage('a NextGen user');
+            } catch {
+                showReferrerMessage('a NextGen user');
+            }
+        }
+        
+        function showReferrerMessage(name) {
+            document.getElementById('referrerMessageContainer').innerHTML = `
+                <div class="referrer-message">
+                    <i class="fas fa-user-check" style="color:#b4945a;"></i>
+                    <div>Referred by <strong>${name}</strong> <span class="bonus-badge">+$0.5 bonus</span></div>
+                </div>
+            `;
+        }
+        document.addEventListener('DOMContentLoaded', checkForReferrer);
+        
+        // UI helpers
+        function showAlert(msg, type='error') {
+            const d = document.getElementById('alertDialog');
+            document.getElementById('overlay').classList.add('show');
+            d.classList.add('show');
+            document.getElementById('alertIcon').className = 'fas ' + (type==='error' ? 'fa-exclamation-circle' : 'fa-check-circle');
+            document.getElementById('alertTitle').innerText = type==='error' ? 'Error' : 'Success';
+            document.getElementById('alertMessage').innerText = msg;
+        }
+        function hideAlert() {
+            document.getElementById('alertDialog').classList.remove('show');
+            document.getElementById('overlay').classList.remove('show');
+        }
+        
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
+            document.getElementById('registerForm').classList.toggle('hidden', tab !== 'register');
+            document.getElementById('verifyMessage').classList.add('hidden');
+        }
+        
+        function showVerifyView(email) {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('registerForm').classList.add('hidden');
+            document.getElementById('verifyMessage').classList.remove('hidden');
+            document.getElementById('verifyEmail').innerText = email;
+        }
+        
+        async function handleRegister() {
+            const name = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
+            const pwd = document.getElementById('regPassword').value;
+            const phone = document.getElementById('regPhone').value;
+            if (!name || !email || !pwd) return showAlert('All required fields', 'error');
+            if (pwd.length < 6) return showAlert('Password min 6 chars', 'error');
+            try {
+                const cred = await auth.createUserWithEmailAndPassword(email, pwd);
+                await cred.user.sendEmailVerification();
+                const referralCode = sessionStorage.getItem('pendingReferral');
+                let referredBy = null;
+                if (referralCode) {
+                    const snap = await db.collection('users').get();
+                    for (const doc of snap.docs) {
+                        if (generateReferralCode(doc.id) === referralCode) { referredBy = doc.id; break; }
+                    }
+                    sessionStorage.removeItem('pendingReferral');
+                }
+                const userData = { email, displayName: name, phone, role:'user', wallet:0, active:true, verified:false,
+                    membershipType:'basic', membershipPaid:false, membershipStatus:'pending', totalFeesPaid:0,
+                    unreadMessages:0, totalReferrals:0, referralEarnings:0, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
+                if (referredBy) userData.referredBy = referredBy;
+                await db.collection('users').doc(cred.user.uid).set(userData);
+                if (referredBy) {
+                    await db.collection('referrals').add({ referrerId: referredBy, referredId: cred.user.uid, referredEmail: email, referredName: name, status: 'pending', createdAt: firebase.firestore.FieldValue.serverTimestamp() }).catch(()=>{});
+                }
+                showVerifyView(email);
+                showAlert('Verification email sent!', 'success');
+            } catch (e) { showAlert(e.message, 'error'); }
+        }
+        
+        async function handleLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const pwd = document.getElementById('loginPassword').value;
+            if (!email || !pwd) return showAlert('Enter credentials', 'error');
+            try { await auth.signInWithEmailAndPassword(email, pwd); } 
+            catch (e) { showAlert(e.message, 'error'); }
+        }
+        
+        async function handleGoogleLogin() {
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                const res = await auth.signInWithPopup(provider);
+                const user = res.user;
+                const userRef = db.collection('users').doc(user.uid);
+                const doc = await userRef.get();
+                if (!doc.exists) {
+                    let referredBy = null;
+                    const refCode = sessionStorage.getItem('pendingReferral');
+                    if (refCode) {
+                        const snap = await db.collection('users').get();
+                        for (const d of snap.docs) {
+                            if (generateReferralCode(d.id) === refCode) { referredBy = d.id; break; }
+                        }
+                        sessionStorage.removeItem('pendingReferral');
+                    }
+                    const data = { email: user.email, displayName: user.displayName, phone:'', role:'user', wallet:0, active:true, verified:true,
+                        membershipType:'basic', membershipPaid:false, membershipStatus:'pending', totalFeesPaid:0,
+                        unreadMessages:0, totalReferrals:0, referralEarnings:0, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
+                    if (referredBy) data.referredBy = referredBy;
+                    await userRef.set(data);
+                    if (referredBy) {
+                        await db.collection('referrals').add({ referrerId: referredBy, referredId: user.uid, referredEmail: user.email, referredName: user.displayName, status:'pending', createdAt: firebase.firestore.FieldValue.serverTimestamp() }).catch(()=>{});
+                    }
+                }
+            } catch (e) { showAlert(e.message, 'error'); }
+        }
+        
+        async function checkVerification() {
+            if (!auth.currentUser) return;
+            await auth.currentUser.reload();
+            if (auth.currentUser.emailVerified) {
+                await db.collection('users').doc(auth.currentUser.uid).update({ verified: true });
+                window.location.href = 'user-dashboard.html';
+            } else showAlert('Email not verified yet', 'error');
+        }
+        
+        async function resendVerification() {
+            if (auth.currentUser) {
+                await auth.currentUser.sendEmailVerification();
+                showAlert('Verification resent!', 'success');
+            }
+        }
+        
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) return;
+            const isGoogle = user.providerData.some(p => p.providerId === 'google.com');
+            if (!user.emailVerified && !isGoogle) { showVerifyView(user.email); return; }
+            try {
+                const udoc = await db.collection('users').doc(user.uid).get();
+                if (!udoc.exists) return;
+                const data = udoc.data();
+                if (data.active === false) { await auth.signOut(); showAlert('Account disabled', 'error'); return; }
+                window.location.href = data.role === 'admin' ? 'admin-dashboard.html' : 'user-dashboard.html';
+            } catch (e) { console.error(e); }
+        });
+    </script>
+</body>
 </html>

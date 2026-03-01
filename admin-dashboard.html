@@ -1,0 +1,3807 @@
+<!DOCTYPE html>  
+<html lang="en">  
+<head>  
+    <meta charset="UTF-8">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">  
+    <title>NextGen · Admin Dashboard</title>  
+    <!-- Firebase -->  
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>  
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>  
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>  
+    <!-- Font Awesome -->  
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">  
+    <!-- Google Fonts -->  
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">  
+    <style>  
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }  
+        body { background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%); min-height: 100vh; }  
+        .app-container { max-width: 1400px; margin: 0 auto; padding: 1rem; }  
+        .header { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 2rem; padding: 1rem 2rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; color: white; }  
+        .logo h2 { background: linear-gradient(135deg, #818cf8, #34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }  
+        .admin-badge { background: #ef4444; padding: 0.3rem 1rem; border-radius: 40px; font-size: 0.9rem; }  
+        .logout-btn { background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; }  
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }  
+        .stat-card { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 1.5rem; padding: 1.5rem; color: white; border: 1px solid rgba(255,255,255,0.2); }  
+        .stat-card i { font-size: 2rem; color: #818cf8; margin-bottom: 0.5rem; }  
+        .stat-value { font-size: 2rem; font-weight: 700; }  
+        .tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }  
+        .tab { padding: 0.8rem 1.5rem; border: none; border-radius: 40px; background: rgba(255,255,255,0.1); color: white; font-weight: 600; cursor: pointer; transition: all 0.3s; }  
+        .tab.active { background: #6366f1; }  
+        .content { background: white; border-radius: 2rem; padding: 2rem; min-height: 500px; }  
+        .data-table { width: 100%; border-collapse: collapse; }  
+        .data-table th { text-align: left; padding: 1rem; background: #f8fafc; }  
+        .data-table td { padding: 1rem; border-bottom: 1px solid #e2e8f0; }  
+        .badge { padding: 0.3rem 1rem; border-radius: 40px; font-size: 0.8rem; font-weight: 600; display: inline-block; }  
+        .badge.success { background: #10b98120; color: #10b981; border: 1px solid #10b981; }  
+        .badge.warning { background: #f59e0b20; color: #f59e0b; border: 1px solid #f59e0b; }  
+        .badge.danger { background: #ef444420; color: #ef4444; border: 1px solid #ef4444; }  
+        .badge.primary { background: #6366f120; color: #6366f1; border: 1px solid #6366f1; }  
+        .badge.info { background: #3b82f620; color: #3b82f6; border: 1px solid #3b82f6; }  
+        .btn { padding: 0.5rem 1rem; border: none; border-radius: 40px; font-weight: 600; cursor: pointer; margin: 0.2rem; pointer-events: auto; }  
+        .btn-primary { background: #6366f1; color: white; }  
+        .btn-success { background: #10b981; color: white; }  
+        .btn-danger { background: #ef4444; color: white; }  
+        .btn-warning { background: #f59e0b; color: white; }  
+        .btn-info { background: #3b82f6; color: white; }  
+        .btn-sm { padding: 0.3rem 0.8rem; font-size: 0.8rem; }  
+        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 2rem; padding: 2rem; max-width: 600px; width: 90%; z-index: 1000; max-height: 80vh; overflow-y: auto; }  
+        .modal.active { display: block; }  
+        .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); z-index: 999; }  
+        .modal-backdrop.active { display: block; }  
+        
+        /* Alert Modal Styles */
+        .alert-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 2rem;
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+            z-index: 2000;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        .alert-modal.active {
+            display: block;
+        }
+        
+        .alert-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 1999;
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .alert-backdrop.active {
+            display: block;
+        }
+        
+        .alert-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .alert-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .alert-icon.success {
+            background: #10b98120;
+            color: #10b981;
+        }
+        
+        .alert-icon.error {
+            background: #ef444420;
+            color: #ef4444;
+        }
+        
+        .alert-icon.warning {
+            background: #f59e0b20;
+            color: #f59e0b;
+        }
+        
+        .alert-icon.info {
+            background: #3b82f620;
+            color: #3b82f6;
+        }
+        
+        .alert-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        
+        .alert-message {
+            color: #4b5563;
+            margin-bottom: 2rem;
+            line-height: 1.5;
+        }
+        
+        .alert-button {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .alert-button.success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .alert-button.success:hover {
+            background: #059669;
+        }
+        
+        .alert-button.error {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .alert-button.error:hover {
+            background: #dc2626;
+        }
+        
+        .alert-button.info {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .alert-button.info:hover {
+            background: #2563eb;
+        }
+        
+        /* Settings Cards */
+        .settings-section {
+            background: #f8fafc;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border-left: 4px solid #6366f1;
+        }
+        
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .settings-card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+        }
+        
+        .settings-card h4 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            color: #1e293b;
+        }
+        
+        .settings-card h4 i {
+            color: #6366f1;
+        }
+        
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px dashed #e2e8f0;
+        }
+        
+        .settings-row:last-child {
+            border-bottom: none;
+        }
+        
+        .settings-label {
+            color: #64748b;
+            font-weight: 500;
+        }
+        
+        .settings-value {
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        .settings-value.highlight {
+            color: #10b981;
+        }
+        
+        .settings-input {
+            width: 120px;
+            padding: 0.5rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 40px;
+            text-align: right;
+            font-size: 0.9rem;
+        }
+        
+        .settings-input:focus {
+            border-color: #6366f1;
+            outline: none;
+        }
+        
+        .currency-symbol {
+            position: relative;
+        }
+        
+        .currency-symbol:before {
+            content: '$';
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+        }
+        
+        .currency-symbol input {
+            padding-left: 25px;
+        }
+        
+        /* Fee Breakdown Preview */
+        .fee-preview {
+            background: #f1f5f9;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .fee-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px dashed #cbd5e1;
+        }
+        
+        .fee-row:last-child {
+            border-bottom: none;
+        }
+        
+        .fee-total {
+            font-weight: 700;
+            color: #10b981;
+        }
+        
+        /* Membership Package Cards */
+        .packages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .package-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            border: 2px solid #e2e8f0;
+            position: relative;
+        }
+        
+        .package-card.basic { border-color: #94a3b8; }
+        .package-card.premium { border-color: #6366f1; }
+        .package-card.elite { border-color: #f59e0b; }
+        
+        .package-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .package-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .package-price {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #6366f1;
+        }
+        
+        .package-price small {
+            font-size: 0.9rem;
+            font-weight: 400;
+            color: #64748b;
+        }
+        
+        .package-features {
+            margin: 1rem 0;
+            padding: 0;
+            list-style: none;
+        }
+        
+        .package-features li {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        
+        .package-features li:last-child {
+            border-bottom: none;
+        }
+        
+        .package-features .fa-check-circle {
+            color: #10b981;
+        }
+        
+        .package-features .fa-times-circle {
+            color: #ef4444;
+        }
+        
+        .feature-highlight {
+            color: #10b981;
+            font-weight: 600;
+        }
+        
+        .package-badge {
+            position: absolute;
+            top: 1rem;
+            right: -1rem;
+            background: #10b981;
+            color: white;
+            padding: 0.2rem 2rem;
+            transform: rotate(45deg);
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .package-badge.popular {
+            background: #6366f1;
+        }
+        
+        .package-badge.best-value {
+            background: #f59e0b;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .feature-item input[type="text"] {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        
+        .feature-item input[type="checkbox"] {
+            width: auto;
+            margin-bottom: 0;
+        }
+        
+        .feature-controls {
+            display: flex;
+            gap: 0.3rem;
+        }
+        
+        /* Withdrawal History Stats */
+        .stats-mini-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .stats-mini-card {
+            background: #f8fafc;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            text-align: center;
+        }
+        
+        .stats-mini-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #6366f1;
+        }
+        
+        .stats-mini-label {
+            color: #64748b;
+            font-size: 0.8rem;
+            margin-top: 0.3rem;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -60%);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        /* Enhanced Referral Cards */
+        .referral-card {
+            background: #f8fafc;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
+            transition: transform 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .referral-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .referral-card.pending {
+            border-left-color: #f59e0b;
+            background: linear-gradient(to right, #fff7ed, #ffffff);
+        }
+        
+        .referral-card.completed {
+            border-left-color: #10b981;
+            background: linear-gradient(to right, #f0fdf4, #ffffff);
+        }
+        
+        .referral-card.rejected {
+            border-left-color: #ef4444;
+            background: linear-gradient(to right, #fef2f2, #ffffff);
+        }
+        
+        .referral-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .referral-badges {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .referral-amount {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #10b981;
+            background: #10b98120;
+            padding: 0.3rem 1rem;
+            border-radius: 40px;
+        }
+        
+        /* User Info Cards */
+        .user-info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .user-info-card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            border: 1px solid #e2e8f0;
+        }
+        
+        .user-info-card.referrer {
+            border-top: 3px solid #6366f1;
+        }
+        
+        .user-info-card.referred {
+            border-top: 3px solid #10b981;
+        }
+        
+        .user-info-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            color: #1e293b;
+        }
+        
+        .user-info-header i {
+            font-size: 1.2rem;
+        }
+        
+        .user-info-header.referrer i {
+            color: #6366f1;
+        }
+        
+        .user-info-header.referred i {
+            color: #10b981;
+        }
+        
+        .user-detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px dashed #e2e8f0;
+        }
+        
+        .user-detail-row:last-child {
+            border-bottom: none;
+        }
+        
+        .user-detail-label {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+        
+        .user-detail-value {
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        .user-detail-value.highlight {
+            color: #10b981;
+        }
+        
+        /* Membership Status */
+        .membership-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.2rem 0.8rem;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .membership-status.basic {
+            background: #94a3b820;
+            color: #475569;
+        }
+        
+        .membership-status.premium {
+            background: #6366f120;
+            color: #6366f1;
+        }
+        
+        .membership-status.elite {
+            background: #f59e0b20;
+            color: #f59e0b;
+        }
+        
+        /* Timeline */
+        .referral-timeline {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: #f1f5f9;
+            border-radius: 0.75rem;
+        }
+        
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.5rem 0;
+        }
+        
+        .timeline-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #94a3b8;
+        }
+        
+        .timeline-dot.completed {
+            background: #10b981;
+        }
+        
+        .timeline-dot.pending {
+            background: #f59e0b;
+        }
+        
+        .timeline-content {
+            flex: 1;
+            display: flex;
+            justify-content: space-between;
+            color: #475569;
+        }
+        
+        /* Action Buttons */
+        .referral-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e2e8f0;
+            flex-wrap: wrap;
+        }
+        
+        .action-btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 0.7rem;
+            border: none;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.3rem;
+        }
+        
+        .action-btn.approve {
+            background: #10b981;
+            color: white;
+        }
+        
+        .action-btn.approve:hover {
+            background: #059669;
+        }
+        
+        .action-btn.reject {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .action-btn.reject:hover {
+            background: #dc2626;
+        }
+        
+        .action-btn.view {
+            background: #6366f1;
+            color: white;
+        }
+        
+        .action-btn.view:hover {
+            background: #4f52e0;
+        }
+        
+        /* Stats Cards */
+        .referral-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .referral-stat-card {
+            background: #f8fafc;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            text-align: center;
+        }
+        
+        .referral-stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #6366f1;
+        }
+        
+        .referral-stat-label {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-top: 0.3rem;
+        }
+        
+        .toast { display: none; } /* Hide old toast */
+        
+        input, textarea, select { width: 100%; padding: 0.8rem; border: 2px solid #e2e8f0; border-radius: 40px; margin-bottom: 1rem; font-size: 1rem; }  
+        textarea { border-radius: 20px; min-height: 100px; }  
+        .submission-card { background: #f8fafc; border-radius: 1rem; padding: 1.5rem; margin-bottom: 1rem; }  
+        .flex-row { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }  
+        .action-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; }  
+        .action-buttons button { position: relative; z-index: 1; }  
+        .deadline-badge { background: #fef3c7; color: #92400e; padding: 0.2rem 0.5rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }  
+        .client-badge { background: #e0e7ff; color: #3730a3; padding: 0.2rem 0.5rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }  
+        .task-requirements { background: #f1f5f9; padding: 0.5rem; border-radius: 0.5rem; font-size: 0.9rem; margin: 0.5rem 0; }  
+        .instructions-badge { background: #dbeafe; color: #1e40af; padding: 0.2rem 0.5rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }  
+        
+        @media (max-width: 768px) { 
+            .header { flex-direction: column; gap: 1rem; text-align: center; }
+            .user-info-grid { grid-template-columns: 1fr; }
+            .referral-actions { flex-direction: column; }
+            .action-btn { width: 100%; }
+        }  
+    </style>  
+</head>  
+<body>  
+    <div class="app-container">  
+        <div class="header">  
+            <div class="logo">  
+                <h2>🔷 NextGen Admin</h2>  
+            </div>  
+            <div style="display: flex; align-items: center; gap: 1rem;">  
+                <span id="adminName">Loading...</span>  
+                <span class="admin-badge">Admin</span>  
+                <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>  
+            </div>  
+        </div>  
+        
+        <div class="stats-grid" id="statsGrid"></div>  
+      
+        <div class="tabs">  
+            <button class="tab active" data-tab="users">👥 Users</button>  
+            <button class="tab" data-tab="tasks">📋 Tasks</button>  
+            <button class="tab" data-tab="submissions">📝 Submissions</button>  
+            <button class="tab" data-tab="withdrawals">💰 Withdrawals</button>  
+            <button class="tab" data-tab="memberships">👑 Memberships</button>  
+            <button class="tab" data-tab="referrals">🤝 Referrals</button>  
+            <button class="tab" data-tab="messages">💬 Messages</button>  
+            <button class="tab" data-tab="settings">⚙️ Settings</button>  
+        </div>  
+      
+        <div class="content" id="content"></div>  
+    </div>  
+  
+    <!-- Regular Modal -->  
+    <div class="modal-backdrop" id="modalBackdrop"></div>  
+    <div class="modal" id="modal">  
+        <div id="modalContent"></div>  
+        <div class="flex-row" style="justify-content: flex-end; margin-top: 1rem;">  
+            <button class="btn btn-danger" id="closeModalBtn">Close</button>  
+        </div>  
+    </div>  
+  
+    <!-- Alert Modal (replaces toast) -->  
+    <div class="alert-backdrop" id="alertBackdrop"></div>  
+    <div class="alert-modal" id="alertModal">  
+        <div class="alert-header">  
+            <div class="alert-icon" id="alertIcon">  
+                <i class="fas fa-check-circle"></i>  
+            </div>  
+            <div class="alert-title" id="alertTitle">Success</div>  
+        </div>  
+        <div class="alert-message" id="alertMessage">Operation completed successfully</div>  
+        <button class="alert-button" id="alertButton">OK</button>  
+    </div>  
+  
+    <!-- Old toast (hidden) -->  
+    <div class="toast" id="toast"></div>  
+  
+    <script>  
+        // Firebase Config  
+        const firebaseConfig = {  
+            apiKey: "AIzaSyChk2JA68-I5s1D0S10r9WK71LgTNi4hRQ",  
+            authDomain: "nextgen-5fb6f.firebaseapp.com",  
+            projectId: "nextgen-5fb6f",  
+            storageBucket: "nextgen-5fb6f.firebasestorage.app",  
+            messagingSenderId: "100132076455",  
+            appId: "1:100132076455:web:c5aea1f6e1a5ebbea99482"  
+        };  
+          
+        firebase.initializeApp(firebaseConfig);  
+        const auth = firebase.auth();  
+        const db = firebase.firestore();  
+        
+        // Membership constants
+        const MEMBERSHIP_TYPES = {
+            BASIC: 'basic',
+            PREMIUM: 'premium',
+            ELITE: 'elite'
+        };
+        
+        // Default fee settings
+        const DEFAULT_FEE_SETTINGS = {
+            transactionFeePercent: 3,
+            platformFeePercent: 2,
+            minimumWithdrawal: 5,
+            withdrawalMethods: ['M-Pesa', 'Airtel Money', 'Bank Transfer'],
+            exchangeRate: 130, // USD to KES
+            maxWithdrawalPerDay: 1000,
+            maxWithdrawalPerMonth: 5000
+        };
+        
+        // Default membership packages (fallback if not set in Firestore)
+        const DEFAULT_MEMBERSHIP_PACKAGES = {
+            basic: {
+                name: 'BASIC',
+                price: 0,
+                duration: 'lifetime',
+                features: [
+                    { text: 'Access to all tasks', included: true, icon: 'fa-check-circle' },
+                    { text: 'Withdrawals', included: false, icon: 'fa-times-circle' },
+                    { text: 'Welcome bonus', included: false, icon: 'fa-times-circle' },
+                    { text: 'Standard support', included: true, icon: 'fa-check-circle' },
+                    { text: 'Task submissions', included: true, icon: 'fa-check-circle' }
+                ],
+                color: '#94a3b8',
+                buttonClass: 'basic',
+                badge: null
+            },
+            premium: {
+                name: 'PREMIUM',
+                price: 3,
+                duration: 'annual',
+                features: [
+                    { text: 'Access to all tasks', included: true, icon: 'fa-check-circle' },
+                    { text: 'Withdrawals enabled', included: true, icon: 'fa-check-circle', highlight: true },
+                    { text: 'Priority support', included: true, icon: 'fa-star' },
+                    { text: 'Higher earning potential', included: true, icon: 'fa-chart-line' },
+                    { text: 'Premium badge', included: true, icon: 'fa-gem' }
+                ],
+                color: '#6366f1',
+                buttonClass: 'premium',
+                badge: 'popular'
+            },
+            elite: {
+                name: 'ELITE',
+                price: 6,
+                duration: 'lifetime',
+                welcomeBonus: 10,
+                features: [
+                    { text: 'Access to all tasks', included: true, icon: 'fa-check-circle' },
+                    { text: 'Withdrawals enabled', included: true, icon: 'fa-check-circle', highlight: true },
+                    { text: 'Welcome bonus', included: true, icon: 'fa-gift', highlight: true, bonus: true },
+                    { text: 'VIP support 24/7', included: true, icon: 'fa-star' },
+                    { text: 'Elite status & perks', included: true, icon: 'fa-trophy' },
+                    { text: 'Reduced fees (coming soon)', included: true, icon: 'fa-percent' }
+                ],
+                color: '#f59e0b',
+                buttonClass: 'elite',
+                badge: 'best-value'
+            }
+        };
+        
+        // Global variables
+        let currentUser = null;  
+        let currentTab = 'users';  
+        let currentMessageType = 'individual';
+        let membershipPackages = null;
+        let feeSettings = null;
+        
+        // Referral constants  
+        const REFERRAL_BONUS_REFERRER = 2; // $2 for referrer  
+        const REFERRAL_BONUS_REFERRED = 0.5; // $0.5 for referred  
+        const ELITE_BONUS = 10; // $10 welcome bonus for Elite
+        
+        // Check auth state  
+        auth.onAuthStateChanged(async (user) => {  
+            if (!user) {  
+                window.location.href = 'index.html';  
+                return;  
+            }  
+              
+            const doc = await db.collection('users').doc(user.uid).get();  
+            if (!doc.exists || doc.data().role !== 'admin') {  
+                auth.signOut();  
+                window.location.href = 'index.html';  
+                return;  
+            }  
+              
+            if (doc.data().active === false) {  
+                auth.signOut();  
+                window.location.href = 'index.html';  
+                return;  
+            }  
+              
+            currentUser = user;  
+            document.getElementById('adminName').textContent = doc.data().displayName;  
+            
+            // Load settings
+            await loadMembershipPackages();
+            await loadFeeSettings();
+              
+            loadDashboard();  
+        });  
+        
+        // Load membership packages from Firestore
+        async function loadMembershipPackages() {
+            try {
+                const doc = await db.collection('settings').doc('membershipPackages').get();
+                
+                if (doc.exists) {
+                    membershipPackages = doc.data();
+                    console.log('Loaded membership packages from Firestore:', membershipPackages);
+                } else {
+                    // Initialize with defaults if not exists
+                    membershipPackages = DEFAULT_MEMBERSHIP_PACKAGES;
+                    
+                    // Create default packages in Firestore
+                    await db.collection('settings').doc('membershipPackages').set(DEFAULT_MEMBERSHIP_PACKAGES);
+                    console.log('Created default membership packages in Firestore');
+                }
+            } catch (error) {
+                console.error('Error loading membership packages:', error);
+                membershipPackages = DEFAULT_MEMBERSHIP_PACKAGES;
+            }
+            
+            return membershipPackages;
+        }
+        
+        // Save membership packages to Firestore
+        async function saveMembershipPackages(packages) {
+            try {
+                await db.collection('settings').doc('membershipPackages').set(packages);
+                membershipPackages = packages;
+                showAlert('Membership packages updated successfully!', 'success');
+                return true;
+            } catch (error) {
+                console.error('Error saving membership packages:', error);
+                showAlert('Error saving packages: ' + error.message, 'error');
+                return false;
+            }
+        }
+        
+        // Load fee settings from Firestore
+        async function loadFeeSettings() {
+            try {
+                const doc = await db.collection('settings').doc('feeSettings').get();
+                
+                if (doc.exists) {
+                    feeSettings = doc.data();
+                    console.log('Loaded fee settings from Firestore:', feeSettings);
+                } else {
+                    // Initialize with defaults if not exists
+                    feeSettings = DEFAULT_FEE_SETTINGS;
+                    
+                    // Create default settings in Firestore
+                    await db.collection('settings').doc('feeSettings').set(DEFAULT_FEE_SETTINGS);
+                    console.log('Created default fee settings in Firestore');
+                }
+            } catch (error) {
+                console.error('Error loading fee settings:', error);
+                feeSettings = DEFAULT_FEE_SETTINGS;
+            }
+            
+            return feeSettings;
+        }
+        
+        // Save fee settings to Firestore
+        async function saveFeeSettings(settings) {
+            try {
+                await db.collection('settings').doc('feeSettings').set(settings);
+                feeSettings = settings;
+                showAlert('Fee settings updated successfully!', 'success');
+                return true;
+            } catch (error) {
+                console.error('Error saving fee settings:', error);
+                showAlert('Error saving settings: ' + error.message, 'error');
+                return false;
+            }
+        }
+        
+        // Get package by type
+        function getPackageByType(type) {
+            if (!membershipPackages) return DEFAULT_MEMBERSHIP_PACKAGES[type] || DEFAULT_MEMBERSHIP_PACKAGES.basic;
+            return membershipPackages[type] || DEFAULT_MEMBERSHIP_PACKAGES[type] || DEFAULT_MEMBERSHIP_PACKAGES.basic;
+        }
+        
+        // Get welcome bonus amount
+        function getWelcomeBonus(type) {
+            if (type !== MEMBERSHIP_TYPES.ELITE) return 0;
+            const pkg = getPackageByType(type);
+            return pkg.welcomeBonus || ELITE_BONUS;
+        }
+          
+        // Alert Modal Function  
+        function showAlert(message, type = 'success', title = '') {  
+            const alertModal = document.getElementById('alertModal');  
+            const alertBackdrop = document.getElementById('alertBackdrop');  
+            const alertIcon = document.getElementById('alertIcon');  
+            const alertTitle = document.getElementById('alertTitle');  
+            const alertMessage = document.getElementById('alertMessage');  
+            const alertButton = document.getElementById('alertButton');  
+            
+            // Set icon based on type
+            let iconHtml = '';
+            let buttonClass = 'success';
+            let defaultTitle = '';
+            
+            switch(type) {
+                case 'success':
+                    iconHtml = '<i class="fas fa-check-circle"></i>';
+                    defaultTitle = 'Success';
+                    buttonClass = 'success';
+                    break;
+                case 'error':
+                    iconHtml = '<i class="fas fa-exclamation-circle"></i>';
+                    defaultTitle = 'Error';
+                    buttonClass = 'error';
+                    break;
+                case 'warning':
+                    iconHtml = '<i class="fas fa-exclamation-triangle"></i>';
+                    defaultTitle = 'Warning';
+                    buttonClass = 'warning';
+                    break;
+                case 'info':
+                    iconHtml = '<i class="fas fa-info-circle"></i>';
+                    defaultTitle = 'Information';
+                    buttonClass = 'info';
+                    break;
+                default:
+                    iconHtml = '<i class="fas fa-check-circle"></i>';
+                    defaultTitle = 'Success';
+                    buttonClass = 'success';
+            }
+            
+            // Update modal content
+            alertIcon.className = `alert-icon ${type}`;
+            alertIcon.innerHTML = iconHtml;
+            alertTitle.textContent = title || defaultTitle;
+            alertMessage.textContent = message;
+            alertButton.className = `alert-button ${buttonClass}`;
+            alertButton.textContent = 'OK';
+            
+            // Show modal
+            alertModal.classList.add('active');
+            alertBackdrop.classList.add('active');
+            
+            // Handle button click
+            alertButton.onclick = () => {
+                alertModal.classList.remove('active');
+                alertBackdrop.classList.remove('active');
+            };
+            
+            // Close on backdrop click
+            alertBackdrop.onclick = () => {
+                alertModal.classList.remove('active');
+                alertBackdrop.classList.remove('active');
+            };
+        }
+        
+        // Modal functions  
+        function showModal(html) {  
+            document.getElementById('modalContent').innerHTML = html;  
+            document.getElementById('modal').classList.add('active');  
+            document.getElementById('modalBackdrop').classList.add('active');  
+        }  
+          
+        function closeModal() {  
+            document.getElementById('modal').classList.remove('active');  
+            document.getElementById('modalBackdrop').classList.remove('active');  
+        }  
+          
+        // Format date for display  
+        function formatDate(date) {  
+            if (!date) return 'N/A';  
+            if (date.toDate) date = date.toDate();  
+            return new Date(date).toLocaleDateString('en-US', {  
+                year: 'numeric',  
+                month: 'short',  
+                day: 'numeric',  
+                hour: '2-digit',  
+                minute: '2-digit'  
+            });  
+        }  
+          
+        // Format currency  
+        function formatCurrency(amount) {  
+            return new Intl.NumberFormat('en-US', {  
+                style: 'currency',  
+                currency: 'USD',  
+                minimumFractionDigits: 2  
+            }).format(amount || 0);  
+        }  
+          
+        // Check if deadline is approaching  
+        function getDeadlineStatus(deadline) {  
+            if (!deadline) return null;  
+            const deadlineDate = deadline.toDate ? deadline.toDate() : new Date(deadline);  
+            const now = new Date();  
+            const daysLeft = Math.ceil((deadlineDate - now) / (1000 * 60 * 60 * 24));  
+              
+            if (daysLeft < 0) return { class: 'danger', text: 'Overdue' };  
+            if (daysLeft <= 2) return { class: 'warning', text: `${daysLeft} day${daysLeft === 1 ? '' : 's'} left` };  
+            return { class: 'success', text: `${daysLeft} days left` };  
+        }  
+          
+        // Logout function  
+        function logout() {  
+            auth.signOut();  
+            window.location.href = 'index.html';  
+        }  
+          
+        // Tab switching function  
+        function switchTab(tab) {  
+            currentTab = tab;  
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));  
+            document.querySelector(`[data-tab="${tab}"]`).classList.add('active');  
+              
+            switch(tab) {  
+                case 'users': loadUsers(); break;  
+                case 'tasks': loadTasks(); break;  
+                case 'submissions': loadSubmissions(); break;  
+                case 'withdrawals': loadWithdrawals(); break;  
+                case 'memberships': loadMemberships(); break;  
+                case 'referrals': loadReferrals(); break;  
+                case 'messages': loadMessages(); break;  
+                case 'settings': loadSettings(); break;  
+            }  
+        }  
+          
+        // Load Dashboard Stats  
+        async function loadDashboard() {  
+            const usersSnapshot = await db.collection('users').get();  
+            const tasksSnapshot = await db.collection('tasks').get();  
+              
+            const pendingSubs = await db.collection('submissions')  
+                .where('status', '==', 'pending')  
+                .get();  
+              
+            const pendingWithdrawals = await db.collection('withdrawals')  
+                .where('status', '==', 'pending')  
+                .get();  
+                
+            let pendingReferrals = { size: 0 };  
+            try {  
+                pendingReferrals = await db.collection('referrals')  
+                    .where('status', '==', 'pending')  
+                    .get();  
+            } catch (error) {  
+                console.warn('Could not fetch pending referrals:', error);  
+            }  
+              
+            document.getElementById('statsGrid').innerHTML = `  
+                <div class="stat-card">  
+                    <i class="fas fa-users"></i>  
+                    <div class="stat-value">${usersSnapshot.size}</div>  
+                    <div class="stat-label">Total Users</div>  
+                </div>  
+                <div class="stat-card">  
+                    <i class="fas fa-tasks"></i>  
+                    <div class="stat-value">${tasksSnapshot.size}</div>  
+                    <div class="stat-label">Tasks</div>  
+                </div>  
+                <div class="stat-card">  
+                    <i class="fas fa-clock"></i>  
+                    <div class="stat-value">${pendingSubs.size}</div>  
+                    <div class="stat-label">Pending Reviews</div>  
+                </div>  
+                <div class="stat-card">  
+                    <i class="fas fa-money-bill"></i>  
+                    <div class="stat-value">${pendingWithdrawals.size}</div>  
+                    <div class="stat-label">Pending Withdrawals</div>  
+                </div>  
+                <div class="stat-card">  
+                    <i class="fas fa-users"></i>  
+                    <div class="stat-value">${pendingReferrals.size}</div>  
+                    <div class="stat-label">Pending Referrals</div>  
+                </div>  
+            `;  
+              
+            loadUsers();  
+        }  
+          
+        // Load Users - Modified to show referral info  
+        async function loadUsers() {  
+            const snapshot = await db.collection('users').orderBy('createdAt', 'desc').get();  
+              
+            let html = '<h3 style="margin-bottom:1.5rem;">User Management</h3>';  
+            html += '<table class="data-table">';  
+            html += '<tr><th>Email</th><th>Name</th><th>Wallet</th><th>Referrals</th><th>Referral Earnings</th><th>Membership</th><th>Role</th><th>Status</th><th>Actions</th></tr>';  
+              
+            snapshot.forEach(doc => {  
+                const user = doc.data();  
+                const membershipClass = user.membershipType === 'elite' ? 'warning' : user.membershipType === 'premium' ? 'primary' : 'info';  
+                html += `  
+                    <tr>  
+                        <td>${user.email}</td>  
+                        <td>${user.displayName}</td>  
+                        <td>$${user.wallet || 0}</td>  
+                        <td><span class="badge primary">${user.totalReferrals || 0}</span></td>  
+                        <td>$${user.referralEarnings || 0}</td>  
+                        <td><span class="badge ${membershipClass}">${(user.membershipType || 'basic').toUpperCase()}</span></td>  
+                        <td>${user.role}</td>  
+                        <td><span class="badge ${user.active ? 'success' : 'danger'}">${user.active ? 'Active' : 'Inactive'}</span></td>  
+                        <td class="action-buttons">  
+                            <button class="btn btn-primary toggle-status-btn" data-user-id="${doc.id}" data-new-status="${!user.active}">${user.active ? 'Deactivate' : 'Activate'}</button>  
+                            <button class="btn btn-success adjust-wallet-btn" data-user-id="${doc.id}" data-user-name="${user.displayName}" data-wallet="${user.wallet || 0}">Adjust Wallet</button>  
+                            ${user.role !== 'admin' ? `<button class="btn btn-warning make-admin-btn" data-user-id="${doc.id}">Make Admin</button>` : ''}  
+                        </td>  
+                    </tr>  
+                `;  
+            });  
+              
+            html += '</table>';  
+            document.getElementById('content').innerHTML = html;  
+        }  
+          
+        // Toggle User Status  
+        async function toggleUserStatus(userId, newStatus) {  
+            await db.collection('users').doc(userId).update({ active: newStatus });  
+            showAlert(`User status updated to ${newStatus ? 'Active' : 'Inactive'}`, 'success');  
+            loadUsers();  
+        }  
+          
+        // Make Admin  
+        async function makeAdmin(userId) {  
+            await db.collection('users').doc(userId).update({ role: 'admin' });  
+            showAlert('User is now an admin', 'success');  
+            loadUsers();  
+        }  
+          
+        // Show Adjust Wallet Modal  
+        function showAdjustWallet(userId, userName, currentWallet) {  
+            showModal(`  
+                <h3 style="margin-bottom:1rem;">Adjust Wallet - ${userName}</h3>  
+                <p>Current Balance: $${currentWallet}</p>  
+                <input type="number" id="adjustAmount" placeholder="Amount" step="0.01" min="0">  
+                <select id="adjustType">  
+                    <option value="add">Add Funds</option>  
+                    <option value="subtract">Subtract Funds</option>  
+                </select>  
+                <textarea id="adjustReason" placeholder="Reason for adjustment (required)"></textarea>  
+                <button class="btn btn-primary apply-adjustment-btn" data-user-id="${userId}" style="width:100%;">Apply</button>  
+            `);  
+        }  
+          
+        // Adjust Wallet  
+        async function adjustWallet(userId) {  
+            const amount = parseFloat(document.getElementById('adjustAmount')?.value);  
+            const type = document.getElementById('adjustType')?.value;  
+            const reason = document.getElementById('adjustReason')?.value;  
+              
+            if (!amount || amount <= 0) {  
+                showAlert('Please enter a valid amount greater than 0', 'error');  
+                return;  
+            }  
+              
+            if (!reason || reason.trim() === '') {  
+                showAlert('Please enter a reason for the adjustment', 'error');  
+                return;  
+            }  
+              
+            if (!userId) {  
+                showAlert('User ID is missing', 'error');  
+                return;  
+            }  
+              
+            const adjustment = type === 'add' ? amount : -amount;  
+              
+            try {  
+                await db.collection('users').doc(userId).update({  
+                    wallet: firebase.firestore.FieldValue.increment(adjustment)  
+                });  
+                  
+                await db.collection('walletAdjustments').add({  
+                    userId,  
+                    adjustedBy: currentUser.uid,  
+                    amount: adjustment,  
+                    reason: reason.trim(),  
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()  
+                });  
+                  
+                closeModal();  
+                showAlert(`Wallet adjusted by $${amount.toFixed(2)}`, 'success');  
+                loadUsers();  
+            } catch (error) {  
+                console.error('Error adjusting wallet:', error);  
+                showAlert('Error adjusting wallet: ' + error.message, 'error');  
+            }  
+        }  
+          
+        // Load Tasks  
+        async function loadTasks() {  
+            const snapshot = await db.collection('tasks').orderBy('createdAt', 'desc').get();  
+              
+            let html = `  
+                <div style="display:flex; justify-content:space-between; margin-bottom:1.5rem;">  
+                    <h3>Task Management</h3>  
+                    <button class="btn btn-primary" id="createTaskBtn">+ New Task</button>  
+                </div>  
+                <table class="data-table">  
+                <tr><th>Title</th><th>Client</th><th>Reward</th><th>Deadline</th><th>Category</th><th>Difficulty</th><th>Status</th><th>Actions</th></tr>  
+            `;  
+              
+            snapshot.forEach(doc => {  
+                const task = doc.data();  
+                const deadlineStatus = task.deadline ? getDeadlineStatus(task.deadline) : null;  
+                const deadlineDisplay = task.deadline ? formatDate(task.deadline) : 'No deadline';  
+                  
+                html += `  
+                    <tr>  
+                        <td>${task.title}</td>  
+                        <td><span class="client-badge">${task.clientName || 'NextGen'}</span></td>  
+                        <td>$${task.reward}</td>  
+                        <td>  
+                            <span class="deadline-badge">${deadlineDisplay}</span>  
+                            ${deadlineStatus ? `<br><small class="badge ${deadlineStatus.class}">${deadlineStatus.text}</small>` : ''}  
+                        </td>  
+                        <td>${task.category}</td>  
+                        <td>${task.difficulty}</td>  
+                        <td><span class="badge ${task.active ? 'success' : 'danger'}">${task.active ? 'Active' : 'Inactive'}</span></td>  
+                        <td class="action-buttons">  
+                            <button class="btn btn-primary edit-task-btn" data-task-id="${doc.id}">Edit</button>  
+                            <button class="btn btn-info view-requirements-btn" data-task-id="${doc.id}">View Details</button>  
+                            <button class="btn btn-warning toggle-task-btn" data-task-id="${doc.id}" data-new-status="${!task.active}">${task.active ? 'Deactivate' : 'Activate'}</button>  
+                        </td>  
+                    </tr>  
+                `;  
+            });  
+              
+            html += '</table>';  
+            document.getElementById('content').innerHTML = html;  
+        }  
+          
+        // Show Create Task Modal  
+        function showCreateTask() {  
+            showModal(`  
+                <h3 style="margin-bottom:1rem;">Create New Task</h3>  
+                <input type="text" id="taskTitle" placeholder="Task Title" required>  
+                <textarea id="taskDescription" placeholder="Task Description" required></textarea>  
+                  
+                <h4 style="margin: 1rem 0 0.5rem;">Client Information</h4>  
+                <input type="text" id="taskClientName" placeholder="Client Name (e.g., NextGen, Client ABC)" value="NextGen">  
+                  
+                <h4 style="margin: 1rem 0 0.5rem;">Task Requirements</h4>  
+                <textarea id="taskRequirements" placeholder="Detailed requirements for this task..." style="min-height: 120px;" required></textarea>  
+                  
+                <h4 style="margin: 1rem 0 0.5rem;">Instructions for Users</h4>  
+                <textarea id="taskInstructions" placeholder="Step-by-step instructions on how to complete this task..." style="min-height: 120px;" required></textarea>  
+                  
+                <h4 style="margin: 1rem 0 0.5rem;">Deadline & Reward</h4>  
+                <input type="date" id="taskDeadline" required>  
+                <input type="number" id="taskReward" placeholder="Reward (USD)" step="0.01" min="0" required>  
+                  
+                <h4 style="margin: 1rem 0 0.5rem;">Task Details</h4>  
+                <select id="taskCategory">  
+                    <option value="writing">Writing</option>  
+                    <option value="design">Design</option>  
+                    <option value="development">Development</option>  
+                    <option value="marketing">Marketing</option>  
+                    <option value="other">Other</option>  
+                </select>  
+                <select id="taskDifficulty">  
+                    <option value="easy">Easy</option>  
+                    <option value="medium">Medium</option>  
+                    <option value="hard">Hard</option>  
+                </select>  
+                <button class="btn btn-primary" id="createTaskConfirmBtn" style="width:100%;">Create Task</button>  
+            `);  
+        }  
+          
+        // Create Task  
+        async function createTask() {  
+            const title = document.getElementById('taskTitle').value;  
+            const description = document.getElementById('taskDescription').value;  
+            const clientName = document.getElementById('taskClientName').value;  
+            const requirements = document.getElementById('taskRequirements').value;  
+            const instructions = document.getElementById('taskInstructions').value;  
+            const deadline = document.getElementById('taskDeadline').value;  
+            const reward = parseFloat(document.getElementById('taskReward').value);  
+            const category = document.getElementById('taskCategory').value;  
+            const difficulty = document.getElementById('taskDifficulty').value;  
+              
+            if (!title || !description || !requirements || !instructions || !deadline || !reward) {  
+                showAlert('Please fill all required fields', 'error');  
+                return;  
+            }  
+              
+            // Convert deadline string to Firestore timestamp  
+            const deadlineDate = new Date(deadline);  
+            deadlineDate.setHours(23, 59, 59, 999); // End of the selected day  
+              
+            await db.collection('tasks').add({  
+                title,  
+                description,  
+                clientName: clientName || 'NextGen',  
+                requirements,  
+                instructions,  
+                deadline: firebase.firestore.Timestamp.fromDate(deadlineDate),  
+                reward,  
+                rewardKES: reward * (feeSettings?.exchangeRate || 130),  
+                category,  
+                difficulty,  
+                active: true,  
+                submissionsCount: 0,  
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()  
+            });  
+              
+            closeModal();  
+            showAlert('Task created successfully', 'success');  
+            loadTasks();  
+        }  
+          
+        // Toggle Task  
+        async function toggleTask(taskId, newStatus) {  
+            await db.collection('tasks').doc(taskId).update({ active: newStatus });  
+            showAlert(`Task ${newStatus ? 'activated' : 'deactivated'}`, 'success');  
+            loadTasks();  
+        }  
+          
+        // Edit Task  
+        async function editTask(taskId) {  
+            const task = await db.collection('tasks').doc(taskId).get();  
+            const data = task.data();  
+              
+            // Format deadline for date input  
+            let deadlineValue = '';  
+            if (data.deadline) {  
+                const deadline = data.deadline.toDate();  
+                const year = deadline.getFullYear();  
+                const month = String(deadline.getMonth() + 1).padStart(2, '0');  
+                const day = String(deadline.getDate()).padStart(2, '0');  
+                deadlineValue = `${year}-${month}-${day}`;  
+            }  
+              
+            showModal(`  
+                <h3 style="margin-bottom:1rem;">Edit Task</h3>  
+                <input type="text" id="editTitle" value="${data.title}" required>  
+                <textarea id="editDescription" required>${data.description}</textarea>  
+                  
+                <h4 style="margin: 1rem 0 0.5rem;">Client Information</h4>  
+                <input type="text" id="editClientName" value="${data.clientName || 'NextGen'}">  
+                  
+                <h4 style="margin: 1rem 0 0.5rem;">Task Requirements</h4>  
+                <textarea id="editRequirements" style="min-height: 120px;" required>${data.requirements || ''}</textarea>  
+                  
+                <h4 style="margin: 1rem 0 0.5rem;">Instructions for Users</h4>  
+                <textarea id="editInstructions" style="min-height: 120px;" required>${data.instructions || ''}</textarea>  
+                  
+                <h4 style="margin: 1rem 0 0.5rem;">Deadline & Reward</h4>  
+                <input type="date" id="editDeadline" value="${deadlineValue}" required>  
+                <input type="number" id="editReward" value="${data.reward}" step="0.01" min="0" required>  
+                  
+                <h4 style="margin: 1rem 0 0.5rem;">Task Details</h4>  
+                <select id="editCategory">  
+                    <option value="writing" ${data.category === 'writing' ? 'selected' : ''}>Writing</option>  
+                    <option value="design" ${data.category === 'design' ? 'selected' : ''}>Design</option>  
+                    <option value="development" ${data.category === 'development' ? 'selected' : ''}>Development</option>  
+                    <option value="marketing" ${data.category === 'marketing' ? 'selected' : ''}>Marketing</option>  
+                    <option value="other" ${data.category === 'other' ? 'selected' : ''}>Other</option>  
+                </select>  
+                <select id="editDifficulty">  
+                    <option value="easy" ${data.difficulty === 'easy' ? 'selected' : ''}>Easy</option>  
+                    <option value="medium" ${data.difficulty === 'medium' ? 'selected' : ''}>Medium</option>  
+                    <option value="hard" ${data.difficulty === 'hard' ? 'selected' : ''}>Hard</option>  
+                </select>  
+                <button class="btn btn-primary" id="updateTaskBtn" data-task-id="${taskId}" style="width:100%;">Update Task</button>  
+            `);  
+        }  
+          
+        // Update Task  
+        async function updateTask(taskId) {  
+            const title = document.getElementById('editTitle').value;  
+            const description = document.getElementById('editDescription').value;  
+            const clientName = document.getElementById('editClientName').value;  
+            const requirements = document.getElementById('editRequirements').value;  
+            const instructions = document.getElementById('editInstructions').value;  
+            const deadline = document.getElementById('editDeadline').value;  
+            const reward = parseFloat(document.getElementById('editReward').value);  
+            const category = document.getElementById('editCategory').value;  
+            const difficulty = document.getElementById('editDifficulty').value;  
+              
+            if (!title || !description || !requirements || !instructions || !deadline || !reward) {  
+                showAlert('Please fill all required fields', 'error');  
+                return;  
+            }  
+              
+            // Convert deadline string to Firestore timestamp  
+            const deadlineDate = new Date(deadline);  
+            deadlineDate.setHours(23, 59, 59, 999);  
+              
+            await db.collection('tasks').doc(taskId).update({  
+                title,  
+                description,  
+                clientName: clientName || 'NextGen',  
+                requirements,  
+                instructions,  
+                deadline: firebase.firestore.Timestamp.fromDate(deadlineDate),  
+                reward,  
+                rewardKES: reward * (feeSettings?.exchangeRate || 130),  
+                category,  
+                difficulty  
+            });  
+              
+            closeModal();  
+            showAlert('Task updated successfully', 'success');  
+            loadTasks();  
+        }  
+          
+        // View Details  
+        async function viewRequirements(taskId) {  
+            const task = await db.collection('tasks').doc(taskId).get();  
+            const data = task.data();  
+              
+            const deadlineStatus = data.deadline ? getDeadlineStatus(data.deadline) : null;  
+            const deadlineDisplay = data.deadline ? formatDate(data.deadline) : 'No deadline';  
+              
+            showModal(`  
+                <h3 style="margin-bottom:1rem;">${data.title}</h3>  
+                  
+                <div style="background: #f8fafc; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">  
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.5rem;">  
+                        <span class="client-badge"><i class="fas fa-building"></i> ${data.clientName || 'NextGen'}</span>  
+                        <span class="deadline-badge"><i class="fas fa-calendar"></i> ${deadlineDisplay}</span>  
+                        ${deadlineStatus ? `<span class="badge ${deadlineStatus.class}">${deadlineStatus.text}</span>` : ''}  
+                    </div>  
+                    <p><strong>Reward:</strong> $${data.reward} (KES ${data.rewardKES})</p>  
+                    <p><strong>Category:</strong> ${data.category} | <strong>Difficulty:</strong> ${data.difficulty}</p>  
+                </div>  
+                  
+                <h4 style="margin: 1rem 0 0.5rem;">📋 Description</h4>  
+                <div style="background: #f1f5f9; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">  
+                    ${data.description}  
+                </div>  
+                  
+                <h4 style="margin: 1rem 0 0.5rem;">📝 Requirements</h4>  
+                <div style="background: #e0e7ff; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; white-space: pre-wrap;">  
+                    ${data.requirements || 'No specific requirements provided.'}  
+                </div>  
+                  
+                <h4 style="margin: 1rem 0 0.5rem;">📌 Instructions</h4>  
+                <div style="background: #dbeafe; padding: 1rem; border-radius: 0.5rem; white-space: pre-wrap;">  
+                    ${data.instructions || 'No instructions provided.'}  
+                </div>  
+            `);  
+        }  
+          
+        // Load Submissions  
+        async function loadSubmissions() {  
+            const snapshot = await db.collection('submissions')  
+                .where('status', '==', 'pending')  
+                .get();  
+              
+            let html = '<h3 style="margin-bottom:1.5rem;">Pending Submissions</h3>';  
+              
+            if (snapshot.empty) {  
+                html += '<p>No pending submissions.</p>';  
+            } else {  
+                for (const doc of snapshot.docs) {  
+                    const sub = doc.data();  
+                      
+                    // Get task details to show requirements and instructions  
+                    let taskRequirements = '';  
+                    let taskInstructions = '';  
+                    let taskDeadline = '';  
+                    let taskClient = '';  
+                    try {  
+                        const taskDoc = await db.collection('tasks').doc(sub.taskId).get();  
+                        if (taskDoc.exists) {  
+                            const task = taskDoc.data();  
+                            taskRequirements = task.requirements || 'No requirements available';  
+                            taskInstructions = task.instructions || 'No instructions available';  
+                            taskDeadline = task.deadline ? formatDate(task.deadline) : 'No deadline';  
+                            taskClient = task.clientName || 'NextGen';  
+                        }  
+                    } catch (e) {  
+                        console.error('Error fetching task:', e);  
+                    }  
+                      
+                    html += `  
+                        <div class="submission-card" data-sub-id="${doc.id}">  
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">  
+                                <h4 style="margin: 0;">${sub.taskTitle}</h4>  
+                                <span class="client-badge"><i class="fas fa-building"></i> ${taskClient}</span>  
+                            </div>  
+                              
+                            <p><strong>User:</strong> ${sub.userEmail}</p>  
+                              
+                            <div style="margin: 1rem 0;">  
+                                <details>  
+                                    <summary style="cursor: pointer; color: #6366f1; font-weight: 600; margin-bottom: 0.5rem;">  
+                                        📋 View Task Requirements & Instructions  
+                                    </summary>  
+                                    <div style="margin-top: 0.5rem;">  
+                                        <p><strong>Requirements:</strong></p>  
+                                        <div style="background: #f1f5f9; padding: 0.5rem; border-radius: 0.5rem; margin-bottom: 0.5rem; font-size: 0.9rem;">  
+                                            ${taskRequirements}  
+                                        </div>  
+                                        <p><strong>Instructions:</strong></p>  
+                                        <div style="background: #dbeafe; padding: 0.5rem; border-radius: 0.5rem; font-size: 0.9rem;">  
+                                            ${taskInstructions}  
+                                        </div>  
+                                        <p style="margin-top: 0.5rem; font-size: 0.8rem; color: #6b7280;">  
+                                            <i class="fas fa-calendar"></i> Deadline: ${taskDeadline}  
+                                        </p>  
+                                    </div>  
+                                </details>  
+                            </div>  
+                              
+                            <div style="background: #fee2e2; padding: 0.75rem; border-radius: 0.5rem; margin: 0.5rem 0;">  
+                                <p style="margin: 0 0 0.25rem 0;"><strong>User's Submission:</strong></p>  
+                                <p style="margin: 0;">${sub.workText}</p>  
+                            </div>  
+                              
+                            <div class="flex-row" style="margin:1rem 0;">  
+                                <input type="number" class="submission-score" placeholder="Score (0-100)" min="0" max="100" style="width:120px;">  
+                                <textarea class="submission-review" placeholder="Feedback (required)" style="flex:1;"></textarea>  
+                            </div>  
+                            <div class="flex-row">  
+                                <button class="btn btn-success approve-submission" data-sub-id="${doc.id}">Approve</button>  
+                                <button class="btn btn-danger reject-submission" data-sub-id="${doc.id}">Reject</button>  
+                            </div>  
+                        </div>  
+                    `;  
+                }  
+            }  
+              
+            document.getElementById('content').innerHTML = html;  
+        }  
+          
+        // Review Submission  
+        async function reviewSubmission(subId, approved) {  
+            const submissionCard = document.querySelector(`[data-sub-id="${subId}"]`);  
+            const score = parseInt(submissionCard.querySelector('.submission-score')?.value || 0);  
+            const review = submissionCard.querySelector('.submission-review')?.value || '';  
+              
+            if (approved && (!score || score < 0 || score > 100)) {  
+                showAlert('Please enter a valid score between 0 and 100', 'error');  
+                return;  
+            }  
+              
+            if (!review || review.trim() === '') {  
+                showAlert('Please provide feedback for the user', 'error');  
+                return;  
+            }  
+              
+            const subDoc = await db.collection('submissions').doc(subId).get();  
+            const sub = subDoc.data();  
+              
+            const taskDoc = await db.collection('tasks').doc(sub.taskId).get();  
+            const task = taskDoc.data();  
+              
+            let earned = 0;  
+            let status = approved ? 'approved' : 'rejected';  
+              
+            if (approved && score >= 50) {  
+                earned = (task.reward * score) / 100;  
+                  
+                await db.collection('users').doc(sub.userId).update({  
+                    wallet: firebase.firestore.FieldValue.increment(earned),  
+                    totalEarned: firebase.firestore.FieldValue.increment(earned),  
+                    tasksCompleted: firebase.firestore.FieldValue.increment(1)  
+                });  
+                showAlert(`Submission approved! User earned $${earned.toFixed(2)}`, 'success');  
+            } else if (approved && score < 50) {  
+                status = 'rejected';  
+                showAlert('Submission rejected (score below 50%)', 'warning');  
+            } else {  
+                showAlert('Submission rejected', 'info');  
+            }  
+              
+            await db.collection('submissions').doc(subId).update({  
+                status,  
+                score: approved ? score : 0,  
+                review,  
+                earned,  
+                reviewedAt: firebase.firestore.FieldValue.serverTimestamp()  
+            });  
+              
+            loadSubmissions();  
+        }  
+          
+        // Load Withdrawals  
+        async function loadWithdrawals() {  
+            const snapshot = await db.collection('withdrawals')  
+                .where('status', '==', 'pending')  
+                .get();  
+              
+            let html = '<h3 style="margin-bottom:1.5rem;">Pending Withdrawals</h3>';  
+              
+            if (snapshot.empty) {  
+                html += '<p>No pending withdrawals.</p>';  
+            } else {  
+                snapshot.forEach(doc => {  
+                    const w = doc.data();  
+                    html += `  
+                        <div class="submission-card">  
+                            <p><strong>User:</strong> ${w.userEmail}</p>  
+                            <p><strong>Amount:</strong> $${w.amount} (KES ${w.amountKES})</p>  
+                            <p><strong>Method:</strong> ${w.method} - ${w.phone}</p>  
+                            <p><strong>Requested:</strong> ${w.requestedAt?.toDate().toLocaleString()}</p>  
+                            <button class="btn btn-success process-withdrawal" data-withdrawal-id="${doc.id}">Mark as Paid</button>  
+                        </div>  
+                    `;  
+                });  
+            }  
+              
+            document.getElementById('content').innerHTML = html;  
+        }  
+          
+        // Process Withdrawal  
+        async function processWithdrawal(withdrawalId) {  
+            await db.collection('withdrawals').doc(withdrawalId).update({  
+                status: 'paid',  
+                paidAt: firebase.firestore.FieldValue.serverTimestamp()  
+            });  
+              
+            showAlert('Withdrawal marked as paid', 'success');  
+            loadWithdrawals();  
+        }  
+        
+        // Show Edit Fee Settings Modal
+        function showEditFeeSettings() {
+            if (!feeSettings) {
+                showAlert('Fee settings not loaded', 'error');
+                return;
+            }
+            
+            const methodsHtml = feeSettings.withdrawalMethods.map((method, index) => `
+                <div class="feature-item">
+                    <input type="text" class="method-input" data-index="${index}" value="${method}" placeholder="Withdrawal method">
+                    <div class="feature-controls">
+                        <button class="btn btn-sm btn-success add-method" data-index="${index + 1}"><i class="fas fa-plus"></i></button>
+                        <button class="btn btn-sm btn-danger remove-method" data-index="${index}" ${feeSettings.withdrawalMethods.length <= 1 ? 'disabled' : ''}><i class="fas fa-minus"></i></button>
+                    </div>
+                </div>
+            `).join('');
+            
+            const totalFeePercent = (feeSettings.transactionFeePercent || 0) + (feeSettings.platformFeePercent || 0);
+            
+            showModal(`
+                <h3 style="margin-bottom:1.5rem;">Withdrawal & Fee Settings</h3>
+                
+                <div class="settings-section">
+                    <h4 style="margin-bottom:1rem;">💰 Fee Configuration</h4>
+                    
+                    <div class="settings-row">
+                        <span class="settings-label">Transaction Fee (%)</span>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="number" id="transactionFeePercent" class="settings-input" value="${feeSettings.transactionFeePercent || 3}" min="0" max="100" step="0.1">
+                            <span>%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-row">
+                        <span class="settings-label">Platform Fee (%)</span>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="number" id="platformFeePercent" class="settings-input" value="${feeSettings.platformFeePercent || 2}" min="0" max="100" step="0.1">
+                            <span>%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-row" style="background: #6366f110; padding: 0.75rem; border-radius: 0.5rem; margin-top: 0.5rem;">
+                        <span class="settings-label" style="font-weight: 600;">Total Fee</span>
+                        <span class="settings-value highlight" id="totalFeeDisplay">${totalFeePercent.toFixed(1)}%</span>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h4 style="margin-bottom:1rem;">💵 Withdrawal Limits</h4>
+                    
+                    <div class="settings-row">
+                        <span class="settings-label">Minimum Withdrawal ($)</span>
+                        <div class="currency-symbol">
+                            <input type="number" id="minimumWithdrawal" class="settings-input" value="${feeSettings.minimumWithdrawal || 5}" min="0" step="0.01">
+                        </div>
+                    </div>
+                    
+                    <div class="settings-row">
+                        <span class="settings-label">Maximum Per Day ($)</span>
+                        <div class="currency-symbol">
+                            <input type="number" id="maxWithdrawalPerDay" class="settings-input" value="${feeSettings.maxWithdrawalPerDay || 1000}" min="0" step="0.01">
+                        </div>
+                    </div>
+                    
+                    <div class="settings-row">
+                        <span class="settings-label">Maximum Per Month ($)</span>
+                        <div class="currency-symbol">
+                            <input type="number" id="maxWithdrawalPerMonth" class="settings-input" value="${feeSettings.maxWithdrawalPerMonth || 5000}" min="0" step="0.01">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h4 style="margin-bottom:1rem;">💱 Exchange Rate</h4>
+                    
+                    <div class="settings-row">
+                        <span class="settings-label">USD to KES Rate</span>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span>1 USD =</span>
+                            <input type="number" id="exchangeRate" class="settings-input" value="${feeSettings.exchangeRate || 130}" min="0" step="0.1">
+                            <span>KES</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h4 style="margin-bottom:1rem;">📱 Withdrawal Methods</h4>
+                    
+                    <div id="methods-list">
+                        ${methodsHtml}
+                    </div>
+                    
+                    <div class="fee-preview">
+                        <h5 style="margin-bottom:0.5rem;">Fee Preview (based on $100)</h5>
+                        <div class="fee-row">
+                            <span>Withdrawal: $100</span>
+                            <span id="previewAmount">$100.00</span>
+                        </div>
+                        <div class="fee-row">
+                            <span>Transaction Fee (${feeSettings.transactionFeePercent || 3}%):</span>
+                            <span id="previewTransactionFee">-$${((feeSettings.transactionFeePercent || 3)).toFixed(2)}</span>
+                        </div>
+                        <div class="fee-row">
+                            <span>Platform Fee (${feeSettings.platformFeePercent || 2}%):</span>
+                            <span id="previewPlatformFee">-$${((feeSettings.platformFeePercent || 2)).toFixed(2)}</span>
+                        </div>
+                        <div class="fee-row fee-total">
+                            <span>User Receives:</span>
+                            <span id="previewNet">$${(100 - (feeSettings.transactionFeePercent || 3) - (feeSettings.platformFeePercent || 2)).toFixed(2)}</span>
+                        </div>
+                        <div class="fee-row">
+                            <span>KES Equivalent:</span>
+                            <span id="previewKES">KES ${((100 - (feeSettings.transactionFeePercent || 3) - (feeSettings.platformFeePercent || 2)) * (feeSettings.exchangeRate || 130)).toFixed(2)}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button class="btn btn-success" id="saveFeeSettingsBtn">Save Settings</button>
+                    <button class="btn btn-danger" onclick="closeModal()">Cancel</button>
+                </div>
+            `);
+            
+            // Add event listeners after modal is shown
+            setTimeout(() => {
+                document.getElementById('transactionFeePercent').addEventListener('input', updateFeePreview);
+                document.getElementById('platformFeePercent').addEventListener('input', updateFeePreview);
+                document.getElementById('exchangeRate').addEventListener('input', updateFeePreview);
+                
+                document.querySelectorAll('.add-method').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const index = parseInt(this.getAttribute('data-index'));
+                        addWithdrawalMethod(index);
+                    });
+                });
+                
+                document.querySelectorAll('.remove-method').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const index = parseInt(this.getAttribute('data-index'));
+                        removeWithdrawalMethod(index);
+                    });
+                });
+                
+                document.getElementById('saveFeeSettingsBtn').addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    await saveFeeSettings();
+                });
+                
+                updateFeePreview();
+            }, 100);
+        }
+        
+        // Update fee preview
+        function updateFeePreview() {
+            const transactionFee = parseFloat(document.getElementById('transactionFeePercent')?.value) || 0;
+            const platformFee = parseFloat(document.getElementById('platformFeePercent')?.value) || 0;
+            const exchangeRate = parseFloat(document.getElementById('exchangeRate')?.value) || 130;
+            const amount = 100; // Example amount
+            
+            const totalFees = transactionFee + platformFee;
+            const netAmount = amount - totalFees;
+            
+            document.getElementById('totalFeeDisplay').textContent = totalFees.toFixed(1) + '%';
+            document.getElementById('previewTransactionFee').textContent = '-$' + transactionFee.toFixed(2);
+            document.getElementById('previewPlatformFee').textContent = '-$' + platformFee.toFixed(2);
+            document.getElementById('previewNet').textContent = '$' + netAmount.toFixed(2);
+            document.getElementById('previewKES').textContent = 'KES ' + (netAmount * exchangeRate).toFixed(2);
+        }
+        
+        // Add withdrawal method
+        function addWithdrawalMethod(index) {
+            const methodsList = document.getElementById('methods-list');
+            const newMethod = document.createElement('div');
+            newMethod.className = 'feature-item';
+            newMethod.innerHTML = `
+                <input type="text" class="method-input" data-index="${index}" value="New Method" placeholder="Withdrawal method">
+                <div class="feature-controls">
+                    <button class="btn btn-sm btn-success add-method" data-index="${index + 1}"><i class="fas fa-plus"></i></button>
+                    <button class="btn btn-sm btn-danger remove-method" data-index="${index}"><i class="fas fa-minus"></i></button>
+                </div>
+            `;
+            
+            const methods = methodsList.children;
+            if (index >= methods.length) {
+                methodsList.appendChild(newMethod);
+            } else {
+                methodsList.insertBefore(newMethod, methods[index]);
+            }
+            
+            reindexMethods();
+            
+            // Add event listeners to new buttons
+            newMethod.querySelector('.add-method').addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const idx = parseInt(this.getAttribute('data-index'));
+                addWithdrawalMethod(idx);
+            });
+            
+            newMethod.querySelector('.remove-method').addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const idx = parseInt(this.getAttribute('data-index'));
+                removeWithdrawalMethod(idx);
+            });
+        }
+        
+        // Remove withdrawal method
+        function removeWithdrawalMethod(index) {
+            const methodsList = document.getElementById('methods-list');
+            if (methodsList.children.length <= 1) {
+                showAlert('Cannot remove last method', 'warning');
+                return;
+            }
+            
+            methodsList.removeChild(methodsList.children[index]);
+            reindexMethods();
+        }
+        
+        // Reindex methods
+        function reindexMethods() {
+            const methodsList = document.getElementById('methods-list');
+            Array.from(methodsList.children).forEach((child, newIndex) => {
+                child.querySelectorAll('[data-index]').forEach(el => {
+                    el.setAttribute('data-index', newIndex);
+                });
+            });
+        }
+        
+        // Save Fee Settings
+        async function saveFeeSettings() {
+            try {
+                const transactionFeePercent = parseFloat(document.getElementById('transactionFeePercent').value) || 3;
+                const platformFeePercent = parseFloat(document.getElementById('platformFeePercent').value) || 2;
+                const minimumWithdrawal = parseFloat(document.getElementById('minimumWithdrawal').value) || 5;
+                const maxWithdrawalPerDay = parseFloat(document.getElementById('maxWithdrawalPerDay').value) || 1000;
+                const maxWithdrawalPerMonth = parseFloat(document.getElementById('maxWithdrawalPerMonth').value) || 5000;
+                const exchangeRate = parseFloat(document.getElementById('exchangeRate').value) || 130;
+                
+                // Collect methods
+                const methods = [];
+                document.querySelectorAll('.method-input').forEach(input => {
+                    const value = input.value.trim();
+                    if (value) {
+                        methods.push(value);
+                    }
+                });
+                
+                if (methods.length === 0) {
+                    showAlert('At least one withdrawal method is required', 'error');
+                    return;
+                }
+                
+                const settings = {
+                    transactionFeePercent,
+                    platformFeePercent,
+                    minimumWithdrawal,
+                    maxWithdrawalPerDay,
+                    maxWithdrawalPerMonth,
+                    exchangeRate,
+                    withdrawalMethods: methods
+                };
+                
+                const success = await saveFeeSettingsToFirestore(settings);
+                if (success) {
+                    closeModal();
+                    loadSettings(); // Refresh the settings tab
+                }
+            } catch (error) {
+                console.error('Error saving fee settings:', error);
+                showAlert('Error saving settings: ' + error.message, 'error');
+            }
+        }
+        
+        // Save fee settings to Firestore (renamed to avoid conflict)
+        async function saveFeeSettingsToFirestore(settings) {
+            try {
+                await db.collection('settings').doc('feeSettings').set(settings);
+                feeSettings = settings;
+                showAlert('Fee settings updated successfully!', 'success');
+                return true;
+            } catch (error) {
+                console.error('Error saving fee settings:', error);
+                showAlert('Error saving settings: ' + error.message, 'error');
+                return false;
+            }
+        }
+        
+        // Show Edit Membership Packages Modal
+        function showEditPackages() {
+            if (!membershipPackages) {
+                showAlert('Membership packages not loaded', 'error');
+                return;
+            }
+            
+            let packagesHtml = `
+                <h3 style="margin-bottom:1.5rem;">Edit Membership Packages</h3>
+                <p style="margin-bottom:1rem; color:#64748b;">Customize the membership packages that users see. Changes will take effect immediately.</p>
+            `;
+            
+            for (const [type, pkg] of Object.entries(membershipPackages)) {
+                const packageClass = type === 'basic' ? 'basic' : type === 'premium' ? 'premium' : 'elite';
+                const featuresHtml = pkg.features.map((feature, index) => `
+                    <div class="feature-item">
+                        <input type="checkbox" class="feature-included" data-type="${type}" data-index="${index}" ${feature.included ? 'checked' : ''}>
+                        <input type="text" class="feature-text" data-type="${type}" data-index="${index}" value="${feature.text}" placeholder="Feature description">
+                        <select class="feature-icon" data-type="${type}" data-index="${index}">
+                            <option value="fa-check-circle" ${feature.icon === 'fa-check-circle' ? 'selected' : ''}>Check</option>
+                            <option value="fa-times-circle" ${feature.icon === 'fa-times-circle' ? 'selected' : ''}>Times</option>
+                            <option value="fa-star" ${feature.icon === 'fa-star' ? 'selected' : ''}>Star</option>
+                            <option value="fa-gem" ${feature.icon === 'fa-gem' ? 'selected' : ''}>Gem</option>
+                            <option value="fa-gift" ${feature.icon === 'fa-gift' ? 'selected' : ''}>Gift</option>
+                            <option value="fa-trophy" ${feature.icon === 'fa-trophy' ? 'selected' : ''}>Trophy</option>
+                            <option value="fa-percent" ${feature.icon === 'fa-percent' ? 'selected' : ''}>Percent</option>
+                            <option value="fa-users" ${feature.icon === 'fa-users' ? 'selected' : ''}>Users</option>
+                            <option value="fa-chart-line" ${feature.icon === 'fa-chart-line' ? 'selected' : ''}>Chart</option>
+                        </select>
+                        <input type="checkbox" class="feature-highlight" data-type="${type}" data-index="${index}" ${feature.highlight ? 'checked' : ''}> <small>Highlight</small>
+                        <div class="feature-controls">
+                            <button class="btn btn-sm btn-success add-feature" data-type="${type}" data-index="${index + 1}"><i class="fas fa-plus"></i></button>
+                            <button class="btn btn-sm btn-danger remove-feature" data-type="${type}" data-index="${index}" ${pkg.features.length <= 1 ? 'disabled' : ''}><i class="fas fa-minus"></i></button>
+                        </div>
+                    </div>
+                `).join('');
+                
+                packagesHtml += `
+                    <div class="package-card ${packageClass}" style="margin-bottom: 2rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h4>${pkg.name} Package</h4>
+                            <span class="badge ${type}">${type.toUpperCase()}</span>
+                        </div>
+                        
+                        <div class="flex-row" style="margin-bottom: 1rem;">
+                            <input type="text" class="package-name-input" data-type="${type}" value="${pkg.name}" placeholder="Package Name" style="flex: 1;">
+                            <input type="number" class="package-price-input" data-type="${type}" value="${pkg.price}" placeholder="Price" step="0.01" min="0" style="width: 100px;">
+                            <select class="package-duration-input" data-type="${type}" style="width: 120px;">
+                                <option value="lifetime" ${pkg.duration === 'lifetime' ? 'selected' : ''}>Lifetime</option>
+                                <option value="annual" ${pkg.duration === 'annual' ? 'selected' : ''}>Annual</option>
+                                <option value="monthly" ${pkg.duration === 'monthly' ? 'selected' : ''}>Monthly</option>
+                            </select>
+                        </div>
+                        
+                        ${type === 'elite' ? `
+                            <div style="margin-bottom: 1rem;">
+                                <label>Welcome Bonus ($):</label>
+                                <input type="number" class="welcome-bonus-input" data-type="${type}" value="${pkg.welcomeBonus || 10}" step="0.01" min="0">
+                            </div>
+                        ` : ''}
+                        
+                        <div style="margin-bottom: 1rem;">
+                            <label>Badge Text (optional):</label>
+                            <input type="text" class="package-badge-input" data-type="${type}" value="${pkg.badge || ''}" placeholder="e.g., popular, best-value">
+                        </div>
+                        
+                        <h5 style="margin-bottom: 0.5rem;">Features:</h5>
+                        <div class="features-list" id="features-${type}">
+                            ${featuresHtml}
+                        </div>
+                        
+                        <div style="margin-top: 1rem;">
+                            <button class="btn btn-sm btn-info add-feature-bottom" data-type="${type}" data-index="${pkg.features.length}">+ Add Feature</button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            packagesHtml += `
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button class="btn btn-success" id="savePackagesBtn">Save All Changes</button>
+                    <button class="btn btn-danger" onclick="closeModal()">Cancel</button>
+                </div>
+            `;
+            
+            showModal(packagesHtml);
+            
+            // Add event listeners for dynamic feature buttons
+            setTimeout(() => {
+                document.querySelectorAll('.add-feature, .add-feature-bottom').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const type = this.getAttribute('data-type');
+                        const index = parseInt(this.getAttribute('data-index'));
+                        addFeature(type, index);
+                    });
+                });
+                
+                document.querySelectorAll('.remove-feature').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const type = this.getAttribute('data-type');
+                        const index = parseInt(this.getAttribute('data-index'));
+                        removeFeature(type, index);
+                    });
+                });
+                
+                document.getElementById('savePackagesBtn').addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    await savePackages();
+                });
+            }, 100);
+        }
+        
+        // Helper function to add a feature
+        function addFeature(type, index) {
+            const featuresList = document.getElementById(`features-${type}`);
+            const newFeature = document.createElement('div');
+            newFeature.className = 'feature-item';
+            newFeature.innerHTML = `
+                <input type="checkbox" class="feature-included" data-type="${type}" data-index="${index}" checked>
+                <input type="text" class="feature-text" data-type="${type}" data-index="${index}" value="New feature" placeholder="Feature description">
+                <select class="feature-icon" data-type="${type}" data-index="${index}">
+                    <option value="fa-check-circle" selected>Check</option>
+                    <option value="fa-times-circle">Times</option>
+                    <option value="fa-star">Star</option>
+                    <option value="fa-gem">Gem</option>
+                    <option value="fa-gift">Gift</option>
+                    <option value="fa-trophy">Trophy</option>
+                    <option value="fa-percent">Percent</option>
+                    <option value="fa-users">Users</option>
+                    <option value="fa-chart-line">Chart</option>
+                </select>
+                <input type="checkbox" class="feature-highlight" data-type="${type}" data-index="${index}"> <small>Highlight</small>
+                <div class="feature-controls">
+                    <button class="btn btn-sm btn-success add-feature" data-type="${type}" data-index="${index + 1}"><i class="fas fa-plus"></i></button>
+                    <button class="btn btn-sm btn-danger remove-feature" data-type="${type}" data-index="${index}"><i class="fas fa-minus"></i></button>
+                </div>
+            `;
+            
+            // Insert at the correct position
+            const features = featuresList.children;
+            if (index >= features.length) {
+                featuresList.appendChild(newFeature);
+            } else {
+                featuresList.insertBefore(newFeature, features[index]);
+            }
+            
+            // Reindex all features
+            reindexFeatures(type);
+            
+            // Add event listeners to new buttons
+            newFeature.querySelector('.add-feature').addEventListener('click', function(e) {
+                e.preventDefault();
+                const t = this.getAttribute('data-type');
+                const idx = parseInt(this.getAttribute('data-index'));
+                addFeature(t, idx);
+            });
+            
+            newFeature.querySelector('.remove-feature').addEventListener('click', function(e) {
+                e.preventDefault();
+                const t = this.getAttribute('data-type');
+                const idx = parseInt(this.getAttribute('data-index'));
+                removeFeature(t, idx);
+            });
+        }
+        
+        // Helper function to remove a feature
+        function removeFeature(type, index) {
+            const featuresList = document.getElementById(`features-${type}`);
+            if (featuresList.children.length <= 1) {
+                showAlert('Cannot remove last feature', 'warning');
+                return;
+            }
+            
+            featuresList.removeChild(featuresList.children[index]);
+            reindexFeatures(type);
+        }
+        
+        // Helper function to reindex features
+        function reindexFeatures(type) {
+            const featuresList = document.getElementById(`features-${type}`);
+            Array.from(featuresList.children).forEach((child, newIndex) => {
+                child.querySelectorAll('[data-index]').forEach(el => {
+                    el.setAttribute('data-index', newIndex);
+                });
+            });
+        }
+        
+        // Save Membership Packages
+        async function savePackages() {
+            try {
+                const updatedPackages = {};
+                
+                for (const type of Object.keys(membershipPackages)) {
+                    const pkg = {
+                        name: document.querySelector(`.package-name-input[data-type="${type}"]`).value,
+                        price: parseFloat(document.querySelector(`.package-price-input[data-type="${type}"]`).value) || 0,
+                        duration: document.querySelector(`.package-duration-input[data-type="${type}"]`).value,
+                        features: [],
+                        color: membershipPackages[type].color,
+                        buttonClass: membershipPackages[type].buttonClass,
+                        badge: document.querySelector(`.package-badge-input[data-type="${type}"]`).value || null
+                    };
+                    
+                    if (type === 'elite') {
+                        pkg.welcomeBonus = parseFloat(document.querySelector(`.welcome-bonus-input[data-type="${type}"]`).value) || 10;
+                    }
+                    
+                    // Collect features
+                    const featureItems = document.querySelectorAll(`#features-${type} .feature-item`);
+                    featureItems.forEach(item => {
+                        const included = item.querySelector('.feature-included').checked;
+                        const text = item.querySelector('.feature-text').value;
+                        const icon = item.querySelector('.feature-icon').value;
+                        const highlight = item.querySelector('.feature-highlight')?.checked || false;
+                        
+                        if (text.trim()) {
+                            const feature = { text: text.trim(), included, icon };
+                            if (highlight) feature.highlight = true;
+                            pkg.features.push(feature);
+                        }
+                    });
+                    
+                    updatedPackages[type] = pkg;
+                }
+                
+                const success = await saveMembershipPackages(updatedPackages);
+                if (success) {
+                    closeModal();
+                    loadMemberships();
+                }
+            } catch (error) {
+                console.error('Error saving packages:', error);
+                showAlert('Error saving packages: ' + error.message, 'error');
+            }
+        }
+        
+        // Load Memberships with package management
+        async function loadMemberships() {  
+            // Get pending payments
+            const snapshot = await db.collection('membershipPayments')  
+                .where('status', '==', 'pending')  
+                .get();  
+            
+            let html = `  
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">  
+                    <h3>Membership Management</h3>  
+                    <button class="btn btn-primary" onclick="showEditPackages()">✏️ Edit Packages</button>  
+                </div>  
+                
+                <!-- Current Package Preview -->
+                <h4 style="margin: 2rem 0 1rem 0;">Current Package Configuration</h4>  
+                <div class="packages-grid">  
+            `;  
+            
+            // Show current packages
+            for (const [type, pkg] of Object.entries(membershipPackages)) {  
+                const packageClass = type === 'basic' ? 'basic' : type === 'premium' ? 'premium' : 'elite';  
+                
+                let featuresHtml = '';  
+                pkg.features.forEach(feature => {  
+                    const iconClass = feature.included ?   
+                        (feature.icon || 'fa-check-circle') : 'fa-times-circle';  
+                    const iconColor = feature.included ?   
+                        (feature.highlight ? 'feature-highlight' : '') : '';  
+                    
+                    featuresHtml += `  
+                        <li>  
+                            <i class="fas ${iconClass} ${iconColor}"></i>  
+                            <span ${feature.highlight ? 'class="feature-highlight"' : ''}>  
+                                ${feature.text}  
+                                ${feature.bonus && pkg.welcomeBonus ?   
+                                    ` <strong>$${pkg.welcomeBonus}</strong>` : ''}  
+                            </span>  
+                        </li>  
+                    `;  
+                });  
+                
+                html += `  
+                    <div class="package-card ${packageClass}">  
+                        ${pkg.badge ? `<div class="package-badge ${pkg.badge}">${pkg.badge.toUpperCase()}</div>` : ''}  
+                        <div class="package-header">  
+                            <div class="package-name">${pkg.name}</div>  
+                            <div class="package-price">  
+                                ${pkg.price === 0 ? 'FREE' : '$' + pkg.price}   
+                                <small>${pkg.duration}</small>  
+                            </div>  
+                        </div>  
+                        <ul class="package-features">  
+                            ${featuresHtml}  
+                        </ul>  
+                    </div>  
+                `;  
+            }  
+            
+            html += '</div>';  
+            
+            // Pending payments section  
+            html += '<h4 style="margin: 2rem 0 1rem 0;">Pending Membership Payments</h4>';  
+              
+            if (snapshot.empty) {  
+                html += '<p>No pending memberships.</p>';  
+            } else {  
+                snapshot.forEach(doc => {  
+                    const p = doc.data();  
+                    const pkg = getPackageByType(p.membershipType || 'premium');  
+                    
+                    html += `  
+                        <div class="submission-card">  
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">  
+                                <h4 style="margin:0;">${pkg.name} Upgrade Request</h4>  
+                                <span class="badge warning">PENDING</span>  
+                            </div>  
+                            <p><strong>User:</strong> ${p.userEmail}</p>  
+                            <p><strong>Membership:</strong> ${pkg.name}</p>  
+                            <p><strong>Transaction ID:</strong> ${p.transactionCode}</p>  
+                            <p><strong>Amount:</strong> $${p.amount}</p>  
+                            <p><strong>Submitted:</strong> ${p.submittedAt?.toDate().toLocaleString()}</p>  
+                            <div class="flex-row">  
+                                <button class="btn btn-success approve-membership" data-user-id="${p.userId}" data-payment-id="${doc.id}">Approve</button>  
+                                <button class="btn btn-danger reject-membership" data-user-id="${p.userId}" data-payment-id="${doc.id}">Reject</button>  
+                            </div>  
+                        </div>  
+                    `;  
+                });  
+            }  
+              
+            document.getElementById('content').innerHTML = html;  
+        }  
+        
+        // Approve Membership with dynamic package benefits
+        async function approveMembership(userId, paymentId) {
+            try {
+                // Get payment details to know which membership was purchased
+                const paymentDoc = await db.collection('membershipPayments').doc(paymentId).get();
+                if (!paymentDoc.exists) {
+                    showAlert('Payment record not found', 'error');
+                    return;
+                }
+                const payment = paymentDoc.data();
+                const membershipType = payment.membershipType || 'premium';
+                
+                // Get package details
+                const pkg = getPackageByType(membershipType);
+
+                // Prepare user update data
+                const userUpdate = {
+                    membershipType: membershipType,
+                    membershipPaid: true,
+                    membershipStatus: 'active',
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                // Apply membership-specific benefits
+                if (membershipType === MEMBERSHIP_TYPES.ELITE && pkg.welcomeBonus) {
+                    // Add welcome bonus
+                    userUpdate.wallet = firebase.firestore.FieldValue.increment(pkg.welcomeBonus);
+                    userUpdate.eliteBonusApplied = true;
+                }
+
+                if (membershipType === MEMBERSHIP_TYPES.PREMIUM && pkg.duration === 'annual') {
+                    // Set expiry 1 year from now
+                    const expiryDate = new Date();
+                    expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+                    userUpdate.membershipExpiry = expiryDate;
+                }
+
+                // Update user document
+                await db.collection('users').doc(userId).update(userUpdate);
+
+                // Mark payment as approved
+                await db.collection('membershipPayments').doc(paymentId).update({
+                    status: 'approved',
+                    approvedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                // Process referral bonuses if the user was referred and upgraded to premium
+                const userDoc = await db.collection('users').doc(userId).get();
+                const userData = userDoc.data();
+                
+                if (userData.referredBy && membershipType === MEMBERSHIP_TYPES.PREMIUM) {
+                    const referrerId = userData.referredBy;
+                    
+                    // Check if bonuses already given to prevent duplicates
+                    const existingBonus = await db.collection('referralBonuses')
+                        .where('referredId', '==', userId)
+                        .where('type', '==', 'referrer')
+                        .get();
+                    
+                    if (existingBonus.empty) {
+                        await db.runTransaction(async (transaction) => {
+                            // Credit referrer
+                            const referrerRef = db.collection('users').doc(referrerId);
+                            const referrerSnap = await transaction.get(referrerRef);
+                            
+                            transaction.update(referrerRef, {
+                                wallet: firebase.firestore.FieldValue.increment(REFERRAL_BONUS_REFERRER),
+                                referralEarnings: firebase.firestore.FieldValue.increment(REFERRAL_BONUS_REFERRER),
+                                totalReferrals: firebase.firestore.FieldValue.increment(1)
+                            });
+
+                            // Credit referred user
+                            const referredRef = db.collection('users').doc(userId);
+                            transaction.update(referredRef, {
+                                wallet: firebase.firestore.FieldValue.increment(REFERRAL_BONUS_REFERRED),
+                                referralEarnings: firebase.firestore.FieldValue.increment(REFERRAL_BONUS_REFERRED)
+                            });
+
+                            // Record bonuses
+                            const bonus1Ref = db.collection('referralBonuses').doc();
+                            transaction.set(bonus1Ref, {
+                                referrerId: referrerId,
+                                referredId: userId,
+                                referredEmail: userData.email,
+                                amount: REFERRAL_BONUS_REFERRER,
+                                type: 'referrer',
+                                creditedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                creditedBy: currentUser.email
+                            });
+
+                            const bonus2Ref = db.collection('referralBonuses').doc();
+                            transaction.set(bonus2Ref, {
+                                referrerId: referrerId,
+                                referredId: userId,
+                                referredEmail: userData.email,
+                                amount: REFERRAL_BONUS_REFERRED,
+                                type: 'referred',
+                                creditedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                creditedBy: currentUser.email
+                            });
+
+                            // Update referral status
+                            const referralQuery = await db.collection('referrals')
+                                .where('referrerId', '==', referrerId)
+                                .where('referredId', '==', userId)
+                                .get();
+                            
+                            if (!referralQuery.empty) {
+                                const referralRef = referralQuery.docs[0].ref;
+                                transaction.update(referralRef, {
+                                    status: 'completed',
+                                    completedAt: firebase.firestore.FieldValue.serverTimestamp()
+                                });
+                            }
+                        });
+                    }
+                }
+
+                showAlert(`Membership upgraded to ${pkg.name}!`, 'success');
+                loadMemberships(); // Refresh the pending list
+
+            } catch (error) {
+                console.error('Error approving membership:', error);
+                showAlert('Error: ' + error.message, 'error');
+            }
+        }
+          
+        // Reject Membership  
+        async function rejectMembership(userId, paymentId) {
+            try {
+                // Get payment details to know what was rejected
+                const paymentDoc = await db.collection('membershipPayments').doc(paymentId).get();
+                const payment = paymentDoc.data();
+                
+                await db.collection('users').doc(userId).update({  
+                    membershipStatus: 'rejected',
+                    membershipRejectionReason: 'Payment verification failed',
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });  
+                  
+                await db.collection('membershipPayments').doc(paymentId).update({  
+                    status: 'rejected',
+                    rejectedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });  
+                  
+                showAlert(`Membership ${payment.membershipType} rejected`, 'info');  
+                loadMemberships();  
+            } catch (error) {
+                console.error('Error rejecting membership:', error);
+                showAlert('Error: ' + error.message, 'error');
+            }
+        }  
+
+        // Load Settings Tab
+        async function loadSettings() {
+            if (!feeSettings) {
+                await loadFeeSettings();
+            }
+            
+            if (!membershipPackages) {
+                await loadMembershipPackages();
+            }
+            
+            const totalFees = (feeSettings.transactionFeePercent || 0) + (feeSettings.platformFeePercent || 0);
+            
+            // Calculate withdrawal statistics
+            const withdrawalsSnapshot = await db.collection('withdrawals').get();
+            let totalWithdrawn = 0;
+            let totalFeesCollected = 0;
+            let pendingCount = 0;
+            
+            withdrawalsSnapshot.forEach(doc => {
+                const w = doc.data();
+                if (w.status === 'paid') {
+                    totalWithdrawn += w.amount || 0;
+                    totalFeesCollected += w.fees || 0;
+                } else if (w.status === 'pending') {
+                    pendingCount++;
+                }
+            });
+            
+            let html = `
+                <h3 style="margin-bottom:1.5rem;">System Settings</h3>
+                
+                <div class="stats-mini-grid">
+                    <div class="stats-mini-card">
+                        <div class="stats-mini-value">${formatCurrency(totalWithdrawn)}</div>
+                        <div class="stats-mini-label">Total Withdrawn</div>
+                    </div>
+                    <div class="stats-mini-card">
+                        <div class="stats-mini-value">${formatCurrency(totalFeesCollected)}</div>
+                        <div class="stats-mini-label">Fees Collected</div>
+                    </div>
+                    <div class="stats-mini-card">
+                        <div class="stats-mini-value">${pendingCount}</div>
+                        <div class="stats-mini-label">Pending Withdrawals</div>
+                    </div>
+                    <div class="stats-mini-card">
+                        <div class="stats-mini-value">${feeSettings.withdrawalMethods.length}</div>
+                        <div class="stats-mini-label">Payment Methods</div>
+                    </div>
+                </div>
+                
+                <div class="settings-grid">
+                    <!-- Fee Settings Card -->
+                    <div class="settings-card">
+                        <h4><i class="fas fa-percent"></i> Fee Configuration</h4>
+                        <div class="settings-row">
+                            <span class="settings-label">Transaction Fee</span>
+                            <span class="settings-value">${feeSettings.transactionFeePercent || 3}%</span>
+                        </div>
+                        <div class="settings-row">
+                            <span class="settings-label">Platform Fee</span>
+                            <span class="settings-value">${feeSettings.platformFeePercent || 2}%</span>
+                        </div>
+                        <div class="settings-row">
+                            <span class="settings-label">Total Fee</span>
+                            <span class="settings-value highlight">${totalFees}%</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Withdrawal Limits Card -->
+                    <div class="settings-card">
+                        <h4><i class="fas fa-chart-line"></i> Withdrawal Limits</h4>
+                        <div class="settings-row">
+                            <span class="settings-label">Minimum</span>
+                            <span class="settings-value">${formatCurrency(feeSettings.minimumWithdrawal || 5)}</span>
+                        </div>
+                        <div class="settings-row">
+                            <span class="settings-label">Per Day</span>
+                            <span class="settings-value">${formatCurrency(feeSettings.maxWithdrawalPerDay || 1000)}</span>
+                        </div>
+                        <div class="settings-row">
+                            <span class="settings-label">Per Month</span>
+                            <span class="settings-value">${formatCurrency(feeSettings.maxWithdrawalPerMonth || 5000)}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Exchange Rate Card -->
+                    <div class="settings-card">
+                        <h4><i class="fas fa-exchange-alt"></i> Exchange Rate</h4>
+                        <div class="settings-row">
+                            <span class="settings-label">USD to KES</span>
+                            <span class="settings-value">1 USD = ${feeSettings.exchangeRate || 130} KES</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Withdrawal Methods Card -->
+                    <div class="settings-card">
+                        <h4><i class="fas fa-credit-card"></i> Payment Methods</h4>
+                        ${feeSettings.withdrawalMethods.map(method => `
+                            <div class="settings-row">
+                                <span class="settings-label">✓</span>
+                                <span class="settings-value">${method}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <button class="btn btn-primary" onclick="showEditFeeSettings()">
+                        <i class="fas fa-edit"></i> Edit Fee Settings
+                    </button>
+                    <button class="btn btn-success" onclick="showEditPackages()">
+                        <i class="fas fa-box"></i> Edit Membership Packages
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('content').innerHTML = html;
+        }
+
+        // Initialize referral collections if they don't exist
+        async function initializeReferralCollections() {
+            try {
+                const testQuery = await db.collection('referrals').limit(1).get();
+                console.log('Referrals collection exists');
+            } catch (error) {
+                console.log('Referrals collection does not exist yet, will be created when needed');
+            }
+            
+            try {
+                const testQuery2 = await db.collection('referralBonuses').limit(1).get();
+                console.log('ReferralBonuses collection exists');
+            } catch (error) {
+                console.log('ReferralBonuses collection does not exist yet, will be created when needed');
+            }
+        }
+
+        // Create sample referral data for testing
+        async function createSampleReferral() {
+            try {
+                showAlert('Creating sample referral data...', 'info', 'Please Wait');
+                
+                const usersSnapshot = await db.collection('users').limit(2).get();
+                
+                if (usersSnapshot.size < 2) {
+                    showAlert('Need at least 2 users to create a sample referral', 'error');
+                    return;
+                }
+                
+                const users = [];
+                usersSnapshot.forEach(doc => users.push({ id: doc.id, ...doc.data() }));
+                
+                await db.collection('referrals').add({
+                    referrerId: users[0].id,
+                    referredId: users[1].id,
+                    referredEmail: users[1].email,
+                    status: 'pending',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                showAlert('Sample referral created successfully!', 'success');
+                loadReferrals();
+                
+            } catch (error) {
+                console.error('Error creating sample referral:', error);
+                showAlert('Error creating sample referral: ' + error.message, 'error');
+            }
+        }
+
+        // Show Referral Details Modal
+        async function showReferralDetails(referralId, referrerData, referredData, referral) {
+            const createdDate = referral.createdAt?.seconds ? formatDate(referral.createdAt) : 'N/A';
+            
+            let timelineHtml = `
+                <div class="timeline-item">
+                    <div class="timeline-dot completed"></div>
+                    <div class="timeline-content">
+                        <span>Referral created</span>
+                        <span>${createdDate}</span>
+                    </div>
+                </div>
+            `;
+            
+            if (referral.status === 'completed') {
+                const completedDate = referral.completedAt?.seconds ? formatDate(referral.completedAt) : 'N/A';
+                timelineHtml += `
+                    <div class="timeline-item">
+                        <div class="timeline-dot completed"></div>
+                        <div class="timeline-content">
+                            <span>Bonuses paid</span>
+                            <span>${completedDate}</span>
+                        </div>
+                    </div>
+                `;
+            } else if (referral.status === 'rejected') {
+                const rejectedDate = referral.rejectedAt?.seconds ? formatDate(referral.rejectedAt) : 'N/A';
+                timelineHtml += `
+                    <div class="timeline-item">
+                        <div class="timeline-dot danger"></div>
+                        <div class="timeline-content">
+                            <span>Referral rejected</span>
+                            <span>${rejectedDate}</span>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            showModal(`
+                <h3 style="margin-bottom:1.5rem;">Referral Details</h3>
+                
+                <div class="user-info-grid">
+                    <!-- Referrer Info -->
+                    <div class="user-info-card referrer">
+                        <div class="user-info-header referrer">
+                            <i class="fas fa-user"></i>
+                            <h4>Referrer</h4>
+                        </div>
+                        <div class="user-detail-row">
+                            <span class="user-detail-label">Email</span>
+                            <span class="user-detail-value">${referrerData.email}</span>
+                        </div>
+                        <div class="user-detail-row">
+                            <span class="user-detail-label">Name</span>
+                            <span class="user-detail-value">${referrerData.displayName || 'N/A'}</span>
+                        </div>
+                        <div class="user-detail-row">
+                            <span class="user-detail-label">User ID</span>
+                            <span class="user-detail-value"><small>${referral.referrerId}</small></span>
+                        </div>
+                        <div class="user-detail-row">
+                            <span class="user-detail-label">Wallet Balance</span>
+                            <span class="user-detail-value highlight">${formatCurrency(referrerData.wallet || 0)}</span>
+                        </div>
+                        <div class="user-detail-row">
+                            <span class="user-detail-label">Membership</span>
+                            <span class="user-detail-value">
+                                <span class="membership-status ${referrerData.membershipType || 'basic'}">
+                                    ${(referrerData.membershipType || 'basic').toUpperCase()}
+                                </span>
+                            </span>
+                        </div>
+                        <div class="user-detail-row">
+                            <span class="user-detail-label">Total Referrals</span>
+                            <span class="user-detail-value">${referrerData.totalReferrals || 0}</span>
+                        </div>
+                        <div class="user-detail-row">
+                            <span class="user-detail-label">Referral Earnings</span>
+                            <span class="user-detail-value highlight">${formatCurrency(referrerData.referralEarnings || 0)}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Referred User Info -->
+                    <div class="user-info-card referred">
+                        <div class="user-info-header referred">
+                            <i class="fas fa-user-plus"></i>
+                            <h4>Referred User</h4>
+                        </div>
+                        <div class="user-detail-row">
+                            <span class="user-detail-label">Email</span>
+                            <span class="user-detail-value">${referredData.email}</span>
+                        </div>
+                        <div class="user-detail-row">
+                            <span class="user-detail-label">Name</span>
+                            <span class="user-detail-value">${referredData.displayName || 'N/A'}</span>
+                        </div>
+                        <div class="user-detail-row">
+                            <span class="user-detail-label">User ID</span>
+                            <span class="user-detail-value"><small>${referral.referredId}</small></span>
+                        </div>
+                        <div class="user-detail-row">
+                            <span class="user-detail-label">Wallet Balance</span>
+                            <span class="user-detail-value highlight">${formatCurrency(referredData.wallet || 0)}</span>
+                        </div>
+                        <div class="user-detail-row">
+                            <span class="user-detail-label">Membership</span>
+                            <span class="user-detail-value">
+                                <span class="membership-status ${referredData.membershipType || 'basic'}">
+                                    ${(referredData.membershipType || 'basic').toUpperCase()}
+                                </span>
+                            </span>
+                        </div>
+                        <div class="user-detail-row">
+                            <span class="user-detail-label">Joined</span>
+                            <span class="user-detail-value">${referredData.createdAt ? formatDate(referredData.createdAt) : 'N/A'}</span>
+                        </div>
+                        <div class="user-detail-row">
+                            <span class="user-detail-label">Upgraded to Premium?</span>
+                            <span class="user-detail-value">
+                                ${referredData.membershipType === 'premium' || referredData.membershipType === 'elite' 
+                                    ? '<span class="badge success">Yes</span>' 
+                                    : '<span class="badge warning">No</span>'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Bonus Breakdown -->
+                <div style="background: #f1f5f9; padding: 1.5rem; border-radius: 0.75rem; margin: 1.5rem 0;">
+                    <h4 style="margin-bottom: 1rem;">Bonus Breakdown</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div style="background: white; padding: 1rem; border-radius: 0.5rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <i class="fas fa-user" style="color: #6366f1;"></i>
+                                <span style="font-weight: 600;">Referrer Bonus</span>
+                            </div>
+                            <div style="font-size: 1.5rem; font-weight: 700; color: #6366f1;">
+                                ${formatCurrency(REFERRAL_BONUS_REFERRER)}
+                            </div>
+                        </div>
+                        <div style="background: white; padding: 1rem; border-radius: 0.5rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <i class="fas fa-user-plus" style="color: #10b981;"></i>
+                                <span style="font-weight: 600;">Referred Bonus</span>
+                            </div>
+                            <div style="font-size: 1.5rem; font-weight: 700; color: #10b981;">
+                                ${formatCurrency(REFERRAL_BONUS_REFERRED)}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 2px dashed #cbd5e1;">
+                        <div style="display: flex; justify-content: space-between; font-weight: 700;">
+                            <span>Total Bonus</span>
+                            <span style="color: #10b981;">${formatCurrency(REFERRAL_BONUS_REFERRER + REFERRAL_BONUS_REFERRED)}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Timeline -->
+                <div class="referral-timeline">
+                    <h4 style="margin-bottom: 1rem;">Timeline</h4>
+                    ${timelineHtml}
+                </div>
+                
+                <!-- Actions -->
+                <div class="referral-actions">
+                    ${referral.status === 'pending' && (referredData.membershipType === 'premium' || referredData.membershipType === 'elite') ? `
+                        <button class="action-btn approve" onclick="creditReferralBonus('${referralId}', '${referral.referrerId}', '${referral.referredId}', '${referral.referredEmail}')">
+                            <i class="fas fa-check-circle"></i> Approve & Credit Bonuses
+                        </button>
+                    ` : ''}
+                    ${referral.status === 'pending' ? `
+                        <button class="action-btn reject" onclick="rejectReferral('${referralId}')">
+                            <i class="fas fa-times-circle"></i> Reject
+                        </button>
+                    ` : ''}
+                    <button class="action-btn view" onclick="closeModal()">
+                        <i class="fas fa-times"></i> Close
+                    </button>
+                </div>
+            `);
+        }
+
+        // Load Referrals with enhanced details
+        async function loadReferrals() {  
+            try {  
+                document.getElementById('content').innerHTML = `  
+                    <div style="text-align: center; padding: 3rem;">  
+                        <i class="fas fa-spinner fa-spin" style="font-size: 3rem; color: #6366f1; margin-bottom: 1rem;"></i>  
+                        <h3>Loading Referrals...</h3>  
+                        <p style="color: #64748b;">Please wait while we fetch the referral data.</p>  
+                    </div>  
+                `;  
+                
+                await initializeReferralCollections();  
+                
+                let snapshot;  
+                try {  
+                    snapshot = await db.collection('referrals')  
+                        .orderBy('createdAt', 'desc')  
+                        .get();  
+                } catch (error) {  
+                    console.warn('Error fetching referrals, collection might not exist:', error);  
+                    snapshot = { empty: true, docs: [] };  
+                }  
+                
+                // Calculate stats
+                let totalPending = 0;
+                let totalCompleted = 0;
+                let totalRejected = 0;
+                let totalBonusPaid = 0;
+                
+                if (!snapshot.empty) {
+                    snapshot.forEach(doc => {
+                        const referral = doc.data();
+                        const status = referral.status || 'pending';
+                        if (status === 'pending') totalPending++;
+                        else if (status === 'completed') {
+                            totalCompleted++;
+                            totalBonusPaid += REFERRAL_BONUS_REFERRER + REFERRAL_BONUS_REFERRED;
+                        }
+                        else if (status === 'rejected') totalRejected++;
+                    });
+                }
+                
+                let html = `  
+                    <h3 style="margin-bottom:1.5rem;">Referral Management</h3>  
+                    
+                    <!-- Stats Overview -->
+                    <div class="referral-stats-grid">
+                        <div class="referral-stat-card">
+                            <div class="referral-stat-value">${totalPending}</div>
+                            <div class="referral-stat-label">Pending</div>
+                        </div>
+                        <div class="referral-stat-card">
+                            <div class="referral-stat-value">${totalCompleted}</div>
+                            <div class="referral-stat-label">Completed</div>
+                        </div>
+                        <div class="referral-stat-card">
+                            <div class="referral-stat-value">${totalRejected}</div>
+                            <div class="referral-stat-label">Rejected</div>
+                        </div>
+                        <div class="referral-stat-card">
+                            <div class="referral-stat-value">${formatCurrency(totalBonusPaid)}</div>
+                            <div class="referral-stat-label">Total Bonuses Paid</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem; background: #f8fafc; padding: 1.5rem; border-radius: 1rem;">  
+                        <p><strong>Referral Bonus Structure:</strong></p>  
+                        <ul style="margin-top: 0.5rem;">  
+                            <li><span style="color: #6366f1;">Referrer gets <strong>$${REFERRAL_BONUS_REFERRER}</strong></span> when referred user upgrades to Premium</li>  
+                            <li><span style="color: #10b981;">Referred user gets <strong>$${REFERRAL_BONUS_REFERRED}</strong></span> when they upgrade to Premium</li>  
+                        </ul>  
+                    </div>  
+                `;  
+                
+                if (!snapshot || snapshot.empty) {  
+                    html += `  
+                        <div style="text-align: center; padding: 3rem; background: #f8fafc; border-radius: 1rem;">  
+                            <i class="fas fa-users" style="font-size: 4rem; color: #94a3b8; margin-bottom: 1rem;"></i>  
+                            <h4 style="color: #1e293b; margin-bottom: 0.5rem;">No Referrals Found</h4>  
+                            <p style="color: #64748b;">There are no referrals in the system yet.</p>  
+                            <p style="color: #94a3b8; font-size: 0.9rem; margin-top: 1rem;">When users sign up using referral links, they will appear here.</p>  
+                            <button class="btn btn-success" onclick="createSampleReferral()" style="margin-top: 1rem;">  
+                                <i class="fas fa-flask"></i> Create Sample Data  
+                            </button>  
+                        </div>  
+                    `;  
+                } else {  
+                    // Group by status
+                    const pending = [];  
+                    const completed = [];  
+                    const rejected = [];  
+                    const unknown = [];
+                    
+                    snapshot.forEach(doc => {  
+                        const referral = { id: doc.id, ...doc.data() };  
+                        const status = referral.status || 'pending';
+                        
+                        if (status === 'pending') pending.push(referral);  
+                        else if (status === 'completed') completed.push(referral);  
+                        else if (status === 'rejected') rejected.push(referral);  
+                        else {
+                            console.warn('Referral with unknown status:', referral);
+                            pending.push({...referral, status: 'pending'});
+                            unknown.push(referral);
+                        }
+                    });  
+                    
+                    // Pending referrals section  
+                    if (pending.length > 0) {  
+                        html += '<h4 style="margin: 2rem 0 1rem 0; color: #f59e0b;">Pending Referrals ⏳</h4>';  
+                        
+                        for (const referral of pending) {  
+                            try {  
+                                // Get referrer info  
+                                let referrerData = { email: 'Unknown', displayName: 'Unknown', wallet: 0, membershipType: 'basic' };
+                                try {  
+                                    const referrerDoc = await db.collection('users').doc(referral.referrerId).get();  
+                                    if (referrerDoc.exists) {  
+                                        referrerData = referrerDoc.data();
+                                    }  
+                                } catch (e) {  
+                                    console.warn('Could not fetch referrer:', e);  
+                                }  
+                                
+                                // Get referred user info  
+                                let referredData = { email: 'Unknown', displayName: 'Unknown', wallet: 0, membershipType: 'basic' };
+                                try {  
+                                    const referredDoc = await db.collection('users').doc(referral.referredId).get();  
+                                    if (referredDoc.exists) {  
+                                        referredData = referredDoc.data();
+                                    }  
+                                } catch (e) {  
+                                    console.warn('Could not fetch referred user:', e);  
+                                }  
+                                
+                                const createdDate = referral.createdAt?.seconds ?   
+                                    formatDate(referral.createdAt) : 'N/A';  
+                                
+                                const hasUpgraded = referredData.membershipType === 'premium' || referredData.membershipType === 'elite';
+                                
+                                html += `  
+                                    <div class="referral-card pending" onclick="showReferralDetails('${referral.id}', ${JSON.stringify(referrerData).replace(/'/g, "&apos;")}, ${JSON.stringify(referredData).replace(/'/g, "&apos;")}, ${JSON.stringify(referral).replace(/'/g, "&apos;")})" style="cursor: pointer;">  
+                                        <div class="referral-header">  
+                                            <div class="referral-badges">  
+                                                <span class="badge warning">Pending</span>  
+                                                ${hasUpgraded ? 
+                                                    `<span class="badge success">Upgraded to ${referredData.membershipType}</span>` : 
+                                                    `<span class="badge info">Not Upgraded</span>`
+                                                }  
+                                            </div>  
+                                            <span class="referral-amount">  
+                                                <i class="fas fa-gift"></i> ${formatCurrency(REFERRAL_BONUS_REFERRER + REFERRAL_BONUS_REFERRED)}  
+                                            </span>  
+                                        </div>  
+                                        
+                                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">  
+                                            <div>  
+                                                <div style="color: #64748b; font-size: 0.85rem;">👤 Referrer</div>  
+                                                <div style="font-weight: 600;">${referrerData.email}</div>  
+                                                <div style="font-size: 0.9rem; color: #475569;">Wallet: ${formatCurrency(referrerData.wallet || 0)}</div>  
+                                            </div>  
+                                            <div>  
+                                                <div style="color: #64748b; font-size: 0.85rem;">👥 Referred</div>  
+                                                <div style="font-weight: 600;">${referral.referredEmail}</div>  
+                                                <div style="font-size: 0.9rem; color: #475569;">Membership: ${(referredData.membershipType || 'basic').toUpperCase()}</div>  
+                                            </div>  
+                                            <div>  
+                                                <div style="color: #64748b; font-size: 0.85rem;">📅 Referred on</div>  
+                                                <div>${createdDate}</div>  
+                                            </div>  
+                                        </div>  
+                                        
+                                        <div style="font-size: 0.9rem; color: #64748b; padding-top: 0.5rem; border-top: 1px dashed #e2e8f0;">  
+                                            <i class="fas fa-info-circle"></i> Click to view full details and take action  
+                                        </div>  
+                                    </div>  
+                                `;  
+                            } catch (e) {  
+                                console.warn('Error displaying referral:', e);  
+                            }  
+                        }  
+                    }  
+                    
+                    // Completed referrals section  
+                    if (completed.length > 0) {  
+                        html += '<h4 style="margin: 2rem 0 1rem 0; color: #10b981;">Completed Referrals ✓</h4>';  
+                        
+                        for (const referral of completed) {  
+                            try {  
+                                const createdDate = referral.createdAt?.seconds ? formatDate(referral.createdAt) : 'N/A';  
+                                const completedDate = referral.completedAt?.seconds ? formatDate(referral.completedAt) : 'N/A';  
+                                
+                                html += `  
+                                    <div class="referral-card completed">  
+                                        <div class="referral-header">  
+                                            <div class="referral-badges">  
+                                                <span class="badge success">Completed</span>  
+                                            </div>  
+                                            <span class="referral-amount">${formatCurrency(REFERRAL_BONUS_REFERRER + REFERRAL_BONUS_REFERRED)} paid</span>  
+                                        </div>  
+                                        
+                                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">  
+                                            <div>  
+                                                <div style="color: #64748b; font-size: 0.85rem;">Referrer</div>  
+                                                <div><small>ID: ${referral.referrerId.substring(0, 8)}...</small></div>  
+                                            </div>  
+                                            <div>  
+                                                <div style="color: #64748b; font-size: 0.85rem;">Referred</div>  
+                                                <div>${referral.referredEmail}</div>  
+                                            </div>  
+                                            <div>  
+                                                <div style="color: #64748b; font-size: 0.85rem;">Completed</div>  
+                                                <div>${completedDate}</div>  
+                                            </div>  
+                                        </div>  
+                                    </div>  
+                                `;  
+                            } catch (e) {  
+                                console.warn('Error displaying completed referral:', e);  
+                            }  
+                        }  
+                    }  
+                    
+                    // Rejected referrals section  
+                    if (rejected.length > 0) {  
+                        html += '<h4 style="margin: 2rem 0 1rem 0; color: #ef4444;">Rejected Referrals ✗</h4>';  
+                        
+                        for (const referral of rejected) {  
+                            try {  
+                                const createdDate = referral.createdAt?.seconds ? formatDate(referral.createdAt) : 'N/A';  
+                                
+                                html += `  
+                                    <div class="referral-card rejected">  
+                                        <div class="referral-header">  
+                                            <span class="badge danger">Rejected</span>  
+                                        </div>  
+                                        
+                                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">  
+                                            <div>  
+                                                <div style="color: #64748b; font-size: 0.85rem;">Referrer</div>  
+                                                <div><small>ID: ${referral.referrerId.substring(0, 8)}...</small></div>  
+                                            </div>  
+                                            <div>  
+                                                <div style="color: #64748b; font-size: 0.85rem;">Referred</div>  
+                                                <div>${referral.referredEmail}</div>  
+                                            </div>  
+                                            <div>  
+                                                <div style="color: #64748b; font-size: 0.85rem;">Referred on</div>  
+                                                <div>${createdDate}</div>  
+                                            </div>  
+                                        </div>  
+                                    </div>  
+                                `;  
+                            } catch (e) {  
+                                console.warn('Error displaying rejected referral:', e);  
+                            }  
+                        }  
+                    }  
+                    
+                    if (unknown.length > 0) {  
+                        html += `  
+                            <div style="margin-top: 1rem; padding: 0.5rem; background: #f1f5f9; border-radius: 0.5rem;">  
+                                <p style="margin: 0; color: #64748b; font-size: 0.9rem;">  
+                                    <i class="fas fa-info-circle"></i> ${unknown.length} referral(s) with missing status have been shown in Pending section.  
+                                </p>  
+                            </div>  
+                        `;  
+                    }  
+                }  
+                
+                document.getElementById('content').innerHTML = html;  
+                
+            } catch (error) {  
+                console.error('Error loading referrals:', error);  
+                
+                let errorMessage = error.message;
+                let errorTitle = 'Error Loading Referrals';
+                let errorIcon = 'fa-exclamation-triangle';
+                let errorColor = '#ef4444';
+                
+                if (error.code === 'permission-denied') {
+                    errorMessage = 'You don\'t have permission to view referrals. Please check your admin privileges.';
+                    errorTitle = 'Permission Denied';
+                    errorIcon = 'fa-shield-alt';
+                    errorColor = '#f59e0b';
+                } else if (error.message.includes('collection')) {
+                    errorMessage = 'The referrals collection hasn\'t been created yet. It will be created automatically when the first referral is made.';
+                    errorTitle = 'No Referrals Yet';
+                    errorIcon = 'fa-users';
+                    errorColor = '#6366f1';
+                }
+                
+                document.getElementById('content').innerHTML = `  
+                    <div style="text-align: center; padding: 3rem;">  
+                        <i class="fas ${errorIcon}" style="font-size: 4rem; color: ${errorColor}; margin-bottom: 1rem;"></i>  
+                        <h3 style="margin-bottom: 0.5rem;">${errorTitle}</h3>  
+                        <p style="color: #64748b; margin-bottom: 2rem;">${errorMessage}</p>  
+                        <button class="btn btn-primary" onclick="loadReferrals()" style="margin-right: 0.5rem;">  
+                            <i class="fas fa-sync-alt"></i> Try Again  
+                        </button>  
+                        <button class="btn btn-success" onclick="createSampleReferral()">  
+                            <i class="fas fa-flask"></i> Create Sample Data  
+                        </button>  
+                    </div>  
+                `;  
+            }  
+        }  
+          
+        // Credit Referral Bonus  
+        async function creditReferralBonus(referralId, referrerId, referredId, referredEmail) {  
+            try {  
+                showModal(`  
+                    <h3 style="margin-bottom:1rem;">Confirm Referral Bonus</h3>  
+                    <div style="background: #f8fafc; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">  
+                        <p><strong>You are about to credit:</strong></p>  
+                        <ul style="margin-top: 0.5rem;">  
+                            <li><span style="color: #6366f1;">Referrer: <strong>$${REFERRAL_BONUS_REFERRER}</strong></span></li>  
+                            <li><span style="color: #10b981;">Referred User: <strong>$${REFERRAL_BONUS_REFERRED}</strong></span></li>  
+                        </ul>  
+                        <p style="margin-top: 0.5rem; color: #6b7280;">Total: $${REFERRAL_BONUS_REFERRER + REFERRAL_BONUS_REFERRED}</p>  
+                    </div>  
+                    <p>This action cannot be undone. Are you sure?</p>  
+                    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">  
+                        <button class="btn btn-success" id="confirmCreditBtn"   
+                                data-referral-id="${referralId}"  
+                                data-referrer-id="${referrerId}"  
+                                data-referred-id="${referredId}"  
+                                data-referred-email="${referredEmail}">  
+                            Yes, Credit Bonuses  
+                        </button>  
+                        <button class="btn btn-danger" onclick="closeModal()">Cancel</button>  
+                    </div>  
+                `);  
+            } catch (error) {  
+                console.error('Error showing confirmation:', error);  
+                showAlert('Error: ' + error.message, 'error');  
+            }  
+        }  
+          
+        // Execute Credit Bonus  
+        async function executeCreditBonus(referralId, referrerId, referredId, referredEmail) {  
+            try {  
+                await db.runTransaction(async (transaction) => {  
+                    // Credit referrer  
+                    const referrerRef = db.collection('users').doc(referrerId);  
+                    const referrerSnap = await transaction.get(referrerRef);  
+                    
+                    if (!referrerSnap.exists) {  
+                        throw new Error('Referrer not found');  
+                    }  
+                    
+                    transaction.update(referrerRef, {  
+                        wallet: firebase.firestore.FieldValue.increment(REFERRAL_BONUS_REFERRER),  
+                        referralEarnings: firebase.firestore.FieldValue.increment(REFERRAL_BONUS_REFERRER),  
+                        totalReferrals: firebase.firestore.FieldValue.increment(1)  
+                    });  
+                    
+                    // Credit referred user  
+                    const referredRef = db.collection('users').doc(referredId);  
+                    const referredSnap = await transaction.get(referredRef);  
+                    
+                    if (!referredSnap.exists) {  
+                        throw new Error('Referred user not found');  
+                    }  
+                    
+                    transaction.update(referredRef, {  
+                        wallet: firebase.firestore.FieldValue.increment(REFERRAL_BONUS_REFERRED),  
+                        referralEarnings: firebase.firestore.FieldValue.increment(REFERRAL_BONUS_REFERRED)  
+                    });  
+                    
+                    // Record bonus for referrer  
+                    const bonusRef1 = db.collection('referralBonuses').doc();  
+                    transaction.set(bonusRef1, {  
+                        referrerId: referrerId,  
+                        referredId: referredId,  
+                        referredEmail: referredEmail,  
+                        amount: REFERRAL_BONUS_REFERRER,  
+                        type: 'referrer',  
+                        status: 'paid',  
+                        creditedBy: currentUser.email,  
+                        creditedAt: firebase.firestore.FieldValue.serverTimestamp()  
+                    });  
+                    
+                    // Record bonus for referred  
+                    const bonusRef2 = db.collection('referralBonuses').doc();  
+                    transaction.set(bonusRef2, {  
+                        referrerId: referrerId,  
+                        referredId: referredId,  
+                        referredEmail: referredEmail,  
+                        amount: REFERRAL_BONUS_REFERRED,  
+                        type: 'referred',  
+                        status: 'paid',  
+                        creditedBy: currentUser.email,  
+                        creditedAt: firebase.firestore.FieldValue.serverTimestamp()  
+                    });  
+                    
+                    // Update referral status  
+                    const referralRef = db.collection('referrals').doc(referralId);  
+                    transaction.update(referralRef, {  
+                        status: 'completed',  
+                        completedAt: firebase.firestore.FieldValue.serverTimestamp(),  
+                        completedBy: currentUser.email  
+                    });  
+                });  
+                
+                closeModal();  
+                showAlert('Referral bonuses credited successfully!', 'success');  
+                loadReferrals();  
+                
+            } catch (error) {  
+                console.error('Error crediting referral:', error);  
+                showAlert('Error crediting referral: ' + error.message, 'error');  
+                closeModal();  
+            }  
+        }  
+          
+        // Reject Referral  
+        async function rejectReferral(referralId) {  
+            try {  
+                await db.collection('referrals').doc(referralId).update({  
+                    status: 'rejected',  
+                    rejectedAt: firebase.firestore.FieldValue.serverTimestamp(),  
+                    rejectedBy: currentUser.email  
+                });  
+                
+                showAlert('Referral rejected', 'info');  
+                loadReferrals();  
+                
+            } catch (error) {  
+                console.error('Error rejecting referral:', error);  
+                showAlert('Error rejecting referral: ' + error.message, 'error');  
+            }  
+        }  
+          
+        // Load Messages  
+        async function loadMessages() {  
+            const users = await db.collection('users').get();  
+              
+            let options = '';  
+            users.forEach(doc => {  
+                const user = doc.data();  
+                options += `<option value="${doc.id}">${user.email} - ${user.displayName}</option>`;  
+            });  
+              
+            const messages = await db.collection('messages')  
+                .orderBy('createdAt', 'desc')  
+                .limit(20)  
+                .get();  
+              
+            let messagesHtml = '';  
+            messages.forEach(doc => {  
+                const msg = doc.data();  
+                const isBroadcast = msg.userId === 'ALL_USERS' || msg.isBroadcast;  
+                messagesHtml += `  
+                    <div class="submission-card" style="border-left: 4px solid ${isBroadcast ? '#6366f1' : '#10b981'}">  
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">  
+                            <strong style="color: ${isBroadcast ? '#6366f1' : '#10b981'}">  
+                                ${isBroadcast ? '📢 Broadcast to All Users' : `👤 To: ${msg.userEmail || msg.userId}`}  
+                            </strong>  
+                            <small>${msg.createdAt?.toDate().toLocaleString()}</small>  
+                        </div>  
+                        ${msg.title ? `<h4 style="margin: 0.5rem 0; color: #1f2937;">${msg.title}</h4>` : ''}  
+                        <p style="margin: 0.5rem 0;">${msg.message}</p>  
+                        ${msg.sentCount ? `<small style="color: #6b7280;">✓ Delivered to ${msg.sentCount} users</small>` : ''}  
+                    </div>  
+                `;  
+            });  
+              
+            let html = `  
+                <h3 style="margin-bottom:1.5rem;">Message Center</h3>  
+                  
+                <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">  
+                    <button class="btn ${currentMessageType === 'individual' ? 'btn-primary' : 'btn'}" id="individualMessageBtn">📨 Individual Message</button>  
+                    <button class="btn ${currentMessageType === 'broadcast' ? 'btn-primary' : 'btn'}" id="broadcastMessageBtn">📢 Broadcast to All</button>  
+                </div>  
+                  
+                <div id="individualMessageForm" style="background:#f8fafc; padding:1.5rem; border-radius:1rem; margin-bottom:2rem; display: ${currentMessageType === 'individual' ? 'block' : 'none'};">  
+                    <h4 style="margin-bottom:1rem;">Send Individual Message</h4>  
+                    <select id="messageUser">  
+                        <option value="">Select User</option>  
+                        ${options}  
+                    </select>  
+                    <textarea id="messageText" placeholder="Type your message..."></textarea>  
+                    <button class="btn btn-primary" id="sendMessageBtn">Send Message</button>  
+                </div>  
+                  
+                <div id="broadcastMessageForm" style="background:#f8fafc; padding:1.5rem; border-radius:1rem; margin-bottom:2rem; display: ${currentMessageType === 'broadcast' ? 'block' : 'none'};">  
+                    <h4 style="margin-bottom:1rem; color: #6366f1;">Send Broadcast to All Users</h4>  
+                    <div style="background: #6366f120; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">  
+                        <p style="margin: 0;"><strong>⚠️ Important:</strong> This message will be sent to ALL registered users (${users.size} users total).</p>  
+                    </div>  
+                    <input type="text" id="broadcastTitle" placeholder="Message Title (Optional)">  
+                    <textarea id="broadcastMessage" placeholder="Type your broadcast message..." style="min-height: 120px;"></textarea>  
+                    <div style="display: flex; gap: 0.5rem;">  
+                        <button class="btn btn-primary" id="sendBroadcastBtn" style="flex: 1;">  
+                            <i class="fas fa-bullhorn"></i> Send Broadcast  
+                        </button>  
+                        <button class="btn" id="previewBroadcastBtn">  
+                            <i class="fas fa-eye"></i> Preview  
+                        </button>  
+                    </div>  
+                </div>  
+                  
+                <h4 style="margin-bottom:1rem; display: flex; justify-content: space-between; align-items: center;">  
+                    <span>Recent Messages</span>  
+                    <span class="badge primary">${messages.size} messages</span>  
+                </h4>  
+                ${messagesHtml || '<p style="text-align: center; padding: 2rem; background: #f8fafc; border-radius: 1rem;">No messages yet</p>'}  
+            `;  
+              
+            document.getElementById('content').innerHTML = html;  
+        }  
+          
+        // Send Individual Message  
+        async function sendMessage() {  
+            const userId = document.getElementById('messageUser').value;  
+            const message = document.getElementById('messageText').value;  
+              
+            if (!userId) {  
+                showAlert('Please select a user', 'error');  
+                return;  
+            }  
+              
+            if (!message) {  
+                showAlert('Please enter a message', 'error');  
+                return;  
+            }  
+              
+            const userDoc = await db.collection('users').doc(userId).get();  
+            const userEmail = userDoc.data().email;  
+              
+            await db.collection('messages').add({  
+                userId,  
+                userEmail,  
+                message,  
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()  
+            });  
+              
+            showAlert('Message sent successfully', 'success');  
+            document.getElementById('messageText').value = '';  
+            loadMessages();  
+        }  
+          
+        // Send Broadcast Message  
+        async function sendBroadcast() {  
+            const title = document.getElementById('broadcastTitle')?.value || '';  
+            const message = document.getElementById('broadcastMessage')?.value;  
+              
+            if (!message || message.trim() === '') {  
+                showAlert('Please enter a message', 'error');  
+                return;  
+            }  
+              
+            showModal(`  
+                <h3 style="margin-bottom:1rem; color: #6366f1;">Confirm Broadcast</h3>  
+                <div style="background: #6366f120; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">  
+                    <p><strong>⚠️ You are about to send a message to ALL users</strong></p>  
+                    <p>This action cannot be undone. Please review your message:</p>  
+                </div>  
+                  
+                ${title ? `<p><strong>Title:</strong> ${title}</p>` : ''}  
+                <p><strong>Message:</strong></p>  
+                <div style="background: #f8fafc; padding: 1rem; border-radius: 0.5rem; margin: 1rem 0;">  
+                    ${message}  
+                </div>  
+                  
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">  
+                    <button class="btn btn-success" id="confirmBroadcastBtn" style="flex: 1;">  
+                        <i class="fas fa-check"></i> Yes, Send to All Users  
+                    </button>  
+                    <button class="btn btn-danger" id="cancelBroadcastBtn" style="flex: 1;">  
+                        <i class="fas fa-times"></i> Cancel  
+                    </button>  
+                </div>  
+            `);  
+        }  
+          
+        // Execute Broadcast  
+        async function executeBroadcast() {  
+            const title = document.getElementById('broadcastTitle')?.value || '';  
+            const message = document.getElementById('broadcastMessage')?.value;  
+              
+            closeModal();  
+            showAlert('Preparing broadcast...', 'info', 'Please Wait');  
+              
+            try {  
+                const usersSnapshot = await db.collection('users').get();  
+                const sentCount = usersSnapshot.size;  
+                  
+                await db.collection('messages').add({  
+                    userId: 'ALL_USERS',  
+                    isBroadcast: true,  
+                    title: title,  
+                    message: message,  
+                    sentCount: sentCount,  
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),  
+                    sentBy: currentUser.uid  
+                });  
+                  
+                const batch = db.batch();  
+                usersSnapshot.docs.forEach((userDoc) => {  
+                    const notifRef = db.collection('notifications').doc();  
+                    batch.set(notifRef, {  
+                        userId: userDoc.id,  
+                        type: 'broadcast',  
+                        title: title || 'New Announcement',  
+                        message: message,  
+                        read: false,  
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()  
+                    });  
+                });  
+                  
+                await batch.commit();  
+                  
+                showAlert(`✅ Broadcast sent to ${sentCount} users!`, 'success');  
+                  
+                document.getElementById('broadcastMessage').value = '';  
+                if (document.getElementById('broadcastTitle')) {  
+                    document.getElementById('broadcastTitle').value = '';  
+                }  
+                  
+                loadMessages();  
+                  
+            } catch (error) {  
+                console.error('Broadcast error:', error);  
+                showAlert('Error sending broadcast: ' + error.message, 'error');  
+            }  
+        }  
+          
+        // Preview Broadcast  
+        function previewBroadcast() {  
+            const title = document.getElementById('broadcastTitle')?.value || '';  
+            const message = document.getElementById('broadcastMessage')?.value;  
+              
+            if (!message) {  
+                showAlert('Please enter a message to preview', 'error');  
+                return;  
+            }  
+              
+            showModal(`  
+                <h3 style="margin-bottom:1rem;">Broadcast Preview</h3>  
+                <div style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 2rem; border-radius: 1rem;">  
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">  
+                        <i class="fas fa-bullhorn" style="font-size: 1.5rem;"></i>  
+                        <span style="font-weight: 600;">Admin Announcement</span>  
+                    </div>  
+                    ${title ? `<h4 style="margin-bottom: 0.5rem;">${title}</h4>` : ''}  
+                    <p style="margin: 0; opacity: 0.95;">${message}</p>  
+                    <div style="margin-top: 1rem; font-size: 0.8rem; opacity: 0.7;">  
+                        — NextGen Admin  
+                    </div>  
+                </div>  
+                <p style="margin-top: 1rem; color: #6b7280;">This is how users will see your broadcast message.</p>  
+                <button class="btn btn-primary" onclick="closeModal()" style="width: 100%;">Close Preview</button>  
+            `);  
+        }  
+          
+        // Event Delegation for all buttons  
+        document.addEventListener('click', async (e) => {  
+            const target = e.target;  
+            
+            // Handle referral card clicks (but not when clicking on buttons inside)
+            if (target.classList.contains('referral-card') && !target.closest('button')) {
+                // The click is handled by the onclick attribute
+                return;
+            }
+              
+            // Logout button  
+            if (target.id === 'logoutBtn' || target.closest('#logoutBtn')) {  
+                logout();  
+                return;  
+            }  
+              
+            // Tab buttons  
+            if (target.classList.contains('tab') || target.closest('.tab')) {  
+                const tab = target.closest('.tab') || target;  
+                const tabName = tab.getAttribute('data-tab');  
+                if (tabName) {  
+                    switchTab(tabName);  
+                }  
+                return;  
+            }  
+              
+            // Close modal button  
+            if (target.id === 'closeModalBtn' || target.closest('#closeModalBtn') || target.classList.contains('modal-backdrop')) {  
+                closeModal();  
+                return;  
+            }  
+              
+            // Adjust Wallet button  
+            if (target.classList.contains('adjust-wallet-btn')) {  
+                const userId = target.getAttribute('data-user-id');  
+                const userName = target.getAttribute('data-user-name');  
+                const wallet = target.getAttribute('data-wallet');  
+                showAdjustWallet(userId, userName, parseFloat(wallet || 0));  
+                return;  
+            }  
+              
+            // Apply Adjustment button (inside modal)  
+            if (target.classList.contains('apply-adjustment-btn')) {  
+                const userId = target.getAttribute('data-user-id');  
+                await adjustWallet(userId);  
+                return;  
+            }  
+              
+            // Toggle User Status  
+            if (target.classList.contains('toggle-status-btn')) {  
+                const userId = target.getAttribute('data-user-id');  
+                const newStatus = target.getAttribute('data-new-status') === 'true';  
+                await toggleUserStatus(userId, newStatus);  
+                return;  
+            }  
+              
+            // Make Admin  
+            if (target.classList.contains('make-admin-btn')) {  
+                const userId = target.getAttribute('data-user-id');  
+                await makeAdmin(userId);  
+                return;  
+            }  
+              
+            // Create Task button  
+            if (target.id === 'createTaskBtn') {  
+                showCreateTask();  
+                return;  
+            }  
+              
+            // Create Task Confirm button  
+            if (target.id === 'createTaskConfirmBtn') {  
+                await createTask();  
+                return;  
+            }  
+              
+            // Edit Task button  
+            if (target.classList.contains('edit-task-btn')) {  
+                const taskId = target.getAttribute('data-task-id');  
+                await editTask(taskId);  
+                return;  
+            }  
+              
+            // Update Task button  
+            if (target.id === 'updateTaskBtn') {  
+                const taskId = target.getAttribute('data-task-id');  
+                await updateTask(taskId);  
+                return;  
+            }  
+              
+            // Toggle Task button  
+            if (target.classList.contains('toggle-task-btn')) {  
+                const taskId = target.getAttribute('data-task-id');  
+                const newStatus = target.getAttribute('data-new-status') === 'true';  
+                await toggleTask(taskId, newStatus);  
+                return;  
+            }  
+              
+            // View Requirements button  
+            if (target.classList.contains('view-requirements-btn')) {  
+                const taskId = target.getAttribute('data-task-id');  
+                await viewRequirements(taskId);  
+                return;  
+            }  
+              
+            // Approve Submission  
+            if (target.classList.contains('approve-submission')) {  
+                const subId = target.getAttribute('data-sub-id');  
+                await reviewSubmission(subId, true);  
+                return;  
+            }  
+              
+            // Reject Submission  
+            if (target.classList.contains('reject-submission')) {  
+                const subId = target.getAttribute('data-sub-id');  
+                await reviewSubmission(subId, false);  
+                return;  
+            }  
+              
+            // Process Withdrawal  
+            if (target.classList.contains('process-withdrawal')) {  
+                const withdrawalId = target.getAttribute('data-withdrawal-id');  
+                await processWithdrawal(withdrawalId);  
+                return;  
+            }  
+              
+            // Approve Membership  
+            if (target.classList.contains('approve-membership')) {  
+                const userId = target.getAttribute('data-user-id');  
+                const paymentId = target.getAttribute('data-payment-id');  
+                await approveMembership(userId, paymentId);  
+                return;  
+            }  
+              
+            // Reject Membership  
+            if (target.classList.contains('reject-membership')) {  
+                const userId = target.getAttribute('data-user-id');  
+                const paymentId = target.getAttribute('data-payment-id');  
+                await rejectMembership(userId, paymentId);  
+                return;  
+            }  
+            
+            // Edit Packages button
+            if (target.classList.contains('edit-packages-btn') || target.id === 'editPackagesBtn' || 
+                (target.closest('button') && target.closest('button').textContent.includes('Edit Packages'))) {
+                showEditPackages();
+                return;
+            }
+            
+            // Save Packages button
+            if (target.id === 'savePackagesBtn' || (target.closest('button') && target.closest('button').id === 'savePackagesBtn')) {
+                e.preventDefault();
+                await savePackages();
+                return;
+            }
+            
+            // Edit Fee Settings button
+            if (target.id === 'editFeeSettingsBtn' || (target.closest('button') && target.closest('button').textContent.includes('Edit Fee Settings'))) {
+                showEditFeeSettings();
+                return;
+            }
+            
+            // Save Fee Settings button
+            if (target.id === 'saveFeeSettingsBtn' || (target.closest('button') && target.closest('button').id === 'saveFeeSettingsBtn')) {
+                e.preventDefault();
+                await saveFeeSettings();
+                return;
+            }
+              
+            // Credit Referral button  
+            if (target.classList.contains('credit-referral-btn')) {  
+                const referralId = target.getAttribute('data-referral-id');  
+                const referrerId = target.getAttribute('data-referrer-id');  
+                const referredId = target.getAttribute('data-referred-id');  
+                const referredEmail = target.getAttribute('data-referred-email');  
+                await creditReferralBonus(referralId, referrerId, referredId, referredEmail);  
+                return;  
+            }  
+              
+            // Confirm Credit button (in modal)  
+            if (target.id === 'confirmCreditBtn') {  
+                const referralId = target.getAttribute('data-referral-id');  
+                const referrerId = target.getAttribute('data-referrer-id');  
+                const referredId = target.getAttribute('data-referred-id');  
+                const referredEmail = target.getAttribute('data-referred-email');  
+                await executeCreditBonus(referralId, referrerId, referredId, referredEmail);  
+                return;  
+            }  
+              
+            // Reject Referral button  
+            if (target.classList.contains('reject-referral-btn')) {  
+                const referralId = target.getAttribute('data-referral-id');  
+                if (confirm('Are you sure you want to reject this referral?')) {  
+                    await rejectReferral(referralId);  
+                }  
+                return;  
+            }  
+              
+            // Send Individual Message  
+            if (target.id === 'sendMessageBtn') {  
+                await sendMessage();  
+                return;  
+            }  
+              
+            // Individual Message button  
+            if (target.id === 'individualMessageBtn') {  
+                currentMessageType = 'individual';  
+                document.getElementById('individualMessageForm').style.display = 'block';  
+                document.getElementById('broadcastMessageForm').style.display = 'none';  
+                target.classList.add('btn-primary');  
+                document.getElementById('broadcastMessageBtn').classList.remove('btn-primary');  
+                return;  
+            }  
+              
+            // Broadcast Message button  
+            if (target.id === 'broadcastMessageBtn') {  
+                currentMessageType = 'broadcast';  
+                document.getElementById('broadcastMessageForm').style.display = 'block';  
+                document.getElementById('individualMessageForm').style.display = 'none';  
+                target.classList.add('btn-primary');  
+                document.getElementById('individualMessageBtn').classList.remove('btn-primary');  
+                return;  
+            }  
+              
+            // Send Broadcast button  
+            if (target.id === 'sendBroadcastBtn' || target.closest('#sendBroadcastBtn')) {  
+                await sendBroadcast();  
+                return;  
+            }  
+              
+            // Preview Broadcast button  
+            if (target.id === 'previewBroadcastBtn') {  
+                previewBroadcast();  
+                return;  
+            }  
+              
+            // Confirm Broadcast button (in modal)  
+            if (target.id === 'confirmBroadcastBtn') {  
+                await executeBroadcast();  
+                return;  
+            }  
+              
+            // Cancel Broadcast button (in modal)  
+            if (target.id === 'cancelBroadcastBtn') {  
+                closeModal();  
+                return;  
+            }  
+        });  
+          
+        // Make functions globally available  
+        window.showAlert = showAlert;  
+        window.showModal = showModal;  
+        window.closeModal = closeModal;  
+        window.logout = logout;  
+        window.switchTab = switchTab;  
+        window.toggleUserStatus = toggleUserStatus;  
+        window.makeAdmin = makeAdmin;  
+        window.showAdjustWallet = showAdjustWallet;  
+        window.adjustWallet = adjustWallet;  
+        window.showCreateTask = showCreateTask;  
+        window.createTask = createTask;  
+        window.toggleTask = toggleTask;  
+        window.editTask = editTask;  
+        window.updateTask = updateTask;  
+        window.viewRequirements = viewRequirements;  
+        window.reviewSubmission = reviewSubmission;  
+        window.processWithdrawal = processWithdrawal;  
+        window.loadMembershipPackages = loadMembershipPackages;  
+        window.loadFeeSettings = loadFeeSettings;  
+        window.showEditPackages = showEditPackages;  
+        window.savePackages = savePackages;  
+        window.showEditFeeSettings = showEditFeeSettings;  
+        window.saveFeeSettings = saveFeeSettings;  
+        window.approveMembership = approveMembership;  
+        window.rejectMembership = rejectMembership;  
+        window.loadReferrals = loadReferrals;  
+        window.creditReferralBonus = creditReferralBonus;  
+        window.executeCreditBonus = executeCreditBonus;  
+        window.rejectReferral = rejectReferral;  
+        window.initializeReferralCollections = initializeReferralCollections;  
+        window.createSampleReferral = createSampleReferral;  
+        window.showReferralDetails = showReferralDetails;  
+        window.sendMessage = sendMessage;  
+        window.sendBroadcast = sendBroadcast;  
+        window.executeBroadcast = executeBroadcast;  
+        window.previewBroadcast = previewBroadcast;  
+    </script>  
+</body>  
+</html>
