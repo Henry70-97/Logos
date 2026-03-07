@@ -1477,7 +1477,7 @@
         <div class="mobile-nav-item" onclick="handleMobileNavClick('messages')">
             <i class="fas fa-envelope"></i>
             <span>Messages</span>
-            <span id="mobileUnreadBadge" style="display:none; background:#ef4444; color:white; border-radius:40px; padding:0.2rem 0.5rem; font-size:0.8rem; margin-left:auto;">0</span>
+            <span id="mobileUnreadBadgeMessages" style="display:none; background:#ef4444; color:white; border-radius:40px; padding:0.2rem 0.5rem; font-size:0.8rem; margin-left:auto;">0</span>
         </div>
         <div class="mobile-nav-item" onclick="handleMobileNavClick('profile')">
             <i class="fas fa-user"></i>
@@ -1608,6 +1608,9 @@
         let TRANSACTION_FEE_PERCENT = 3; // Default fallback
         let PLATFORM_FEE_PERCENT = 2;    // Default fallback
         let TOTAL_FEE_PERCENT = TRANSACTION_FEE_PERCENT + PLATFORM_FEE_PERCENT;
+        
+        // Admin ID constant (you should set this to your actual admin user ID)
+        const ADMIN_USER_ID = 'admin'; // Replace with actual admin UID if known
         
         // Function to load fee settings from Firestore
         async function loadFeeSettings() {
@@ -2094,14 +2097,14 @@
                 messagesListener();
             }
             
+            // Listen for unread messages where user is recipient (messages from admin)
             messagesListener = db.collection('messages')
-                .where('userId', '==', currentUser.uid)
+                .where('recipientId', '==', currentUser.uid)
                 .where('read', '==', false)
-                .where('fromAdmin', '==', true)
                 .onSnapshot((snapshot) => {
                     const unreadCount = snapshot.size;
                     const badge = document.getElementById('unreadMessagesBadge');
-                    const mobileBadge = document.getElementById('mobileUnreadBadge');
+                    const mobileBadge = document.getElementById('mobileUnreadBadgeMessages');
                     
                     if (unreadCount > 0) {
                         if (badge) {
@@ -3211,7 +3214,7 @@
                 let bonusesSnapshot = { empty: true, docs: [] };
                 try {
                     bonusesSnapshot = await db.collection('referralBonuses')
-                        .where('referrerId', '==', currentUser.uid)
+                        .where('userId', '==', currentUser.uid)
                         .orderBy('createdAt', 'desc')
                         .get();
                 } catch (error) {
@@ -3434,14 +3437,42 @@
             });
         }
         
-        // Load Messages
+        // Load Messages - UPDATED to match rules (using senderId and recipientId)
         async function loadMessages() {
             try {
                 document.getElementById('content').innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i><p>Loading messages...</p></div>';
                 
-                const snapshot = await db.collection('messages')
-                    .where('userId', '==', currentUser.uid)
+                // Get messages where user is sender
+                const senderSnapshot = await db.collection('messages')
+                    .where('senderId', '==', currentUser.uid)
                     .get();
+                
+                // Get messages where user is recipient (replies from admin)
+                const recipientSnapshot = await db.collection('messages')
+                    .where('recipientId', '==', currentUser.uid)
+                    .get();
+                
+                // Combine both snapshots
+                const messages = [];
+                
+                senderSnapshot.forEach(doc => {
+                    messages.push({ id: doc.id, ...doc.data() });
+                });
+                
+                recipientSnapshot.forEach(doc => {
+                    messages.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // Remove duplicates by ID (if any)
+                const uniqueMessages = [];
+                const messageIds = new Set();
+                
+                messages.forEach(msg => {
+                    if (!messageIds.has(msg.id)) {
+                        messageIds.add(msg.id);
+                        uniqueMessages.push(msg);
+                    }
+                });
                 
                 let html = `
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
@@ -3452,7 +3483,7 @@
                     </div>
                 `;
                 
-                if (snapshot.empty) {
+                if (uniqueMessages.length === 0) {
                     html += `
                         <div class="empty-state">
                             <i class="fas fa-envelope-open-text"></i>
@@ -3464,19 +3495,15 @@
                         </div>
                     `;
                 } else {
-                    const messages = [];
-                    snapshot.forEach(doc => {
-                        messages.push({ id: doc.id, ...doc.data() });
-                    });
-                    
-                    messages.sort((a, b) => {
+                    uniqueMessages.sort((a, b) => {
                         if (!a.createdAt) return 1;
                         if (!b.createdAt) return -1;
                         return (b.createdAt.seconds || 0) - (a.createdAt.seconds || 0);
                     });
                     
+                    // Group messages by parentMessageId to create threads
                     const threads = {};
-                    messages.forEach(msg => {
+                    uniqueMessages.forEach(msg => {
                         const threadId = msg.parentMessageId || msg.id;
                         if (!threads[threadId]) {
                             threads[threadId] = {
@@ -3487,7 +3514,7 @@
                             };
                         }
                         threads[threadId].messages.push(msg);
-                        if (!msg.read && msg.fromAdmin) {
+                        if (!msg.read && msg.recipientId === currentUser.uid) {
                             threads[threadId].unreadCount++;
                         }
                         
@@ -3531,11 +3558,12 @@
                             }
                         }
                         
-                        const firstMsg = thread.messages[0];
+                        const firstMsg = thread.messages.find(m => m.parentMessageId === thread.id) || thread.messages[0];
                         const subject = firstMsg.subject || 'Conversation with Admin';
                         
                         const preview = lastMsg.message?.substring(0, 70) || 'No content';
                         const messageCount = thread.messages.length;
+                        const lastSender = lastMsg.senderId === currentUser.uid ? 'You' : 'Admin';
                         
                         html += `
                             <div class="submission-card message-card ${hasUnread ? 'unread' : ''}" onclick="viewMessageThread('${thread.id}')" style="padding: 1rem;">
@@ -3556,8 +3584,8 @@
                                         <div style="display:flex; gap:1rem; margin-top:0.3rem; font-size:0.8rem; color:#64748b;">
                                             <span><i class="far fa-comment"></i> ${messageCount} message${messageCount !== 1 ? 's' : ''}</span>
                                             <span>
-                                                <i class="fas ${lastMsg.fromAdmin ? 'fa-user-shield' : 'fa-user'}"></i>
-                                                Last: ${lastMsg.fromAdmin ? 'Admin' : 'You'}
+                                                <i class="fas ${lastMsg.senderId !== currentUser.uid ? 'fa-user-shield' : 'fa-user'}"></i>
+                                                Last: ${lastSender}
                                             </span>
                                         </div>
                                     </div>
@@ -3584,7 +3612,7 @@
             }
         }
         
-        // Show compose message form
+        // Show compose message form - UPDATED
         function showComposeMessage() {
             showModal(`
                 <div class="modal-content">
@@ -3618,7 +3646,7 @@
             `);
         }
         
-        // Send new message
+        // Send new message - UPDATED to use senderId and recipientId
         async function sendMessage() {
             const subject = document.getElementById('messageSubject')?.value;
             const message = document.getElementById('messageContent')?.value;
@@ -3640,7 +3668,8 @@
             
             try {
                 const messageData = {
-                    userId: currentUser.uid,
+                    senderId: currentUser.uid, // Changed from userId
+                    recipientId: ADMIN_USER_ID, // Send to admin
                     userEmail: currentUser.email,
                     userDisplayName: userData.displayName || 'User',
                     subject: subject.trim(),
@@ -3653,6 +3682,7 @@
                 
                 const docRef = await db.collection('messages').add(messageData);
                 
+                // Update with parentMessageId (for threading)
                 await db.collection('messages').doc(docRef.id).update({
                     parentMessageId: docRef.id
                 });
@@ -3664,10 +3694,11 @@
             } catch (error) {
                 console.error('Error sending message:', error);
                 showAlert('Your message has been sent successfully', 'success');
+                loadMessages();
             }
         }
         
-        // View message thread
+        // View message thread - UPDATED
         async function viewMessageThread(threadId) {
             try {
                 const snapshot = await db.collection('messages')
@@ -3688,7 +3719,8 @@
                 const firstMessage = messages[0];
                 const subject = firstMessage.subject || 'Conversation';
                 
-                const unreadMessages = messages.filter(m => m.fromAdmin && !m.read);
+                // Mark unread messages as read (only messages where user is recipient)
+                const unreadMessages = messages.filter(m => m.recipientId === currentUser.uid && !m.read);
                 for (const msg of unreadMessages) {
                     await db.collection('messages').doc(msg.id).update({
                         read: true,
@@ -3711,8 +3743,8 @@
                         msgDate = new Date(msg.createdAt.seconds * 1000).toLocaleString();
                     }
                     
-                    const sender = msg.fromAdmin ? 'Admin' : 'You';
-                    const senderClass = msg.fromAdmin ? 'admin' : 'user';
+                    const sender = msg.senderId === currentUser.uid ? 'You' : 'Admin';
+                    const senderClass = msg.senderId === currentUser.uid ? 'user' : 'admin';
                     
                     threadHtml += `
                         <div class="message-bubble ${senderClass}">
@@ -3723,7 +3755,7 @@
                             <div class="message-content">
                                 ${msg.message.replace(/\n/g, '<br>')}
                             </div>
-                            ${!msg.fromAdmin ? `
+                            ${msg.senderId === currentUser.uid ? `
                                 <div class="message-status ${msg.read ? 'read' : 'unread'}">
                                     ${msg.read ? 'Read' : 'Delivered'}
                                     <i class="fas ${msg.read ? 'fa-check-double' : 'fa-check'}"></i>
@@ -3764,7 +3796,7 @@
             }
         }
         
-        // Send reply in thread
+        // Send reply in thread - UPDATED
         async function sendReply(threadId) {
             const reply = document.getElementById('replyMessage')?.value;
             
@@ -3788,7 +3820,8 @@
                 const firstMsg = firstMsgSnapshot.docs[0]?.data();
                 
                 await db.collection('messages').add({
-                    userId: currentUser.uid,
+                    senderId: currentUser.uid, // Changed from userId
+                    recipientId: ADMIN_USER_ID, // Send to admin
                     userEmail: currentUser.email,
                     userDisplayName: userData.displayName || 'User',
                     parentMessageId: threadId,
