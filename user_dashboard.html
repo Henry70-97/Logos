@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuantumMinds - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs, addDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+        let userData = null;
+
+        // DOM elements
+        const userGreeting = document.getElementById('userGreeting');
+        const walletBalance = document.getElementById('walletBalance');
+        const totalEarnings = document.getElementById('totalEarnings');
+        const jobsList = document.getElementById('jobsList');
+        const toolsList = document.getElementById('toolsList');
+        const purchasedToolsList = document.getElementById('purchasedToolsList');
+        const notificationsContainer = document.getElementById('notifications');
+        const postJobModal = document.getElementById('postJobModal');
+        const buyToolModal = document.getElementById('buyToolModal');
+        const hamburgerMenu = document.getElementById('hamburgerMenu');
+        const sidebar = document.getElementById('sidebar');
+
+        // Toggle sidebar
+        hamburgerMenu.addEventListener('click', () => sidebar.classList.toggle('-translate-x-full'));
+
+        // Logout
+        window.logout = () => signOut(auth);
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                if (userDoc.exists()) {
+                    userData = userDoc.data();
+                    if (userData.role === 'admin') {
+                        window.location.href = 'admin.html';
+                        return;
+                    }
+                    renderDashboard();
+                } else {
+                    alert('User data not found');
+                    window.location.href = 'index.html';
+                }
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+
+        async function renderDashboard() {
+            userGreeting.textContent = `Welcome back, ${userData.fullName || userData.email.split('@')[0]}!`;
+            walletBalance.textContent = `KSh ${userData.walletBalance || 0}`;
+            totalEarnings.textContent = `KSh ${userData.totalEarnings || 0}`;
+
+            await loadJobs();
+            await loadTools();
+            await loadPurchasedTools();
+            await loadNotifications();
+        }
+
+        // Load jobs (both open jobs and my jobs)
+        async function loadJobs() {
+            // Open jobs (not mine)
+            const jobsQuery = query(collection(db, 'jobs'), where('status', '==', 'open'));
+            const jobsSnapshot = await getDocs(jobsQuery);
+            jobsList.innerHTML = '';
+            jobsSnapshot.forEach(docSnap => {
+                const job = docSnap.data();
+                if (job.clientId === currentUser.uid) return; // skip own jobs
+                const jobCard = `
+                    <div class="bg-white p-4 rounded-lg shadow mb-3">
+                        <h3 class="font-bold text-lg">${job.title}</h3>
+                        <p class="text-gray-600">${job.description.substring(0, 100)}...</p>
+                        <p class="text-blue-600 font-semibold">Budget: KSh ${job.budget}</p>
+                        <button onclick="applyForJob('${docSnap.id}', ${job.budget})" class="mt-2 bg-green-600 text-white px-3 py-1 rounded-md text-sm">Apply</button>
+                    </div>
+                `;
+                jobsList.insertAdjacentHTML('beforeend', jobCard);
+            });
+        }
+
+        window.applyForJob = async (jobId, budget) => {
+            if (!userData.skills || userData.skills.length === 0) {
+                alert('Please update your skills in profile to apply for jobs.');
+                return;
+            }
+            const proposal = prompt('Write a short proposal:');
+            if (!proposal) return;
+            const price = prompt('Your bid (KSh):', budget);
+            if (!price) return;
+            try {
+                await addDoc(collection(db, 'applications'), {
+                    jobId: jobId,
+                    freelancerId: currentUser.uid,
+                    proposal: proposal,
+                    bid: parseFloat(price),
+                    status: 'pending',
+                    appliedAt: new Date().toISOString()
+                });
+                alert('Application submitted!');
+            } catch (error) {
+                console.error(error);
+                alert('Failed to apply.');
+            }
+        };
+
+        // Load available tools (marketplace)
+        async function loadTools() {
+            const toolsSnapshot = await getDocs(collection(db, 'tools'));
+            toolsList.innerHTML = '';
+            toolsSnapshot.forEach(docSnap => {
+                const tool = docSnap.data();
+                const toolCard = `
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <h3 class="font-bold">${tool.name}</h3>
+                        <p class="text-gray-600 text-sm">${tool.description}</p>
+                        <p class="text-blue-600 font-semibold">KSh ${tool.price}</p>
+                        <button onclick="openBuyToolModal('${docSnap.id}', '${tool.name}', ${tool.price})" class="mt-2 bg-blue-600 text-white px-3 py-1 rounded-md text-sm">Buy</button>
+                    </div>
+                `;
+                toolsList.insertAdjacentHTML('beforeend', toolCard);
+            });
+        }
+
+        // Open modal for buying tool
+        window.openBuyToolModal = (toolId, toolName, price) => {
+            document.getElementById('toolId').value = toolId;
+            document.getElementById('toolName').textContent = toolName;
+            document.getElementById('toolPrice').textContent = price;
+            document.getElementById('toolPriceInput').value = price;
+            buyToolModal.classList.remove('hidden');
+        };
+
+        // Process payment (M-Pesa simulation)
+        window.processPayment = async () => {
+            const toolId = document.getElementById('toolId').value;
+            const price = parseFloat(document.getElementById('toolPriceInput').value);
+            if (userData.walletBalance < price) {
+                alert('Insufficient balance. Please top up (M-Pesa simulation).');
+                // Here you would integrate actual M-Pesa STK push
+                return;
+            }
+            try {
+                // Deduct from wallet
+                await updateDoc(doc(db, 'users', currentUser.uid), {
+                    walletBalance: userData.walletBalance - price
+                });
+                // Add to user_tools
+                await setDoc(doc(db, 'user_tools', `${currentUser.uid}_${toolId}`), {
+                    userId: currentUser.uid,
+                    toolId: toolId,
+                    purchasedAt: new Date().toISOString()
+                });
+                alert('Tool purchased successfully!');
+                buyToolModal.classList.add('hidden');
+                location.reload(); // refresh to show purchased tools
+            } catch (error) {
+                console.error(error);
+                alert('Purchase failed.');
+            }
+        };
+
+        // Load purchased tools
+        async function loadPurchasedTools() {
+            const purchasedQuery = query(collection(db, 'user_tools'), where('userId', '==', currentUser.uid));
+            const snapshot = await getDocs(purchasedQuery);
+            purchasedToolsList.innerHTML = '';
+            for (const docSnap of snapshot.docs) {
+                const toolRef = await getDoc(doc(db, 'tools', docSnap.data().toolId));
+                if (toolRef.exists()) {
+                    const tool = toolRef.data();
+                    const toolItem = `<div class="bg-gray-100 p-3 rounded-lg mb-2"><i class="fas fa-check-circle text-green-600 mr-2"></i>${tool.name}</div>`;
+                    purchasedToolsList.insertAdjacentHTML('beforeend', toolItem);
+                }
+            }
+        }
+
+        // Load notifications (sample)
+        async function loadNotifications() {
+            // For demo, we just show some static tips
+            notificationsContainer.innerHTML = `
+                <div class="bg-yellow-50 p-3 rounded-lg mb-2"><i class="fas fa-bolt text-yellow-600 mr-2"></i> Buy Proposal Generator to win more jobs!</div>
+                <div class="bg-blue-50 p-3 rounded-lg"><i class="fas fa-chart-line text-blue-600 mr-2"></i> Complete your profile to get more offers.</div>
+            `;
+        }
+
+        // Post Job Modal
+        window.openPostJobModal = () => postJobModal.classList.remove('hidden');
+        window.closeModal = (modalId) => document.getElementById(modalId).classList.add('hidden');
+
+        window.postJob = async () => {
+            const title = document.getElementById('jobTitle').value;
+            const description = document.getElementById('jobDesc').value;
+            const budget = parseFloat(document.getElementById('jobBudget').value);
+            const deadline = document.getElementById('jobDeadline').value;
+
+            if (!title || !description || !budget) {
+                alert('Please fill all fields');
+                return;
+            }
+
+            try {
+                await addDoc(collection(db, 'jobs'), {
+                    clientId: currentUser.uid,
+                    title: title,
+                    description: description,
+                    budget: budget,
+                    deadline: deadline,
+                    status: 'open',
+                    createdAt: new Date().toISOString()
+                });
+                alert('Job posted successfully!');
+                postJobModal.classList.add('hidden');
+                loadJobs(); // refresh
+            } catch (error) {
+                console.error(error);
+                alert('Failed to post job.');
+            }
+        };
+    </script>
+</head>
+<body class="bg-gray-100">
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-10">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <button id="hamburgerMenu" class="text-gray-600 md:hidden"><i class="fas fa-bars text-xl"></i></button>
+                <h1 class="text-xl font-bold text-blue-600">QuantumMinds</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <span id="userGreeting" class="hidden md:inline text-gray-700"></span>
+                <button onclick="logout()" class="bg-red-500 text-white px-3 py-1 rounded-md text-sm">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4 py-6 flex flex-col md:flex-row gap-6">
+        <!-- Sidebar (Hamburger menu) -->
+        <aside id="sidebar" class="fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 w-64 bg-white shadow-md p-4 transition-transform duration-300 z-20 md:z-auto">
+            <nav class="space-y-3">
+                <a href="#" class="flex items-center gap-2 text-gray-700 hover:text-blue-600"><i class="fas fa-tachometer-alt w-5"></i> Dashboard</a>
+                <a href="#" class="flex items-center gap-2 text-gray-700 hover:text-blue-600"><i class="fas fa-briefcase w-5"></i> Available Jobs</a>
+                <a href="#" class="flex items-center gap-2 text-gray-700 hover:text-blue-600"><i class="fas fa-tools w-5"></i> Tools Marketplace</a>
+                <a href="#" class="flex items-center gap-2 text-gray-700 hover:text-blue-600"><i class="fas fa-shopping-cart w-5"></i> Purchased Tools</a>
+                <a href="#" class="flex items-center gap-2 text-gray-700 hover:text-blue-600"><i class="fas fa-chart-line w-5"></i> Earnings</a>
+                <a href="#" class="flex items-center gap-2 text-gray-700 hover:text-blue-600"><i class="fas fa-bell w-5"></i> Notifications</a>
+                <hr>
+                <a href="#" class="flex items-center gap-2 text-blue-600 font-semibold"><i class="fas fa-gem w-5"></i> Buy Tools to Earn Faster 🔥</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1">
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="bg-white p-4 rounded-lg shadow"><h3 class="text-gray-500">Wallet Balance</h3><p id="walletBalance" class="text-2xl font-bold">KSh 0</p></div>
+                <div class="bg-white p-4 rounded-lg shadow"><h3 class="text-gray-500">Total Earnings</h3><p id="totalEarnings" class="text-2xl font-bold">KSh 0</p></div>
+                <div class="bg-white p-4 rounded-lg shadow"><h3 class="text-gray-500">Rating</h3><p class="text-2xl font-bold">4.5 ★</p></div>
+            </div>
+
+            <!-- Jobs Section -->
+            <div class="bg-white p-4 rounded-lg shadow mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold">Available Jobs</h2>
+                    <button onclick="openPostJobModal()" class="bg-blue-600 text-white px-3 py-1 rounded-md text-sm"><i class="fas fa-plus mr-1"></i> Post a Job</button>
+                </div>
+                <div id="jobsList">Loading jobs...</div>
+            </div>
+
+            <!-- Tools Marketplace -->
+            <div class="bg-white p-4 rounded-lg shadow mb-6">
+                <h2 class="text-xl font-bold mb-4">Tools Marketplace</h2>
+                <div id="toolsList" class="grid grid-cols-1 sm:grid-cols-2 gap-4">Loading tools...</div>
+            </div>
+
+            <!-- Purchased Tools -->
+            <div class="bg-white p-4 rounded-lg shadow mb-6">
+                <h2 class="text-xl font-bold mb-4">Your Tools</h2>
+                <div id="purchasedToolsList">Loading...</div>
+            </div>
+
+            <!-- Notifications -->
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h2 class="text-xl font-bold mb-4">Notifications & Tips</h2>
+                <div id="notifications">Loading...</div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Post Job Modal -->
+    <div id="postJobModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-30">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 class="text-xl font-bold mb-4">Post a Job</h3>
+            <input type="text" id="jobTitle" placeholder="Job Title" class="w-full border rounded-md px-3 py-2 mb-3">
+            <textarea id="jobDesc" rows="4" placeholder="Description" class="w-full border rounded-md px-3 py-2 mb-3"></textarea>
+            <input type="number" id="jobBudget" placeholder="Budget (KSh)" class="w-full border rounded-md px-3 py-2 mb-3">
+            <input type="date" id="jobDeadline" class="w-full border rounded-md px-3 py-2 mb-4">
+            <div class="flex justify-end gap-2">
+                <button onclick="closeModal('postJobModal')" class="px-4 py-2 border rounded-md">Cancel</button>
+                <button onclick="postJob()" class="px-4 py-2 bg-blue-600 text-white rounded-md">Post</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Buy Tool Modal (simulated M-Pesa) -->
+    <div id="buyToolModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-30">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 class="text-xl font-bold mb-4">Purchase Tool</h3>
+            <p>Tool: <span id="toolName"></span></p>
+            <p>Price: KSh <span id="toolPrice"></span></p>
+            <input type="hidden" id="toolId">
+            <div class="mb-4">
+                <label>Payment Method</label>
+                <select id="paymentMethod" class="w-full border rounded-md px-3 py-2">
+                    <option value="mpesa">M-Pesa (Simulated)</option>
+                    <option value="wallet">Use Wallet (KSh <span id="userWalletAmount">0</span>)</option>
+                </select>
+            </div>
+            <div class="flex justify-end gap-2">
+                <button onclick="closeModal('buyToolModal')" class="px-4 py-2 border rounded-md">Cancel</button>
+                <button onclick="processPayment()" class="px-4 py-2 bg-blue-600 text-white rounded-md">Pay</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
