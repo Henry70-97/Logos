@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuantumMinds - Dashboard</title>
+    <title>QuantumMinds - Complete Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs, addDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signOut, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, addDoc, deleteDoc, orderBy, Timestamp, arrayUnion, arrayRemove, onSnapshot, serverTimestamp, increment, limit } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDm-PeCeRdlx6TKPEvKNdT93lMqb5D5O20",
@@ -27,24 +27,50 @@
 
         let currentUser = null;
         let userData = null;
+        let applicationsUnsubscribe = null;
+        let myJobsUnsubscribe = null;
+        let messagesUnsubscribe = null;
 
         // DOM elements
         const userGreeting = document.getElementById('userGreeting');
-        const walletBalance = document.getElementById('walletBalance');
-        const totalEarnings = document.getElementById('totalEarnings');
-        const jobsList = document.getElementById('jobsList');
-        const toolsList = document.getElementById('toolsList');
-        const purchasedToolsList = document.getElementById('purchasedToolsList');
-        const notificationsContainer = document.getElementById('notifications');
-        const postJobModal = document.getElementById('postJobModal');
-        const buyToolModal = document.getElementById('buyToolModal');
-        const hamburgerMenu = document.getElementById('hamburgerMenu');
-        const sidebar = document.getElementById('sidebar');
+        const walletBalanceEl = document.getElementById('walletBalance');
+        const totalEarningsEl = document.getElementById('totalEarnings');
+        const activeJobsCount = document.getElementById('activeJobsCount');
+        const pendingAppsCount = document.getElementById('pendingAppsCount');
+        const completedJobsCount = document.getElementById('completedJobsCount');
+        const userLevelBadge = document.getElementById('userLevelBadge');
+        const sidebarLinks = document.querySelectorAll('.sidebar-link');
+        const mainSections = {
+            dashboard: document.getElementById('dashboardSection'),
+            availableJobs: document.getElementById('availableJobsSection'),
+            myApplications: document.getElementById('myApplicationsSection'),
+            myJobs: document.getElementById('myJobsSection'),
+            messages: document.getElementById('messagesSection'),
+            toolsMarketplace: document.getElementById('toolsMarketplaceSection'),
+            purchasedTools: document.getElementById('purchasedToolsSection'),
+            earnings: document.getElementById('earningsSection'),
+            transactions: document.getElementById('transactionsSection'),
+            withdraw: document.getElementById('withdrawSection'),
+            referrals: document.getElementById('referralsSection'),
+            reviews: document.getElementById('reviewsSection'),
+            profile: document.getElementById('profileSection'),
+            settings: document.getElementById('settingsSection'),
+            support: document.getElementById('supportSection')
+        };
 
-        // Toggle sidebar
-        hamburgerMenu.addEventListener('click', () => sidebar.classList.toggle('-translate-x-full'));
+        // Helper functions
+        function showSection(sectionId) {
+            Object.values(mainSections).forEach(section => section.classList.add('hidden'));
+            if (mainSections[sectionId]) mainSections[sectionId].classList.remove('hidden');
+            // Update active link style
+            sidebarLinks.forEach(link => {
+                link.classList.remove('bg-blue-50', 'text-blue-600', 'border-l-4', 'border-blue-600');
+                if (link.getAttribute('data-section') === sectionId) {
+                    link.classList.add('bg-blue-50', 'text-blue-600', 'border-l-4', 'border-blue-600');
+                }
+            });
+        }
 
-        // Logout
         window.logout = () => signOut(auth);
 
         onAuthStateChanged(auth, async (user) => {
@@ -54,10 +80,10 @@
                 if (userDoc.exists()) {
                     userData = userDoc.data();
                     if (userData.role === 'admin') {
-                        window.location.href = 'admin.html';
+                        window.location.href = 'admin_dashboard.html';
                         return;
                     }
-                    renderDashboard();
+                    await renderDashboard();
                 } else {
                     alert('User data not found');
                     window.location.href = 'index.html';
@@ -69,34 +95,90 @@
 
         async function renderDashboard() {
             userGreeting.textContent = `Welcome back, ${userData.fullName || userData.email.split('@')[0]}!`;
-            walletBalance.textContent = `KSh ${userData.walletBalance || 0}`;
-            totalEarnings.textContent = `KSh ${userData.totalEarnings || 0}`;
-
-            await loadJobs();
+            await updateStats();
+            await loadDashboardData();
+            await loadAvailableJobs();
+            await loadMyApplications();
+            await loadMyJobs();
+            await loadMessagesList();
             await loadTools();
             await loadPurchasedTools();
-            await loadNotifications();
+            await loadEarnings();
+            await loadTransactions();
+            await loadReferralData();
+            await loadReviews();
+            await loadProfileData();
+            await loadSupportTickets();
+            showSection('dashboard'); // default
         }
 
-        // Load jobs (both open jobs and my jobs)
-        async function loadJobs() {
-            // Open jobs (not mine)
-            const jobsQuery = query(collection(db, 'jobs'), where('status', '==', 'open'));
-            const jobsSnapshot = await getDocs(jobsQuery);
-            jobsList.innerHTML = '';
-            jobsSnapshot.forEach(docSnap => {
+        // Stats & Summary
+        async function updateStats() {
+            walletBalanceEl.textContent = `KSh ${userData.walletBalance || 0}`;
+            totalEarningsEl.textContent = `KSh ${userData.totalEarnings || 0}`;
+            const activeJobsQuery = query(collection(db, 'jobs'), where('clientId', '==', currentUser.uid), where('status', '==', 'open'));
+            const activeJobsSnap = await getDocs(activeJobsQuery);
+            activeJobsCount.textContent = activeJobsSnap.size;
+            const pendingAppsQuery = query(collection(db, 'applications'), where('freelancerId', '==', currentUser.uid), where('status', '==', 'pending'));
+            const pendingAppsSnap = await getDocs(pendingAppsQuery);
+            pendingAppsCount.textContent = pendingAppsSnap.size;
+            const completedJobsQuery = query(collection(db, 'jobs'), where('freelancerId', '==', currentUser.uid), where('status', '==', 'completed'));
+            const completedJobsSnap = await getDocs(completedJobsQuery);
+            completedJobsCount.textContent = completedJobsSnap.size;
+
+            // User level based on totalEarnings
+            let level = 'Bronze';
+            if (userData.totalEarnings >= 20000) level = 'Platinum';
+            else if (userData.totalEarnings >= 5000) level = 'Gold';
+            else if (userData.totalEarnings >= 1000) level = 'Silver';
+            userLevelBadge.innerHTML = `<i class="fas fa-trophy mr-1"></i> ${level}`;
+        }
+
+        async function loadDashboardData() {
+            // Show recent jobs, applications, etc.
+            // For now, we'll use static or quick fetch
+            const recentJobsQuery = query(collection(db, 'jobs'), where('status', '==', 'open'), limit(3));
+            const recentJobsSnap = await getDocs(recentJobsQuery);
+            const recentJobsList = document.getElementById('recentJobsList');
+            recentJobsList.innerHTML = '';
+            recentJobsSnap.forEach(docSnap => {
                 const job = docSnap.data();
-                if (job.clientId === currentUser.uid) return; // skip own jobs
-                const jobCard = `
-                    <div class="bg-white p-4 rounded-lg shadow mb-3">
-                        <h3 class="font-bold text-lg">${job.title}</h3>
-                        <p class="text-gray-600">${job.description.substring(0, 100)}...</p>
-                        <p class="text-blue-600 font-semibold">Budget: KSh ${job.budget}</p>
-                        <button onclick="applyForJob('${docSnap.id}', ${job.budget})" class="mt-2 bg-green-600 text-white px-3 py-1 rounded-md text-sm">Apply</button>
+                if (job.clientId === currentUser.uid) return;
+                recentJobsList.innerHTML += `
+                    <div class="border rounded p-3 mb-2 flex justify-between items-center">
+                        <div><span class="font-semibold">${job.title}</span><p class="text-sm text-gray-500">KSh ${job.budget}</p></div>
+                        <button onclick="viewJob('${docSnap.id}')" class="text-blue-600 text-sm">View</button>
                     </div>
                 `;
-                jobsList.insertAdjacentHTML('beforeend', jobCard);
             });
+        }
+
+        // Available Jobs (same as before, but now with escrow notice)
+        async function loadAvailableJobs() {
+            const jobsQuery = query(collection(db, 'jobs'), where('status', '==', 'open'));
+            const jobsSnapshot = await getDocs(jobsQuery);
+            const container = document.getElementById('availableJobsList');
+            container.innerHTML = '<div class="animate-pulse">Loading jobs...</div>';
+            let html = '';
+            jobsSnapshot.forEach(docSnap => {
+                const job = docSnap.data();
+                if (job.clientId === currentUser.uid) return;
+                html += `
+                    <div class="bg-white p-4 rounded-lg shadow mb-3 border-l-4 border-blue-500">
+                        <div class="flex justify-between items-start">
+                            <h3 class="font-bold text-lg">${job.title}</h3>
+                            <span class="text-sm bg-gray-100 px-2 py-1 rounded">${job.category || 'General'}</span>
+                        </div>
+                        <p class="text-gray-600 text-sm mt-1">${job.description.substring(0, 100)}...</p>
+                        <div class="flex justify-between items-center mt-3">
+                            <span class="text-blue-600 font-semibold">Budget: KSh ${job.budget}</span>
+                            <span class="text-xs text-gray-500">Deadline: ${job.deadline ? new Date(job.deadline).toLocaleDateString() : 'Not set'}</span>
+                        </div>
+                        <button onclick="applyForJob('${docSnap.id}', ${job.budget})" class="mt-3 bg-green-600 text-white px-4 py-1 rounded-md text-sm hover:bg-green-700">Apply</button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html || '<p class="text-gray-500">No open jobs available.</p>';
         }
 
         window.applyForJob = async (jobId, budget) => {
@@ -106,141 +188,555 @@
             }
             const proposal = prompt('Write a short proposal:');
             if (!proposal) return;
-            const price = prompt('Your bid (KSh):', budget);
-            if (!price) return;
+            const bid = prompt('Your bid (KSh):', budget);
+            if (!bid) return;
             try {
                 await addDoc(collection(db, 'applications'), {
                     jobId: jobId,
                     freelancerId: currentUser.uid,
+                    freelancerName: userData.fullName,
                     proposal: proposal,
-                    bid: parseFloat(price),
+                    bid: parseFloat(bid),
                     status: 'pending',
-                    appliedAt: new Date().toISOString()
+                    appliedAt: serverTimestamp()
                 });
                 alert('Application submitted!');
+                loadAvailableJobs(); // refresh
+                loadMyApplications();
             } catch (error) {
                 console.error(error);
                 alert('Failed to apply.');
             }
         };
 
-        // Load available tools (marketplace)
-        async function loadTools() {
-            const toolsSnapshot = await getDocs(collection(db, 'tools'));
-            toolsList.innerHTML = '';
-            toolsSnapshot.forEach(docSnap => {
-                const tool = docSnap.data();
-                const toolCard = `
-                    <div class="bg-white p-4 rounded-lg shadow">
-                        <h3 class="font-bold">${tool.name}</h3>
-                        <p class="text-gray-600 text-sm">${tool.description}</p>
-                        <p class="text-blue-600 font-semibold">KSh ${tool.price}</p>
-                        <button onclick="openBuyToolModal('${docSnap.id}', '${tool.name}', ${tool.price})" class="mt-2 bg-blue-600 text-white px-3 py-1 rounded-md text-sm">Buy</button>
+        // My Applications
+        async function loadMyApplications() {
+            const appsQuery = query(collection(db, 'applications'), where('freelancerId', '==', currentUser.uid), orderBy('appliedAt', 'desc'));
+            const appsSnap = await getDocs(appsQuery);
+            const container = document.getElementById('myApplicationsList');
+            container.innerHTML = '';
+            for (const docSnap of appsSnap.docs) {
+                const app = docSnap.data();
+                const jobDoc = await getDoc(doc(db, 'jobs', app.jobId));
+                const job = jobDoc.exists() ? jobDoc.data() : null;
+                container.innerHTML += `
+                    <div class="border rounded p-3 mb-2">
+                        <div class="flex justify-between">
+                            <span class="font-semibold">${job ? job.title : 'Job not found'}</span>
+                            <span class="text-sm px-2 py-0.5 rounded-full ${app.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : app.status === 'accepted' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${app.status}</span>
+                        </div>
+                        <p class="text-sm text-gray-600">Your bid: KSh ${app.bid}</p>
+                        <p class="text-sm text-gray-500">Proposal: ${app.proposal}</p>
+                        ${app.status === 'accepted' ? `<button onclick="startChatForJob('${app.jobId}')" class="mt-2 text-blue-600 text-sm"><i class="fas fa-comment"></i> Message Client</button>` : ''}
+                        ${app.status === 'accepted' ? `<button onclick="submitWork('${app.jobId}')" class="mt-2 ml-3 text-green-600 text-sm"><i class="fas fa-upload"></i> Submit Work</button>` : ''}
                     </div>
                 `;
-                toolsList.insertAdjacentHTML('beforeend', toolCard);
-            });
+            }
+            if (appsSnap.empty) container.innerHTML = '<p class="text-gray-500">You have not applied to any jobs yet.</p>';
         }
 
-        // Open modal for buying tool
-        window.openBuyToolModal = (toolId, toolName, price) => {
-            document.getElementById('toolId').value = toolId;
-            document.getElementById('toolName').textContent = toolName;
-            document.getElementById('toolPrice').textContent = price;
-            document.getElementById('toolPriceInput').value = price;
-            buyToolModal.classList.remove('hidden');
+        // My Jobs (client side)
+        async function loadMyJobs() {
+            const jobsQuery = query(collection(db, 'jobs'), where('clientId', '==', currentUser.uid), orderBy('createdAt', 'desc'));
+            const jobsSnap = await getDocs(jobsQuery);
+            const container = document.getElementById('myJobsList');
+            container.innerHTML = '';
+            for (const jobDoc of jobsSnap.docs) {
+                const job = jobDoc.data();
+                const appsQuery = query(collection(db, 'applications'), where('jobId', '==', jobDoc.id));
+                const appsSnap = await getDocs(appsQuery);
+                const applicants = appsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                container.innerHTML += `
+                    <div class="border rounded p-3 mb-3">
+                        <div class="flex justify-between">
+                            <h4 class="font-bold">${job.title}</h4>
+                            <span class="text-sm px-2 py-0.5 rounded-full ${job.status === 'open' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">${job.status}</span>
+                        </div>
+                        <p class="text-sm text-gray-600">Budget: KSh ${job.budget} | Deadline: ${job.deadline ? new Date(job.deadline).toLocaleDateString() : 'Not set'}</p>
+                        <div class="mt-2">
+                            <button onclick="toggleApplicants('${jobDoc.id}')" class="text-blue-600 text-sm">Show Applicants (${applicants.length})</button>
+                            <div id="applicants-${jobDoc.id}" class="hidden mt-2 space-y-2">
+                                ${applicants.map(app => `
+                                    <div class="bg-gray-50 p-2 rounded flex justify-between items-center">
+                                        <div>
+                                            <span class="font-medium">${app.freelancerName || 'Freelancer'}</span>
+                                            <p class="text-xs">Bid: KSh ${app.bid}</p>
+                                            <p class="text-xs">Proposal: ${app.proposal}</p>
+                                        </div>
+                                        ${job.status === 'open' ? `
+                                            <div>
+                                                <button onclick="acceptFreelancer('${jobDoc.id}', '${app.freelancerId}', ${app.bid})" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Accept</button>
+                                                <button onclick="rejectApplication('${app.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Reject</button>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                `).join('')}
+                                ${applicants.length === 0 ? '<p class="text-gray-400 text-sm">No applications yet.</p>' : ''}
+                            </div>
+                        </div>
+                        ${job.status === 'in_progress' ? `
+                            <div class="mt-2">
+                                <button onclick="viewDeliveries('${jobDoc.id}')" class="text-blue-600 text-sm">View Deliveries</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }
+            if (jobsSnap.empty) container.innerHTML = '<p class="text-gray-500">You have not posted any jobs yet.</p>';
+        }
+
+        window.toggleApplicants = (jobId) => {
+            const el = document.getElementById(`applicants-${jobId}`);
+            if (el) el.classList.toggle('hidden');
         };
 
-        // Process payment (M-Pesa simulation)
-        window.processPayment = async () => {
-            const toolId = document.getElementById('toolId').value;
-            const price = parseFloat(document.getElementById('toolPriceInput').value);
+        window.acceptFreelancer = async (jobId, freelancerId, budget) => {
+            if (confirm(`Accept freelancer? You will deposit KSh ${budget} into escrow.`)) {
+                // Check wallet balance
+                if (userData.walletBalance < budget) {
+                    alert('Insufficient wallet balance. Please top up.');
+                    return;
+                }
+                try {
+                    // Deduct from client's wallet (escrow)
+                    await updateDoc(doc(db, 'users', currentUser.uid), {
+                        walletBalance: userData.walletBalance - budget,
+                        escrowBalance: (userData.escrowBalance || 0) + budget
+                    });
+                    // Update job status and assign freelancer
+                    await updateDoc(doc(db, 'jobs', jobId), {
+                        status: 'in_progress',
+                        freelancerId: freelancerId,
+                        escrowAmount: budget
+                    });
+                    // Update all applications for this job to 'rejected' except accepted one
+                    const appsQuery = query(collection(db, 'applications'), where('jobId', '==', jobId));
+                    const appsSnap = await getDocs(appsQuery);
+                    appsSnap.forEach(async (appDoc) => {
+                        if (appDoc.data().freelancerId === freelancerId) {
+                            await updateDoc(doc(db, 'applications', appDoc.id), { status: 'accepted' });
+                        } else {
+                            await updateDoc(doc(db, 'applications', appDoc.id), { status: 'rejected' });
+                        }
+                    });
+                    alert('Freelancer accepted. Escrow held.');
+                    loadMyJobs();
+                    loadDashboardData();
+                } catch (error) {
+                    console.error(error);
+                    alert('Error accepting freelancer.');
+                }
+            }
+        };
+
+        window.rejectApplication = async (appId) => {
+            await updateDoc(doc(db, 'applications', appId), { status: 'rejected' });
+            loadMyJobs();
+        };
+
+        // Messages / Chat
+        async function loadMessagesList() {
+            // Get all conversations: jobs where user is client or freelancer and status is in_progress/completed
+            const jobsAsClient = query(collection(db, 'jobs'), where('clientId', '==', currentUser.uid), where('status', 'in', ['in_progress', 'completed']));
+            const jobsAsFreelancer = query(collection(db, 'jobs'), where('freelancerId', '==', currentUser.uid), where('status', 'in', ['in_progress', 'completed']));
+            const [clientSnap, freelancerSnap] = await Promise.all([getDocs(jobsAsClient), getDocs(jobsAsFreelancer)]);
+            const conversations = [];
+            clientSnap.forEach(docSnap => {
+                conversations.push({ jobId: docSnap.id, title: docSnap.data().title, otherUserId: docSnap.data().freelancerId });
+            });
+            freelancerSnap.forEach(docSnap => {
+                conversations.push({ jobId: docSnap.id, title: docSnap.data().title, otherUserId: docSnap.data().clientId });
+            });
+            const container = document.getElementById('conversationsList');
+            container.innerHTML = '';
+            for (const conv of conversations) {
+                const otherUserDoc = await getDoc(doc(db, 'users', conv.otherUserId));
+                const otherName = otherUserDoc.exists() ? otherUserDoc.data().fullName : 'User';
+                container.innerHTML += `
+                    <div class="p-3 border-b cursor-pointer hover:bg-gray-50" onclick="openChat('${conv.jobId}', '${conv.title}', '${conv.otherUserId}', '${otherName}')">
+                        <div class="font-medium">${conv.title}</div>
+                        <div class="text-sm text-gray-500">with ${otherName}</div>
+                    </div>
+                `;
+            }
+            if (conversations.length === 0) container.innerHTML = '<p class="text-gray-500 p-3">No active conversations.</p>';
+        }
+
+        window.openChat = (jobId, jobTitle, otherUserId, otherName) => {
+            const chatContainer = document.getElementById('chatMessages');
+            const chatHeader = document.getElementById('chatHeader');
+            const chatInput = document.getElementById('chatInput');
+            chatHeader.innerHTML = `<i class="fas fa-comment-dots mr-2"></i> Chat: ${jobTitle} with ${otherName}`;
+            chatContainer.innerHTML = '<div class="text-center text-gray-500">Loading messages...</div>';
+            if (messagesUnsubscribe) messagesUnsubscribe();
+            const messagesQuery = query(collection(db, `jobs/${jobId}/messages`), orderBy('timestamp', 'asc'));
+            messagesUnsubscribe = onSnapshot(messagesQuery, (snapshot) => {
+                chatContainer.innerHTML = '';
+                snapshot.forEach(docSnap => {
+                    const msg = docSnap.data();
+                    const isMe = msg.senderId === currentUser.uid;
+                    chatContainer.innerHTML += `
+                        <div class="flex ${isMe ? 'justify-end' : 'justify-start'} mb-3">
+                            <div class="max-w-xs ${isMe ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'} rounded-lg p-2">
+                                <div class="text-sm">${msg.text}</div>
+                                <div class="text-xs ${isMe ? 'text-blue-100' : 'text-gray-500'} mt-1">${new Date(msg.timestamp?.toDate()).toLocaleTimeString()}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            });
+            window.currentChatJobId = jobId;
+            window.currentChatOtherId = otherUserId;
+            chatInput.disabled = false;
+            document.getElementById('sendMessageBtn').onclick = () => sendMessage();
+            chatInput.onkeypress = (e) => { if (e.key === 'Enter') sendMessage(); };
+        };
+
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text || !window.currentChatJobId) return;
+            try {
+                await addDoc(collection(db, `jobs/${window.currentChatJobId}/messages`), {
+                    text: text,
+                    senderId: currentUser.uid,
+                    senderName: userData.fullName,
+                    timestamp: serverTimestamp()
+                });
+                input.value = '';
+            } catch (error) {
+                console.error(error);
+                alert('Failed to send message.');
+            }
+        }
+
+        // Tools Marketplace (with categories)
+        async function loadTools() {
+            const toolsSnapshot = await getDocs(collection(db, 'tools'));
+            const categories = {};
+            toolsSnapshot.forEach(docSnap => {
+                const tool = docSnap.data();
+                const cat = tool.category || 'General';
+                if (!categories[cat]) categories[cat] = [];
+                categories[cat].push({ id: docSnap.id, ...tool });
+            });
+            const container = document.getElementById('toolsList');
+            container.innerHTML = '';
+            for (const [cat, tools] of Object.entries(categories)) {
+                container.innerHTML += `<h3 class="font-bold text-lg mt-4 mb-2">${cat}</h3><div class="grid grid-cols-1 sm:grid-cols-2 gap-4">`;
+                tools.forEach(tool => {
+                    container.innerHTML += `
+                        <div class="bg-white p-4 rounded-lg shadow">
+                            <h3 class="font-bold">${tool.name}</h3>
+                            <p class="text-gray-600 text-sm">${tool.description}</p>
+                            <p class="text-blue-600 font-semibold">KSh ${tool.price}</p>
+                            <button onclick="buyTool('${tool.id}', ${tool.price})" class="mt-2 bg-blue-600 text-white px-3 py-1 rounded-md text-sm">Buy</button>
+                        </div>
+                    `;
+                });
+                container.innerHTML += `</div>`;
+            }
+            if (toolsSnapshot.empty) container.innerHTML = '<p class="text-gray-500">No tools available.</p>';
+        }
+
+        window.buyTool = async (toolId, price) => {
             if (userData.walletBalance < price) {
-                alert('Insufficient balance. Please top up (M-Pesa simulation).');
-                // Here you would integrate actual M-Pesa STK push
+                alert('Insufficient balance. Please deposit funds.');
                 return;
             }
             try {
-                // Deduct from wallet
                 await updateDoc(doc(db, 'users', currentUser.uid), {
                     walletBalance: userData.walletBalance - price
                 });
-                // Add to user_tools
                 await setDoc(doc(db, 'user_tools', `${currentUser.uid}_${toolId}`), {
                     userId: currentUser.uid,
                     toolId: toolId,
-                    purchasedAt: new Date().toISOString()
+                    purchasedAt: serverTimestamp()
+                });
+                // Record transaction
+                await addDoc(collection(db, 'transactions'), {
+                    userId: currentUser.uid,
+                    type: 'tool_purchase',
+                    amount: -price,
+                    description: `Purchased tool`,
+                    timestamp: serverTimestamp()
                 });
                 alert('Tool purchased successfully!');
-                buyToolModal.classList.add('hidden');
-                location.reload(); // refresh to show purchased tools
+                loadPurchasedTools();
+                updateStats();
+                loadTransactions();
             } catch (error) {
                 console.error(error);
                 alert('Purchase failed.');
             }
         };
 
-        // Load purchased tools
         async function loadPurchasedTools() {
             const purchasedQuery = query(collection(db, 'user_tools'), where('userId', '==', currentUser.uid));
             const snapshot = await getDocs(purchasedQuery);
-            purchasedToolsList.innerHTML = '';
+            const container = document.getElementById('purchasedToolsList');
+            container.innerHTML = '';
             for (const docSnap of snapshot.docs) {
                 const toolRef = await getDoc(doc(db, 'tools', docSnap.data().toolId));
                 if (toolRef.exists()) {
                     const tool = toolRef.data();
-                    const toolItem = `<div class="bg-gray-100 p-3 rounded-lg mb-2"><i class="fas fa-check-circle text-green-600 mr-2"></i>${tool.name}</div>`;
-                    purchasedToolsList.insertAdjacentHTML('beforeend', toolItem);
+                    container.innerHTML += `<div class="bg-gray-100 p-3 rounded-lg mb-2"><i class="fas fa-check-circle text-green-600 mr-2"></i>${tool.name}</div>`;
                 }
             }
+            if (snapshot.empty) container.innerHTML = '<p class="text-gray-500">You have not purchased any tools yet.</p>';
         }
 
-        // Load notifications (sample)
-        async function loadNotifications() {
-            // For demo, we just show some static tips
-            notificationsContainer.innerHTML = `
-                <div class="bg-yellow-50 p-3 rounded-lg mb-2"><i class="fas fa-bolt text-yellow-600 mr-2"></i> Buy Proposal Generator to win more jobs!</div>
-                <div class="bg-blue-50 p-3 rounded-lg"><i class="fas fa-chart-line text-blue-600 mr-2"></i> Complete your profile to get more offers.</div>
-            `;
+        // Earnings & Transactions
+        async function loadEarnings() {
+            const earningsList = document.getElementById('earningsList');
+            earningsList.innerHTML = `<p>Total Earnings: KSh ${userData.totalEarnings || 0}</p>`;
         }
 
-        // Post Job Modal
-        window.openPostJobModal = () => postJobModal.classList.remove('hidden');
-        window.closeModal = (modalId) => document.getElementById(modalId).classList.add('hidden');
+        async function loadTransactions() {
+            const transactionsQuery = query(collection(db, 'transactions'), where('userId', '==', currentUser.uid), orderBy('timestamp', 'desc'), limit(20));
+            const snapshot = await getDocs(transactionsQuery);
+            const container = document.getElementById('transactionsList');
+            container.innerHTML = '';
+            snapshot.forEach(docSnap => {
+                const txn = docSnap.data();
+                container.innerHTML += `
+                    <div class="border-b py-2 flex justify-between">
+                        <div><span class="font-medium">${txn.type}</span><p class="text-xs text-gray-500">${new Date(txn.timestamp?.toDate()).toLocaleString()}</p></div>
+                        <div class="${txn.amount >= 0 ? 'text-green-600' : 'text-red-600'}">KSh ${txn.amount}</div>
+                    </div>
+                `;
+            });
+            if (snapshot.empty) container.innerHTML = '<p class="text-gray-500">No transactions yet.</p>';
+        }
 
-        window.postJob = async () => {
-            const title = document.getElementById('jobTitle').value;
-            const description = document.getElementById('jobDesc').value;
-            const budget = parseFloat(document.getElementById('jobBudget').value);
-            const deadline = document.getElementById('jobDeadline').value;
+        // Withdraw Funds
+        window.requestWithdrawal = async () => {
+            const amount = parseFloat(document.getElementById('withdrawAmount').value);
+            const method = document.getElementById('withdrawMethod').value;
+            const phone = document.getElementById('withdrawPhone').value;
+            if (!amount || amount <= 0) {
+                alert('Please enter a valid amount');
+                return;
+            }
+            if (amount > (userData.walletBalance || 0)) {
+                alert('Insufficient balance');
+                return;
+            }
+            if (method === 'mpesa' && !phone) {
+                alert('Please enter M-Pesa phone number');
+                return;
+            }
+            try {
+                await addDoc(collection(db, 'withdrawals'), {
+                    userId: currentUser.uid,
+                    amount: amount,
+                    method: method,
+                    phone: phone,
+                    status: 'pending',
+                    requestedAt: serverTimestamp()
+                });
+                alert('Withdrawal request submitted. Admin will process it shortly.');
+                document.getElementById('withdrawAmount').value = '';
+                document.getElementById('withdrawPhone').value = '';
+            } catch (error) {
+                console.error(error);
+                alert('Failed to submit request.');
+            }
+        };
 
-            if (!title || !description || !budget) {
+        // Referrals
+        async function loadReferralData() {
+            const referralCode = userData.referralCode || currentUser.uid.substring(0, 8);
+            if (!userData.referralCode) {
+                await updateDoc(doc(db, 'users', currentUser.uid), { referralCode });
+                userData.referralCode = referralCode;
+            }
+            document.getElementById('referralLink').value = `${window.location.origin}/?ref=${referralCode}`;
+            const referredUsersQuery = query(collection(db, 'users'), where('referredBy', '==', currentUser.uid));
+            const referredSnap = await getDocs(referredUsersQuery);
+            document.getElementById('referralCount').textContent = referredSnap.size;
+            document.getElementById('referralEarnings').textContent = `KSh ${userData.referralEarnings || 0}`;
+        }
+
+        // Reviews
+        async function loadReviews() {
+            const reviewsQuery = query(collection(db, 'reviews'), where('revieweeId', '==', currentUser.uid), orderBy('createdAt', 'desc'));
+            const snapshot = await getDocs(reviewsQuery);
+            const container = document.getElementById('reviewsList');
+            container.innerHTML = '';
+            snapshot.forEach(docSnap => {
+                const rev = docSnap.data();
+                container.innerHTML += `
+                    <div class="border rounded p-3 mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="font-semibold">${rev.reviewerName}</span>
+                            <span class="text-yellow-500">${'★'.repeat(rev.rating)}${'☆'.repeat(5-rev.rating)}</span>
+                        </div>
+                        <p class="text-gray-600">${rev.comment}</p>
+                        <p class="text-xs text-gray-400">${new Date(rev.createdAt?.toDate()).toLocaleDateString()}</p>
+                    </div>
+                `;
+            });
+            if (snapshot.empty) container.innerHTML = '<p class="text-gray-500">No reviews yet.</p>';
+        }
+
+        // Profile Settings
+        async function loadProfileData() {
+            document.getElementById('profileFullName').value = userData.fullName || '';
+            document.getElementById('profileEmail').value = userData.email;
+            document.getElementById('profilePhone').value = userData.phone || '';
+            document.getElementById('profileSkills').value = (userData.skills || []).join(', ');
+            document.getElementById('profileBio').value = userData.bio || '';
+        }
+
+        window.updateProfile = async () => {
+            const fullName = document.getElementById('profileFullName').value;
+            const phone = document.getElementById('profilePhone').value;
+            const skills = document.getElementById('profileSkills').value.split(',').map(s => s.trim());
+            const bio = document.getElementById('profileBio').value;
+            await updateDoc(doc(db, 'users', currentUser.uid), {
+                fullName, phone, skills, bio
+            });
+            userData.fullName = fullName;
+            userData.phone = phone;
+            userData.skills = skills;
+            userData.bio = bio;
+            alert('Profile updated!');
+            renderDashboard();
+        };
+
+        // Security Settings
+        window.changePassword = async () => {
+            const oldPwd = document.getElementById('oldPassword').value;
+            const newPwd = document.getElementById('newPassword').value;
+            if (!oldPwd || !newPwd) {
+                alert('Please fill both fields');
+                return;
+            }
+            try {
+                const credential = EmailAuthProvider.credential(currentUser.email, oldPwd);
+                await reauthenticateWithCredential(currentUser, credential);
+                await updatePassword(currentUser, newPwd);
+                alert('Password changed successfully!');
+                document.getElementById('oldPassword').value = '';
+                document.getElementById('newPassword').value = '';
+            } catch (error) {
+                console.error(error);
+                alert('Failed to change password. Check your current password.');
+            }
+        };
+
+        // Support
+        async function loadSupportTickets() {
+            const ticketsQuery = query(collection(db, 'support_tickets'), where('userId', '==', currentUser.uid), orderBy('createdAt', 'desc'));
+            const snapshot = await getDocs(ticketsQuery);
+            const container = document.getElementById('supportTickets');
+            container.innerHTML = '';
+            snapshot.forEach(docSnap => {
+                const ticket = docSnap.data();
+                container.innerHTML += `
+                    <div class="border rounded p-3 mb-2">
+                        <div class="flex justify-between">
+                            <span class="font-semibold">${ticket.subject}</span>
+                            <span class="text-xs ${ticket.status === 'open' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'} px-2 py-0.5 rounded">${ticket.status}</span>
+                        </div>
+                        <p class="text-sm text-gray-600">${ticket.message}</p>
+                        <p class="text-xs text-gray-400">${new Date(ticket.createdAt?.toDate()).toLocaleString()}</p>
+                    </div>
+                `;
+            });
+            if (snapshot.empty) container.innerHTML = '<p class="text-gray-500">No support tickets yet.</p>';
+        }
+
+        window.createSupportTicket = async () => {
+            const subject = document.getElementById('ticketSubject').value;
+            const message = document.getElementById('ticketMessage').value;
+            if (!subject || !message) {
                 alert('Please fill all fields');
                 return;
             }
+            await addDoc(collection(db, 'support_tickets'), {
+                userId: currentUser.uid,
+                userName: userData.fullName,
+                subject,
+                message,
+                status: 'open',
+                createdAt: serverTimestamp()
+            });
+            alert('Ticket submitted. Admin will respond soon.');
+            document.getElementById('ticketSubject').value = '';
+            document.getElementById('ticketMessage').value = '';
+            loadSupportTickets();
+        };
 
+        // Escrow & Work Submission
+        window.submitWork = async (jobId) => {
+            const workDescription = prompt('Describe your completed work:');
+            if (!workDescription) return;
             try {
-                await addDoc(collection(db, 'jobs'), {
-                    clientId: currentUser.uid,
-                    title: title,
-                    description: description,
-                    budget: budget,
-                    deadline: deadline,
-                    status: 'open',
-                    createdAt: new Date().toISOString()
+                await addDoc(collection(db, 'deliveries'), {
+                    jobId: jobId,
+                    freelancerId: currentUser.uid,
+                    description: workDescription,
+                    submittedAt: serverTimestamp(),
+                    status: 'pending'
                 });
-                alert('Job posted successfully!');
-                postJobModal.classList.add('hidden');
-                loadJobs(); // refresh
+                alert('Work submitted. Awaiting client approval.');
             } catch (error) {
                 console.error(error);
-                alert('Failed to post job.');
+                alert('Failed to submit work.');
+            }
+        };
+
+        window.viewDeliveries = async (jobId) => {
+            const deliveriesQuery = query(collection(db, 'deliveries'), where('jobId', '==', jobId));
+            const snapshot = await getDocs(deliveriesQuery);
+            let msg = 'Deliveries:\n';
+            snapshot.forEach(docSnap => {
+                const d = docSnap.data();
+                msg += `- ${d.description} (${d.status})\n`;
+            });
+            alert(msg);
+        };
+
+        window.approveDelivery = async (deliveryId, jobId, freelancerId, amount) => {
+            if (confirm('Approve this delivery and release payment?')) {
+                try {
+                    // Update delivery status
+                    await updateDoc(doc(db, 'deliveries', deliveryId), { status: 'approved' });
+                    // Release escrow to freelancer
+                    const jobRef = doc(db, 'jobs', jobId);
+                    const jobDoc = await getDoc(jobRef);
+                    const escrowAmount = jobDoc.data().escrowAmount;
+                    await updateDoc(doc(db, 'users', freelancerId), {
+                        walletBalance: increment(escrowAmount),
+                        totalEarnings: increment(escrowAmount)
+                    });
+                    await updateDoc(doc(db, 'users', currentUser.uid), {
+                        escrowBalance: increment(-escrowAmount)
+                    });
+                    await updateDoc(jobRef, { status: 'completed' });
+                    // Record transaction
+                    await addDoc(collection(db, 'transactions'), {
+                        userId: freelancerId,
+                        type: 'job_payment',
+                        amount: escrowAmount,
+                        description: `Payment for job ${jobId}`,
+                        timestamp: serverTimestamp()
+                    });
+                    alert('Payment released. Job completed.');
+                    loadMyJobs();
+                    loadDashboardData();
+                } catch (error) {
+                    console.error(error);
+                    alert('Error approving delivery.');
+                }
             }
         };
     </script>
 </head>
 <body class="bg-gray-100">
-    <!-- Header -->
     <header class="bg-white shadow-sm sticky top-0 z-10">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center gap-4">
@@ -255,92 +751,207 @@
     </header>
 
     <div class="container mx-auto px-4 py-6 flex flex-col md:flex-row gap-6">
-        <!-- Sidebar (Hamburger menu) -->
-        <aside id="sidebar" class="fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 w-64 bg-white shadow-md p-4 transition-transform duration-300 z-20 md:z-auto">
-            <nav class="space-y-3">
-                <a href="#" class="flex items-center gap-2 text-gray-700 hover:text-blue-600"><i class="fas fa-tachometer-alt w-5"></i> Dashboard</a>
-                <a href="#" class="flex items-center gap-2 text-gray-700 hover:text-blue-600"><i class="fas fa-briefcase w-5"></i> Available Jobs</a>
-                <a href="#" class="flex items-center gap-2 text-gray-700 hover:text-blue-600"><i class="fas fa-tools w-5"></i> Tools Marketplace</a>
-                <a href="#" class="flex items-center gap-2 text-gray-700 hover:text-blue-600"><i class="fas fa-shopping-cart w-5"></i> Purchased Tools</a>
-                <a href="#" class="flex items-center gap-2 text-gray-700 hover:text-blue-600"><i class="fas fa-chart-line w-5"></i> Earnings</a>
-                <a href="#" class="flex items-center gap-2 text-gray-700 hover:text-blue-600"><i class="fas fa-bell w-5"></i> Notifications</a>
-                <hr>
-                <a href="#" class="flex items-center gap-2 text-blue-600 font-semibold"><i class="fas fa-gem w-5"></i> Buy Tools to Earn Faster 🔥</a>
+        <!-- Sidebar -->
+        <aside id="sidebar" class="fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 w-64 bg-white shadow-md p-4 transition-transform duration-300 z-20 md:z-auto overflow-y-auto">
+            <nav class="space-y-1">
+                <a href="#" data-section="dashboard" class="sidebar-link flex items-center gap-2 text-gray-700 hover:bg-gray-100 p-2 rounded" onclick="showSection('dashboard')"><i class="fas fa-tachometer-alt w-5"></i> Dashboard</a>
+                <a href="#" data-section="availableJobs" class="sidebar-link flex items-center gap-2 text-gray-700 hover:bg-gray-100 p-2 rounded" onclick="showSection('availableJobs')"><i class="fas fa-briefcase w-5"></i> Available Jobs</a>
+                <a href="#" data-section="myApplications" class="sidebar-link flex items-center gap-2 text-gray-700 hover:bg-gray-100 p-2 rounded" onclick="showSection('myApplications')"><i class="fas fa-file-alt w-5"></i> My Applications</a>
+                <a href="#" data-section="myJobs" class="sidebar-link flex items-center gap-2 text-gray-700 hover:bg-gray-100 p-2 rounded" onclick="showSection('myJobs')"><i class="fas fa-tasks w-5"></i> My Jobs</a>
+                <a href="#" data-section="messages" class="sidebar-link flex items-center gap-2 text-gray-700 hover:bg-gray-100 p-2 rounded" onclick="showSection('messages')"><i class="fas fa-comments w-5"></i> Messages</a>
+                <a href="#" data-section="toolsMarketplace" class="sidebar-link flex items-center gap-2 text-gray-700 hover:bg-gray-100 p-2 rounded" onclick="showSection('toolsMarketplace')"><i class="fas fa-tools w-5"></i> Tools Marketplace</a>
+                <a href="#" data-section="purchasedTools" class="sidebar-link flex items-center gap-2 text-gray-700 hover:bg-gray-100 p-2 rounded" onclick="showSection('purchasedTools')"><i class="fas fa-shopping-cart w-5"></i> Purchased Tools</a>
+                <a href="#" data-section="earnings" class="sidebar-link flex items-center gap-2 text-gray-700 hover:bg-gray-100 p-2 rounded" onclick="showSection('earnings')"><i class="fas fa-chart-line w-5"></i> Earnings</a>
+                <a href="#" data-section="transactions" class="sidebar-link flex items-center gap-2 text-gray-700 hover:bg-gray-100 p-2 rounded" onclick="showSection('transactions')"><i class="fas fa-exchange-alt w-5"></i> Transactions</a>
+                <a href="#" data-section="withdraw" class="sidebar-link flex items-center gap-2 text-gray-700 hover:bg-gray-100 p-2 rounded" onclick="showSection('withdraw')"><i class="fas fa-money-bill-wave w-5"></i> Withdraw Funds</a>
+                <a href="#" data-section="referrals" class="sidebar-link flex items-center gap-2 text-gray-700 hover:bg-gray-100 p-2 rounded" onclick="showSection('referrals')"><i class="fas fa-user-friends w-5"></i> Referrals</a>
+                <a href="#" data-section="reviews" class="sidebar-link flex items-center gap-2 text-gray-700 hover:bg-gray-100 p-2 rounded" onclick="showSection('reviews')"><i class="fas fa-star w-5"></i> Reviews</a>
+                <a href="#" data-section="profile" class="sidebar-link flex items-center gap-2 text-gray-700 hover:bg-gray-100 p-2 rounded" onclick="showSection('profile')"><i class="fas fa-user w-5"></i> Profile</a>
+                <a href="#" data-section="settings" class="sidebar-link flex items-center gap-2 text-gray-700 hover:bg-gray-100 p-2 rounded" onclick="showSection('settings')"><i class="fas fa-lock w-5"></i> Security</a>
+                <a href="#" data-section="support" class="sidebar-link flex items-center gap-2 text-gray-700 hover:bg-gray-100 p-2 rounded" onclick="showSection('support')"><i class="fas fa-headset w-5"></i> Support</a>
             </nav>
         </aside>
 
         <!-- Main Content -->
         <main class="flex-1">
-            <!-- Stats Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div class="bg-white p-4 rounded-lg shadow"><h3 class="text-gray-500">Wallet Balance</h3><p id="walletBalance" class="text-2xl font-bold">KSh 0</p></div>
-                <div class="bg-white p-4 rounded-lg shadow"><h3 class="text-gray-500">Total Earnings</h3><p id="totalEarnings" class="text-2xl font-bold">KSh 0</p></div>
-                <div class="bg-white p-4 rounded-lg shadow"><h3 class="text-gray-500">Rating</h3><p class="text-2xl font-bold">4.5 ★</p></div>
-            </div>
-
-            <!-- Jobs Section -->
-            <div class="bg-white p-4 rounded-lg shadow mb-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold">Available Jobs</h2>
-                    <button onclick="openPostJobModal()" class="bg-blue-600 text-white px-3 py-1 rounded-md text-sm"><i class="fas fa-plus mr-1"></i> Post a Job</button>
+            <!-- Dashboard Section -->
+            <div id="dashboardSection">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white p-4 rounded-lg shadow"><h3 class="text-gray-500">Wallet Balance</h3><p id="walletBalance" class="text-2xl font-bold">KSh 0</p></div>
+                    <div class="bg-white p-4 rounded-lg shadow"><h3 class="text-gray-500">Total Earnings</h3><p id="totalEarnings" class="text-2xl font-bold">KSh 0</p></div>
+                    <div class="bg-white p-4 rounded-lg shadow"><h3 class="text-gray-500">Active Jobs</h3><p id="activeJobsCount" class="text-2xl font-bold">0</p></div>
+                    <div class="bg-white p-4 rounded-lg shadow"><h3 class="text-gray-500">Pending Apps</h3><p id="pendingAppsCount" class="text-2xl font-bold">0</p></div>
                 </div>
-                <div id="jobsList">Loading jobs...</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <h2 class="text-xl font-bold mb-3">Recent Jobs</h2>
+                        <div id="recentJobsList">Loading...</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <h2 class="text-xl font-bold mb-3">Your Level</h2>
+                        <div class="flex items-center gap-2"><span id="userLevelBadge" class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"></span><span class="text-gray-500">Based on total earnings</span></div>
+                        <div class="mt-4"><h3 class="font-semibold">Completed Jobs</h3><p id="completedJobsCount" class="text-2xl">0</p></div>
+                    </div>
+                </div>
             </div>
 
-            <!-- Tools Marketplace -->
-            <div class="bg-white p-4 rounded-lg shadow mb-6">
-                <h2 class="text-xl font-bold mb-4">Tools Marketplace</h2>
+            <!-- Available Jobs Section -->
+            <div id="availableJobsSection" class="hidden">
+                <h2 class="text-2xl font-bold mb-4">Available Jobs</h2>
+                <div id="availableJobsList">Loading jobs...</div>
+            </div>
+
+            <!-- My Applications Section -->
+            <div id="myApplicationsSection" class="hidden">
+                <h2 class="text-2xl font-bold mb-4">My Applications</h2>
+                <div id="myApplicationsList">Loading...</div>
+            </div>
+
+            <!-- My Jobs Section -->
+            <div id="myJobsSection" class="hidden">
+                <h2 class="text-2xl font-bold mb-4">My Jobs (as Client)</h2>
+                <div id="myJobsList">Loading...</div>
+            </div>
+
+            <!-- Messages Section -->
+            <div id="messagesSection" class="hidden">
+                <h2 class="text-2xl font-bold mb-4">Messages</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-white rounded-lg shadow p-3 h-96 overflow-y-auto">
+                        <h3 class="font-semibold mb-2">Conversations</h3>
+                        <div id="conversationsList">Loading...</div>
+                    </div>
+                    <div class="md:col-span-2 bg-white rounded-lg shadow flex flex-col h-96">
+                        <div id="chatHeader" class="p-3 border-b font-semibold">Select a conversation</div>
+                        <div id="chatMessages" class="flex-1 overflow-y-auto p-3"></div>
+                        <div class="border-t p-3 flex gap-2">
+                            <input type="text" id="chatInput" placeholder="Type a message..." class="flex-1 border rounded px-3 py-2" disabled>
+                            <button id="sendMessageBtn" class="bg-blue-600 text-white px-4 py-2 rounded">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tools Marketplace Section -->
+            <div id="toolsMarketplaceSection" class="hidden">
+                <h2 class="text-2xl font-bold mb-4">AI Tools Marketplace</h2>
                 <div id="toolsList" class="grid grid-cols-1 sm:grid-cols-2 gap-4">Loading tools...</div>
             </div>
 
-            <!-- Purchased Tools -->
-            <div class="bg-white p-4 rounded-lg shadow mb-6">
-                <h2 class="text-xl font-bold mb-4">Your Tools</h2>
+            <!-- Purchased Tools Section -->
+            <div id="purchasedToolsSection" class="hidden">
+                <h2 class="text-2xl font-bold mb-4">Your Purchased Tools</h2>
                 <div id="purchasedToolsList">Loading...</div>
             </div>
 
-            <!-- Notifications -->
-            <div class="bg-white p-4 rounded-lg shadow">
-                <h2 class="text-xl font-bold mb-4">Notifications & Tips</h2>
-                <div id="notifications">Loading...</div>
+            <!-- Earnings Section -->
+            <div id="earningsSection" class="hidden">
+                <h2 class="text-2xl font-bold mb-4">Earnings Overview</h2>
+                <div id="earningsList"></div>
+            </div>
+
+            <!-- Transactions Section -->
+            <div id="transactionsSection" class="hidden">
+                <h2 class="text-2xl font-bold mb-4">Transaction History</h2>
+                <div id="transactionsList">Loading...</div>
+            </div>
+
+            <!-- Withdraw Section -->
+            <div id="withdrawSection" class="hidden">
+                <h2 class="text-2xl font-bold mb-4">Withdraw Funds</h2>
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <div class="mb-4"><label>Amount (KSh)</label><input type="number" id="withdrawAmount" class="w-full border rounded px-3 py-2"></div>
+                    <div class="mb-4"><label>Method</label><select id="withdrawMethod" class="w-full border rounded px-3 py-2"><option value="mpesa">M-Pesa</option><option value="bank">Bank Transfer</option></select></div>
+                    <div class="mb-4"><label>Phone Number (M-Pesa)</label><input type="tel" id="withdrawPhone" class="w-full border rounded px-3 py-2"></div>
+                    <button onclick="requestWithdrawal()" class="bg-blue-600 text-white px-4 py-2 rounded">Request Withdrawal</button>
+                </div>
+            </div>
+
+            <!-- Referrals Section -->
+            <div id="referralsSection" class="hidden">
+                <h2 class="text-2xl font-bold mb-4">Refer & Earn</h2>
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <p>Share your referral link:</p>
+                    <div class="flex mt-2"><input type="text" id="referralLink" readonly class="flex-1 border rounded-l px-3 py-2 bg-gray-100"><button onclick="navigator.clipboard.writeText(document.getElementById('referralLink').value)" class="bg-blue-600 text-white px-4 rounded-r">Copy</button></div>
+                    <p class="mt-4">People referred: <span id="referralCount">0</span></p>
+                    <p>Earned from referrals: <span id="referralEarnings">KSh 0</span></p>
+                </div>
+            </div>
+
+            <!-- Reviews Section -->
+            <div id="reviewsSection" class="hidden">
+                <h2 class="text-2xl font-bold mb-4">Reviews Received</h2>
+                <div id="reviewsList">Loading...</div>
+            </div>
+
+            <!-- Profile Section -->
+            <div id="profileSection" class="hidden">
+                <h2 class="text-2xl font-bold mb-4">Profile Settings</h2>
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <div class="mb-4"><label>Full Name</label><input type="text" id="profileFullName" class="w-full border rounded px-3 py-2"></div>
+                    <div class="mb-4"><label>Email</label><input type="email" id="profileEmail" class="w-full border rounded px-3 py-2" disabled></div>
+                    <div class="mb-4"><label>Phone</label><input type="tel" id="profilePhone" class="w-full border rounded px-3 py-2"></div>
+                    <div class="mb-4"><label>Skills (comma separated)</label><input type="text" id="profileSkills" class="w-full border rounded px-3 py-2"></div>
+                    <div class="mb-4"><label>Bio</label><textarea id="profileBio" rows="3" class="w-full border rounded px-3 py-2"></textarea></div>
+                    <button onclick="updateProfile()" class="bg-blue-600 text-white px-4 py-2 rounded">Update Profile</button>
+                </div>
+            </div>
+
+            <!-- Security Section -->
+            <div id="settingsSection" class="hidden">
+                <h2 class="text-2xl font-bold mb-4">Security Settings</h2>
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <h3 class="font-semibold mb-2">Change Password</h3>
+                    <div class="mb-4"><label>Current Password</label><input type="password" id="oldPassword" class="w-full border rounded px-3 py-2"></div>
+                    <div class="mb-4"><label>New Password</label><input type="password" id="newPassword" class="w-full border rounded px-3 py-2"></div>
+                    <button onclick="changePassword()" class="bg-blue-600 text-white px-4 py-2 rounded">Update Password</button>
+                </div>
+            </div>
+
+            <!-- Support Section -->
+            <div id="supportSection" class="hidden">
+                <h2 class="text-2xl font-bold mb-4">Help & Support</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <h3 class="font-semibold mb-2">Create New Ticket</h3>
+                        <input type="text" id="ticketSubject" placeholder="Subject" class="w-full border rounded px-3 py-2 mb-2">
+                        <textarea id="ticketMessage" rows="3" placeholder="Describe your issue" class="w-full border rounded px-3 py-2 mb-2"></textarea>
+                        <button onclick="createSupportTicket()" class="bg-blue-600 text-white px-4 py-2 rounded">Submit</button>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <h3 class="font-semibold mb-2">Your Tickets</h3>
+                        <div id="supportTickets" class="max-h-96 overflow-y-auto">Loading...</div>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
 
-    <!-- Post Job Modal -->
-    <div id="postJobModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-30">
-        <div class="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 class="text-xl font-bold mb-4">Post a Job</h3>
-            <input type="text" id="jobTitle" placeholder="Job Title" class="w-full border rounded-md px-3 py-2 mb-3">
-            <textarea id="jobDesc" rows="4" placeholder="Description" class="w-full border rounded-md px-3 py-2 mb-3"></textarea>
-            <input type="number" id="jobBudget" placeholder="Budget (KSh)" class="w-full border rounded-md px-3 py-2 mb-3">
-            <input type="date" id="jobDeadline" class="w-full border rounded-md px-3 py-2 mb-4">
-            <div class="flex justify-end gap-2">
-                <button onclick="closeModal('postJobModal')" class="px-4 py-2 border rounded-md">Cancel</button>
-                <button onclick="postJob()" class="px-4 py-2 bg-blue-600 text-white rounded-md">Post</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Buy Tool Modal (simulated M-Pesa) -->
-    <div id="buyToolModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-30">
-        <div class="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 class="text-xl font-bold mb-4">Purchase Tool</h3>
-            <p>Tool: <span id="toolName"></span></p>
-            <p>Price: KSh <span id="toolPrice"></span></p>
-            <input type="hidden" id="toolId">
-            <div class="mb-4">
-                <label>Payment Method</label>
-                <select id="paymentMethod" class="w-full border rounded-md px-3 py-2">
-                    <option value="mpesa">M-Pesa (Simulated)</option>
-                    <option value="wallet">Use Wallet (KSh <span id="userWalletAmount">0</span>)</option>
-                </select>
-            </div>
-            <div class="flex justify-end gap-2">
-                <button onclick="closeModal('buyToolModal')" class="px-4 py-2 border rounded-md">Cancel</button>
-                <button onclick="processPayment()" class="px-4 py-2 bg-blue-600 text-white rounded-md">Pay</button>
-            </div>
-        </div>
-    </div>
+    <script>
+        // Sidebar toggle
+        document.getElementById('hamburgerMenu').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        });
+        // Helper to show section
+        window.showSection = (sectionId) => {
+            const sections = ['dashboard', 'availableJobs', 'myApplications', 'myJobs', 'messages', 'toolsMarketplace', 'purchasedTools', 'earnings', 'transactions', 'withdraw', 'referrals', 'reviews', 'profile', 'settings', 'support'];
+            sections.forEach(sec => {
+                const el = document.getElementById(sec + 'Section');
+                if (el) el.classList.add('hidden');
+            });
+            const active = document.getElementById(sectionId + 'Section');
+            if (active) active.classList.remove('hidden');
+            // Update active link
+            document.querySelectorAll('.sidebar-link').forEach(link => {
+                link.classList.remove('bg-blue-50', 'text-blue-600', 'border-l-4', 'border-blue-600');
+                if (link.getAttribute('data-section') === sectionId) {
+                    link.classList.add('bg-blue-50', 'text-blue-600', 'border-l-4', 'border-blue-600');
+                }
+            });
+        };
+        // Additional functions like viewJob, startChatForJob
+        window.viewJob = (jobId) => { alert('Job details not implemented yet'); };
+        window.startChatForJob = (jobId) => { showSection('messages'); openChat(jobId, 'Job', 'otherUserId', 'Client'); };
+    </script>
 </body>
 </html>
