@@ -9,7 +9,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
-        import { getFirestore, collection, getDocs, doc, getDoc, updateDoc, deleteDoc, addDoc, query, where, orderBy, Timestamp, serverTimestamp, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, getDoc, updateDoc, deleteDoc, addDoc, query, where, orderBy, Timestamp, serverTimestamp, limit } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDm-PeCeRdlx6TKPEvKNdT93lMqb5D5O20",
@@ -41,6 +41,13 @@
         const editToolModal = document.getElementById('editToolModal');
         const viewTicketModal = document.getElementById('viewTicketModal');
 
+        // Helper: close sidebar on mobile
+        function closeSidebarOnMobile() {
+            if (window.innerWidth < 768) {
+                document.getElementById('sidebar').classList.add('-translate-x-full');
+            }
+        }
+
         // Helper: show section
         window.showSection = (section) => {
             const sections = ['dashboard', 'users', 'jobs', 'tools', 'transactions', 'withdrawals', 'tickets'];
@@ -55,6 +62,7 @@
                     link.classList.add('bg-blue-50', 'text-blue-600', 'border-l-4', 'border-blue-600');
                 }
             });
+            closeSidebarOnMobile();
             // Refresh data when section becomes visible
             if (section === 'dashboard') loadDashboardStats();
             if (section === 'users') loadUsers();
@@ -426,7 +434,7 @@
 
     <div class="container mx-auto px-4 py-6 flex flex-col md:flex-row gap-6">
         <!-- Sidebar -->
-        <aside class="w-full md:w-64 bg-white shadow-md rounded-lg p-4">
+        <aside id="sidebar" class="w-full md:w-64 bg-white shadow-md rounded-lg p-4 transition-transform duration-300">
             <nav class="space-y-2">
                 <a href="#" data-section="dashboard" class="sidebar-link flex items-center gap-2 text-gray-700 hover:bg-gray-100 p-2 rounded" onclick="showSection('dashboard')"><i class="fas fa-tachometer-alt w-5"></i> Dashboard</a>
                 <a href="#" data-section="users" class="sidebar-link flex items-center gap-2 text-gray-700 hover:bg-gray-100 p-2 rounded" onclick="showSection('users')"><i class="fas fa-users w-5"></i> Users</a>
@@ -620,5 +628,21 @@
             </div>
         </div>
     </div>
+
+    <script>
+        // Hamburger menu toggle for mobile (optional)
+        const hamburger = document.createElement('button');
+        hamburger.id = 'hamburgerMenu';
+        hamburger.className = 'text-gray-600 md:hidden absolute left-4 top-4';
+        hamburger.innerHTML = '<i class="fas fa-bars text-xl"></i>';
+        document.querySelector('header .container').prepend(hamburger);
+        hamburger.addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        });
+        // On mobile, sidebar starts hidden
+        if (window.innerWidth < 768) {
+            document.getElementById('sidebar').classList.add('-translate-x-full');
+        }
+    </script>
 </body>
 </html>

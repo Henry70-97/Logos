@@ -59,6 +59,12 @@
         };
 
         // Helper functions
+        function closeSidebarOnMobile() {
+            if (window.innerWidth < 768) {
+                document.getElementById('sidebar').classList.add('-translate-x-full');
+            }
+        }
+
         function showSection(sectionId) {
             Object.values(mainSections).forEach(section => section.classList.add('hidden'));
             if (mainSections[sectionId]) mainSections[sectionId].classList.remove('hidden');
@@ -69,7 +75,9 @@
                     link.classList.add('bg-blue-50', 'text-blue-600', 'border-l-4', 'border-blue-600');
                 }
             });
+            closeSidebarOnMobile();
         }
+        window.showSection = showSection;
 
         window.logout = () => signOut(auth);
 
@@ -932,24 +940,7 @@
         document.getElementById('hamburgerMenu').addEventListener('click', () => {
             document.getElementById('sidebar').classList.toggle('-translate-x-full');
         });
-        // Helper to show section
-        window.showSection = (sectionId) => {
-            const sections = ['dashboard', 'availableJobs', 'myApplications', 'myJobs', 'messages', 'toolsMarketplace', 'purchasedTools', 'earnings', 'transactions', 'withdraw', 'referrals', 'reviews', 'profile', 'settings', 'support'];
-            sections.forEach(sec => {
-                const el = document.getElementById(sec + 'Section');
-                if (el) el.classList.add('hidden');
-            });
-            const active = document.getElementById(sectionId + 'Section');
-            if (active) active.classList.remove('hidden');
-            // Update active link
-            document.querySelectorAll('.sidebar-link').forEach(link => {
-                link.classList.remove('bg-blue-50', 'text-blue-600', 'border-l-4', 'border-blue-600');
-                if (link.getAttribute('data-section') === sectionId) {
-                    link.classList.add('bg-blue-50', 'text-blue-600', 'border-l-4', 'border-blue-600');
-                }
-            });
-        };
-        // Additional functions like viewJob, startChatForJob
+        // Helper to view job (placeholder)
         window.viewJob = (jobId) => { alert('Job details not implemented yet'); };
         window.startChatForJob = (jobId) => { showSection('messages'); openChat(jobId, 'Job', 'otherUserId', 'Client'); };
     </script>
