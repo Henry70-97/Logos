@@ -1,419 +1,408 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuantumMinds - Work Smarter with AI</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        .toast {
-            transition: all 0.3s ease;
-            transform: translateX(100%);
-        }
-        .toast.show {
-            transform: translateX(0);
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scholarly Hub - Register / Login</title>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+    body {
+      background: linear-gradient(135deg, #0a2540 0%, #1f4a6e 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    .auth-container {
+      width: 100%;
+      max-width: 500px;
+    }
+    .card {
+      background: white;
+      border-radius: 2rem;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+      overflow: hidden;
+      padding: 2rem;
+    }
+    .logo {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .logo h1 {
+      font-size: 2rem;
+      color: #0a2540;
+    }
+    .logo span {
+      color: #1f6e8c;
+    }
+    .logo p {
+      color: #64748b;
+      font-size: 0.85rem;
+      margin-top: 0.25rem;
+    }
+    .toggle-buttons {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      background: #f1f5f9;
+      border-radius: 3rem;
+      padding: 0.25rem;
+    }
+    .toggle-btn {
+      flex: 1;
+      text-align: center;
+      padding: 0.75rem;
+      border: none;
+      background: transparent;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 2rem;
+      transition: all 0.2s;
+      color: #64748b;
+    }
+    .toggle-btn.active {
+      background: #1f6e8c;
+      color: white;
+      box-shadow: 0 2px 8px rgba(31,110,140,0.3);
+    }
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #1e293b;
+      font-size: 0.85rem;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 0.875rem 1rem;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 1rem;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+      outline: none;
+    }
+    .form-group input:focus {
+      border-color: #1f6e8c;
+      box-shadow: 0 0 0 3px rgba(31,110,140,0.1);
+    }
+    .btn-submit {
+      width: 100%;
+      background: #1f6e8c;
+      color: white;
+      border: none;
+      padding: 0.875rem;
+      border-radius: 2rem;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 0.5rem;
+    }
+    .btn-submit:hover {
+      background: #0e5a74;
+      transform: translateY(-2px);
+    }
+    .message {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      border-radius: 1rem;
+      font-size: 0.85rem;
+      text-align: center;
+    }
+    .error {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+    .success {
+      background: #dcfce7;
+      color: #16a34a;
+    }
+    .info {
+      background: #e0f2fe;
+      color: #0284c7;
+    }
+    .redirect-note {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 0.8rem;
+      color: #64748b;
+    }
+    .role-note {
+      text-align: center;
+      margin-top: 0.5rem;
+      font-size: 0.7rem;
+      color: #94a3b8;
+      background: #f8fafc;
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+    }
+  </style>
 </head>
-<body class="bg-gray-50 font-sans">
-
-    <!-- Header -->
-    <header class="bg-white shadow-sm sticky top-0 z-20">
-        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-blue-600">QuantumMinds</h1>
-            <div class="space-x-4">
-                <button onclick="openLoginModal()" class="border border-blue-600 text-blue-600 px-4 py-2 rounded-md hover:bg-blue-50">Login</button>
-                <button onclick="openRegisterModal()" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Get Started</button>
-            </div>
-        </div>
-    </header>
-
-    <main>
-        <!-- Hero Section -->
-        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 py-20">
-            <div class="container mx-auto px-4 text-center">
-                <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">Earn & Work Smarter with AI</h1>
-                <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">Access powerful AI tools, find freelance jobs, or hire top talent – all in one platform.</p>
-                <button onclick="openRegisterModal()" class="bg-blue-600 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-blue-700 transition">Get Started – It's Free</button>
-            </div>
-        </div>
-
-        <!-- Features -->
-        <div class="container mx-auto px-4 py-16">
-            <h2 class="text-3xl font-bold text-center mb-12">Why Choose QuantumMinds?</h2>
-            <div class="grid md:grid-cols-3 gap-8">
-                <div class="bg-white p-6 rounded-xl shadow-md text-center">
-                    <i class="fas fa-robot text-4xl text-blue-600 mb-4"></i>
-                    <h3 class="text-xl font-semibold mb-2">AI‑Powered Tools</h3>
-                    <p class="text-gray-600">Generate content, code, designs – boost your productivity with our AI suite.</p>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-md text-center">
-                    <i class="fas fa-briefcase text-4xl text-blue-600 mb-4"></i>
-                    <h3 class="text-xl font-semibold mb-2">Freelance Jobs</h3>
-                    <p class="text-gray-600">Find work or hire experts – secure escrow payments for peace of mind.</p>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-md text-center">
-                    <i class="fas fa-chart-line text-4xl text-blue-600 mb-4"></i>
-                    <h3 class="text-xl font-semibold mb-2">Grow Your Income</h3>
-                    <p class="text-gray-600">Refer friends, earn commissions, and level up your career.</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- How It Works -->
-        <div class="bg-gray-100 py-16">
-            <div class="container mx-auto px-4 text-center">
-                <h2 class="text-3xl font-bold mb-8">How It Works</h2>
-                <div class="grid md:grid-cols-3 gap-8">
-                    <div><span class="bg-blue-600 text-white rounded-full w-12 h-12 inline-flex items-center justify-center text-xl font-bold mb-4">1</span><h4 class="font-semibold">Sign Up</h4><p class="text-gray-500">Create your free account in seconds.</p></div>
-                    <div><span class="bg-blue-600 text-white rounded-full w-12 h-12 inline-flex items-center justify-center text-xl font-bold mb-4">2</span><h4 class="font-semibold">Use Tools / Apply for Jobs</h4><p class="text-gray-500">Access AI tools or find freelance work that matches your skills.</p></div>
-                    <div><span class="bg-blue-600 text-white rounded-full w-12 h-12 inline-flex items-center justify-center text-xl font-bold mb-4">3</span><h4 class="font-semibold">Earn & Grow</h4><p class="text-gray-500">Get paid securely, level up, and unlock more opportunities.</p></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Testimonials -->
-        <div class="container mx-auto px-4 py-16">
-            <h2 class="text-3xl font-bold text-center mb-12">Trusted by Freelancers & Businesses</h2>
-            <div class="grid md:grid-cols-2 gap-8">
-                <div class="bg-white p-6 rounded-lg shadow"><p class="italic">"QuantumMinds helped me land high‑paying AI projects. The tools saved me hours of work!"</p><p class="font-semibold mt-4">- Jane D., Freelancer</p></div>
-                <div class="bg-white p-6 rounded-lg shadow"><p class="italic">"I've hired amazing talent through this platform. The escrow system gives me confidence."</p><p class="font-semibold mt-4">- Mark T., Business Owner</p></div>
-            </div>
-        </div>
-    </main>
-
-    <!-- Toast Container -->
-    <div id="toastContainer" class="fixed top-20 right-4 z-50 space-y-2"></div>
-
-    <!-- Login Modal -->
-    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-30">
-        <div class="bg-white rounded-lg p-6 w-full max-w-md">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold">Login</h3>
-                <button onclick="closeModals()" class="text-gray-500 hover:text-gray-700">&times;</button>
-            </div>
-            <div>
-                <div class="mb-4">
-                    <label class="block text-gray-700 mb-2">Email</label>
-                    <input type="email" id="loginEmail" class="w-full border rounded-md px-3 py-2" required>
-                </div>
-                <div class="mb-6">
-                    <label class="block text-gray-700 mb-2">Password</label>
-                    <input type="password" id="loginPassword" class="w-full border rounded-md px-3 py-2" required>
-                </div>
-                <button id="loginBtn" class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 mb-3">Login</button>
-                <button onclick="googleSignIn()" class="w-full border border-gray-300 py-2 rounded-md hover:bg-gray-50 flex items-center justify-center gap-2"><i class="fab fa-google"></i> Sign in with Google</button>
-                <div class="mt-4 text-center text-sm">
-                    <span class="text-gray-500">Don't have an account?</span>
-                    <button onclick="switchToRegister()" class="text-blue-600 ml-1">Sign up</button>
-                </div>
-            </div>
-        </div>
+<body>
+<div class="auth-container">
+  <div class="card">
+    <div class="logo">
+      <h1>Scholarly<span>Hub</span></h1>
+      <p>Learn, Collaborate, Achieve</p>
     </div>
 
-    <!-- Register Modal -->
-    <div id="registerModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-30">
-        <div class="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold">Create Account</h3>
-                <button onclick="closeModals()" class="text-gray-500 hover:text-gray-700">&times;</button>
-            </div>
-            <div>
-                <div class="mb-4"><label class="block text-gray-700 mb-2">Full Name*</label><input type="text" id="signupName" class="w-full border rounded-md px-3 py-2" required></div>
-                <div class="mb-4"><label class="block text-gray-700 mb-2">Email*</label><input type="email" id="signupEmail" class="w-full border rounded-md px-3 py-2" required></div>
-                <div class="mb-4"><label class="block text-gray-700 mb-2">Password*</label><input type="password" id="signupPassword" class="w-full border rounded-md px-3 py-2" required></div>
-                <div class="mb-4"><label class="block text-gray-700 mb-2">Phone Number</label><input type="tel" id="signupPhone" class="w-full border rounded-md px-3 py-2"></div>
-                <div class="mb-4"><label class="block text-gray-700 mb-2">Date of Birth</label><input type="date" id="signupDob" class="w-full border rounded-md px-3 py-2"></div>
-                <div class="mb-4"><label class="block text-gray-700 mb-2">Nationality</label><input type="text" id="signupNationality" class="w-full border rounded-md px-3 py-2"></div>
-                <button id="signupBtn" class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700">Create Account</button>
-                <div class="mt-3 text-center text-sm text-gray-500">We'll send a verification email.</div>
-                <div class="mt-4 text-center text-sm">
-                    <span class="text-gray-500">Already have an account?</span>
-                    <button onclick="switchToLogin()" class="text-blue-600 ml-1">Login</button>
-                </div>
-            </div>
-        </div>
+    <div class="toggle-buttons">
+      <button class="toggle-btn" id="loginTabBtn">Login</button>
+      <button class="toggle-btn" id="registerTabBtn">Register</button>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, sendEmailVerification, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+    <!-- Login Form -->
+    <div id="loginForm" style="display: none;">
+      <form id="loginFormElement">
+        <div class="form-group">
+          <label><i class="fas fa-envelope"></i> Email Address</label>
+          <input type="email" id="loginEmail" required placeholder="user@example.com">
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-lock"></i> Password</label>
+          <input type="password" id="loginPassword" required placeholder="••••••••">
+        </div>
+        <button type="submit" class="btn-submit">Sign In <i class="fas fa-arrow-right"></i></button>
+      </form>
+    </div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDm-PeCeRdlx6TKPEvKNdT93lMqb5D5O20",
-            authDomain: "urbanpay-c5aee.firebaseapp.com",
-            projectId: "urbanpay-c5aee",
-            storageBucket: "urbanpay-c5aee.firebasestorage.app",
-            messagingSenderId: "648155825006",
-            appId: "1:648155825006:web:16d6ea4dfab808920b777f",
-            measurementId: "G-CTKZN6VHPS"
-        };
+    <!-- Registration Form (No Role Selection) -->
+    <div id="registerForm" style="display: none;">
+      <form id="registerFormElement">
+        <div class="form-group">
+          <label><i class="fas fa-user"></i> Full Name</label>
+          <input type="text" id="regName" required placeholder="John Doe">
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-envelope"></i> Email Address</label>
+          <input type="email" id="regEmail" required placeholder="user@example.com">
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-lock"></i> Password</label>
+          <input type="password" id="regPassword" required placeholder="Minimum 6 characters">
+        </div>
+        <button type="submit" class="btn-submit">Create Account <i class="fas fa-user-plus"></i></button>
+      </form>
+      <div class="role-note">
+        <i class="fas fa-info-circle"></i> All new accounts are created as regular users. Admin access is granted by system administrators only.
+      </div>
+    </div>
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const googleProvider = new GoogleAuthProvider();
+    <div id="messageDiv" class="message" style="display: none;"></div>
+    <div class="redirect-note">
+      <i class="fas fa-shield-alt"></i> Secure authentication with Firebase
+    </div>
+  </div>
+</div>
 
-        // Toast system
-        function showToast(message, type = 'info', duration = 5000) {
-            const toastContainer = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = `toast bg-white border-l-4 rounded shadow-lg p-4 mb-2 flex items-center justify-between transform transition-all duration-300 ${type === 'error' ? 'border-red-500' : type === 'success' ? 'border-green-500' : 'border-blue-500'}`;
-            toast.innerHTML = `
-                <div class="flex items-center gap-2">
-                    <i class="fas ${type === 'error' ? 'fa-exclamation-circle text-red-500' : type === 'success' ? 'fa-check-circle text-green-500' : 'fa-info-circle text-blue-500'}"></i>
-                    <span>${message}</span>
-                </div>
-                <button class="text-gray-400 hover:text-gray-600" onclick="this.parentElement.remove()">&times;</button>
-            `;
-            toastContainer.appendChild(toast);
-            setTimeout(() => toast.classList.add('show'), 10);
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 300);
-            }, duration);
+<script>
+  // Firebase Configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyDm-PeCeRdlx6TKPEvKNdT93lMqb5D5O20",
+    authDomain: "urbanpay-c5aee.firebaseapp.com",
+    projectId: "urbanpay-c5aee",
+    storageBucket: "urbanpay-c5aee.firebasestorage.app",
+    messagingSenderId: "648155825006",
+    appId: "1:648155825006:web:16d6ea4dfab808920b777f",
+    measurementId: "G-CTKZN6VHPS"
+  };
+
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  // DOM Elements
+  const loginTab = document.getElementById('loginTabBtn');
+  const registerTab = document.getElementById('registerTabBtn');
+  const loginDiv = document.getElementById('loginForm');
+  const registerDiv = document.getElementById('registerForm');
+  const messageDiv = document.getElementById('messageDiv');
+
+  // Show Login form by default
+  loginTab.classList.add('active');
+  loginDiv.style.display = 'block';
+  registerDiv.style.display = 'none';
+
+  // Tab switching
+  loginTab.addEventListener('click', () => {
+    loginTab.classList.add('active');
+    registerTab.classList.remove('active');
+    loginDiv.style.display = 'block';
+    registerDiv.style.display = 'none';
+    hideMessage();
+  });
+
+  registerTab.addEventListener('click', () => {
+    registerTab.classList.add('active');
+    loginTab.classList.remove('active');
+    registerDiv.style.display = 'block';
+    loginDiv.style.display = 'none';
+    hideMessage();
+  });
+
+  function showMessage(text, type) {
+    messageDiv.textContent = text;
+    messageDiv.className = `message ${type}`;
+    messageDiv.style.display = 'block';
+    setTimeout(() => {
+      if (messageDiv) messageDiv.style.display = 'none';
+    }, 4000);
+  }
+
+  function hideMessage() {
+    messageDiv.style.display = 'none';
+  }
+
+  // Save user to Firestore with role = 'user' (always)
+  async function saveUserToFirestore(userId, email, name) {
+    try {
+      await db.collection('users').doc(userId).set({
+        name: name,
+        email: email,
+        role: 'user',  // Always set role to 'user' on registration
+        walletBalance: 0,
+        subscriptionActive: false,
+        acceptedTasks: [],
+        submittedTasks: [],
+        completedTasks: [],
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      return true;
+    } catch (error) {
+      console.error("Firestore error:", error);
+      throw error;
+    }
+  }
+
+  // REGISTRATION (No role selection)
+  document.getElementById('registerFormElement').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('regName').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const password = document.getElementById('regPassword').value;
+
+    if (!name || !email || !password) {
+      showMessage('Please fill in all fields', 'error');
+      return;
+    }
+    if (password.length < 6) {
+      showMessage('Password must be at least 6 characters', 'error');
+      return;
+    }
+
+    try {
+      showMessage('Creating account...', 'info');
+      const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+      const user = userCredential.user;
+      
+      // Update profile with name
+      await user.updateProfile({ displayName: name });
+      
+      // Save user data to Firestore with role 'user'
+      await saveUserToFirestore(user.uid, email, name);
+      
+      showMessage(`Welcome ${name}! Your account has been created. Redirecting...`, 'success');
+      
+      // Redirect to user dashboard (always user role)
+      setTimeout(() => {
+        window.location.href = 'user.html';
+      }, 1500);
+      
+    } catch (error) {
+      let errorMsg = error.message;
+      if (error.code === 'auth/email-already-in-use') {
+        errorMsg = 'Email already registered. Please login instead.';
+      }
+      showMessage(errorMsg, 'error');
+    }
+  });
+
+  // LOGIN - Redirects based on role from Firestore
+  document.getElementById('loginFormElement').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+
+    if (!email || !password) {
+      showMessage('Please enter email and password', 'error');
+      return;
+    }
+
+    try {
+      showMessage('Signing in...', 'info');
+      const userCredential = await auth.signInWithEmailAndPassword(email, password);
+      const user = userCredential.user;
+      
+      // Fetch user role from Firestore
+      const userDoc = await db.collection('users').doc(user.uid).get();
+      
+      if (!userDoc.exists) {
+        // If user document doesn't exist, create it with default role
+        await saveUserToFirestore(user.uid, email, user.displayName || email.split('@')[0]);
+        showMessage(`Welcome! Redirecting to dashboard...`, 'success');
+        setTimeout(() => window.location.href = 'user.html', 1000);
+        return;
+      }
+      
+      const userRole = userDoc.data().role;
+      const userName = userDoc.data().name || user.displayName || 'User';
+      
+      showMessage(`Welcome back ${userName}! Redirecting...`, 'success');
+      
+      setTimeout(() => {
+        if (userRole === 'admin') {
+          window.location.href = 'admin.html';
+        } else {
+          window.location.href = 'user.html';
         }
+      }, 1000);
+      
+    } catch (error) {
+      let errorMsg = 'Invalid email or password';
+      if (error.code === 'auth/user-not-found') {
+        errorMsg = 'No account found with this email. Please register first.';
+      } else if (error.code === 'auth/wrong-password') {
+        errorMsg = 'Incorrect password. Please try again.';
+      }
+      showMessage(errorMsg, 'error');
+    }
+  });
 
-        // Modal controls
-        window.openLoginModal = () => {
-            document.getElementById('loginModal').classList.remove('hidden');
-            document.getElementById('registerModal').classList.add('hidden');
-        };
-        window.openRegisterModal = () => {
-            document.getElementById('registerModal').classList.remove('hidden');
-            document.getElementById('loginModal').classList.add('hidden');
-        };
-        window.closeModals = () => {
-            document.getElementById('loginModal').classList.add('hidden');
-            document.getElementById('registerModal').classList.add('hidden');
-        };
-        window.switchToRegister = () => {
-            document.getElementById('loginModal').classList.add('hidden');
-            document.getElementById('registerModal').classList.remove('hidden');
-        };
-        window.switchToLogin = () => {
-            document.getElementById('registerModal').classList.add('hidden');
-            document.getElementById('loginModal').classList.remove('hidden');
-        };
-
-        // Google Sign-In
-        window.googleSignIn = async () => {
-            try {
-                const result = await signInWithPopup(auth, googleProvider);
-                const user = result.user;
-                await handleUserAfterAuth(user);
-            } catch (error) {
-                console.error(error);
-                showToast(error.message, 'error');
-            }
-        };
-
-        // Email/Password Sign-Up
-        document.getElementById('signupBtn').addEventListener('click', async () => {
-            const name = document.getElementById('signupName').value;
-            const email = document.getElementById('signupEmail').value;
-            const password = document.getElementById('signupPassword').value;
-            const phone = document.getElementById('signupPhone').value;
-            const dob = document.getElementById('signupDob').value;
-            const nationality = document.getElementById('signupNationality').value;
-
-            if (!name || !email || !password) {
-                showToast('Please fill all required fields', 'error');
-                return;
-            }
-
-            try {
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-
-                await sendEmailVerification(user);
-
-                await setDoc(doc(db, 'users', user.uid), {
-                    fullName: name,
-                    email: email,
-                    phone: phone,
-                    dateOfBirth: dob,
-                    nationality: nationality,
-                    role: 'freelancer',
-                    walletBalance: 0,
-                    totalEarnings: 0,
-                    rating: 0,
-                    createdAt: new Date().toISOString()
-                });
-
-                // Show verification toast with resend button
-                const toastId = showToastWithResend(user);
-                // Optionally auto-dismiss after 10 seconds
-                setTimeout(() => {
-                    const toast = document.getElementById(toastId);
-                    if (toast) toast.remove();
-                }, 10000);
-
-                closeModals();
-                // Clear form
-                document.getElementById('signupName').value = '';
-                document.getElementById('signupEmail').value = '';
-                document.getElementById('signupPassword').value = '';
-                document.getElementById('signupPhone').value = '';
-                document.getElementById('signupDob').value = '';
-                document.getElementById('signupNationality').value = '';
-            } catch (error) {
-                console.error(error);
-                showToast(error.message, 'error');
-            }
-        });
-
-        // Helper to create toast with resend button
-        function showToastWithResend(user) {
-            const toastContainer = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            const toastId = 'toast-' + Date.now();
-            toast.id = toastId;
-            toast.className = `toast bg-white border-l-4 border-blue-500 rounded shadow-lg p-4 mb-2 flex items-center justify-between transform transition-all duration-300`;
-            toast.innerHTML = `
-                <div class="flex items-center gap-2">
-                    <i class="fas fa-envelope text-blue-500"></i>
-                    <div>
-                        <span>Verification email sent to ${user.email}. Please check your inbox.</span>
-                        <button id="resendBtn-${toastId}" class="text-blue-600 text-sm underline ml-2">Resend</button>
-                    </div>
-                </div>
-                <button class="text-gray-400 hover:text-gray-600" onclick="this.parentElement.remove()">&times;</button>
-            `;
-            toastContainer.appendChild(toast);
-            setTimeout(() => toast.classList.add('show'), 10);
-
-            // Add event listener for resend
-            const resendBtn = toast.querySelector(`#resendBtn-${toastId}`);
-            resendBtn.addEventListener('click', async () => {
-                try {
-                    await sendEmailVerification(user);
-                    showToast(`Verification email resent to ${user.email}`, 'success');
-                } catch (error) {
-                    showToast(error.message, 'error');
-                }
-            });
-            return toastId;
+  // Check if user is already logged in
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      const userDoc = await db.collection('users').doc(user.uid).get();
+      if (userDoc.exists) {
+        const role = userDoc.data().role;
+        if (role === 'admin') {
+          window.location.href = 'admin.html';
+        } else {
+          window.location.href = 'user.html';
         }
-
-        // Email/Password Login
-        document.getElementById('loginBtn').addEventListener('click', async () => {
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-
-            if (!email || !password) {
-                showToast('Please enter email and password', 'error');
-                return;
-            }
-
-            try {
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-
-                if (!user.emailVerified) {
-                    showToastWithResend(user);
-                    return;
-                }
-
-                await handleUserAfterAuth(user);
-            } catch (error) {
-                console.error(error);
-                showToast(error.message, 'error');
-            }
-        });
-
-        async function handleUserAfterAuth(user) {
-            const userDoc = await getDoc(doc(db, 'users', user.uid));
-            if (userDoc.exists()) {
-                const userData = userDoc.data();
-                if (userData.onboardingCompleted) {
-                    if (userData.role === 'admin') {
-                        window.location.href = 'admin_dashboard.html';
-                    } else {
-                        window.location.href = 'user_dashboard.html';
-                    }
-                } else {
-                    showOnboarding(user.uid);
-                }
-            } else {
-                await setDoc(doc(db, 'users', user.uid), {
-                    email: user.email,
-                    fullName: user.displayName || '',
-                    role: 'freelancer',
-                    walletBalance: 0,
-                    totalEarnings: 0,
-                    rating: 0,
-                    createdAt: new Date().toISOString()
-                });
-                showOnboarding(user.uid);
-            }
-        }
-
-        function showOnboarding(uid) {
-            // Hide modals and show onboarding container (add it to DOM if not present)
-            closeModals();
-            let onboardingContainer = document.getElementById('onboardingContainer');
-            if (!onboardingContainer) {
-                // Create onboarding container dynamically
-                onboardingContainer = document.createElement('div');
-                onboardingContainer.id = 'onboardingContainer';
-                onboardingContainer.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40';
-                onboardingContainer.innerHTML = `
-                    <div class="bg-white rounded-lg p-6 w-full max-w-md">
-                        <h2 class="text-2xl font-bold mb-4">Complete Your Profile</h2>
-                        <div class="mb-4">
-                            <label class="block text-gray-700 mb-2">I am a:</label>
-                            <select id="roleSelect" class="w-full border rounded-md px-3 py-2">
-                                <option value="freelancer">Freelancer</option>
-                                <option value="client">Client</option>
-                            </select>
-                        </div>
-                        <div class="mb-4">
-                            <label class="block text-gray-700 mb-2">Select your skills (Freelancer) / needs (Client)</label>
-                            <select id="skillsSelect" multiple class="w-full border rounded-md px-3 py-2 h-32">
-                                <option value="writing">Writing</option>
-                                <option value="ai_tools">AI Tools</option>
-                                <option value="design">Design</option>
-                                <option value="development">Development</option>
-                            </select>
-                        </div>
-                        <button id="completeOnboarding" class="w-full bg-blue-600 text-white py-2 rounded-md">Continue to Dashboard</button>
-                    </div>
-                `;
-                document.body.appendChild(onboardingContainer);
-            }
-            onboardingContainer.classList.remove('hidden');
-
-            const skillsSelect = document.getElementById('skillsSelect');
-            const roleSelect = document.getElementById('roleSelect');
-            const completeBtn = document.getElementById('completeOnboarding');
-
-            completeBtn.onclick = async () => {
-                const selectedRole = roleSelect.value;
-                const selectedSkills = Array.from(skillsSelect.selectedOptions).map(opt => opt.value);
-
-                await setDoc(doc(db, 'users', uid), {
-                    role: selectedRole,
-                    skills: selectedSkills,
-                    onboardingCompleted: true
-                }, { merge: true });
-
-                if (selectedRole === 'admin') {
-                    window.location.href = 'admin_dashboard.html';
-                } else {
-                    window.location.href = 'user_dashboard.html';
-                }
-            };
-        }
-
-        // Check auth state
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                handleUserAfterAuth(user);
-            }
-        });
-    </script>
+      } else {
+        // User exists in auth but not in Firestore - create record
+        await saveUserToFirestore(user.uid, user.email, user.displayName || user.email.split('@')[0]);
+        window.location.href = 'user.html';
+      }
+    }
+  });
+</script>
 </body>
 </html>
