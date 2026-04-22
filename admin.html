@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Scholarly Hub - Complete Admin Dashboard</title>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+    body { background: #f0f2f5; }
+    .app-wrapper { display: flex; min-height: 100vh; }
+    .sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: linear-gradient(180deg, #0a2540 0%, #1a3a4f 100%); color: white; transition: left 0.3s; z-index: 1000; overflow-y: auto; }
+    .sidebar.open { left: 0; }
+    .sidebar-header { padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; }
+    .close-sidebar { background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 0.75rem 1.5rem; color: #e2edf7; cursor: pointer; transition: 0.2s; }
+    .nav-item:hover { background: rgba(255,255,255,0.1); }
+    .nav-item.active { background: #1f6e8c; border-left: 3px solid #ffb74d; }
+    .nav-section-title { padding: 0.75rem 1.5rem; font-size: 0.7rem; text-transform: uppercase; color: #9bb7d0; letter-spacing: 1px; }
+    .main-content { flex: 1; }
+    .top-navbar { background: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 99; }
+    .menu-btn { background: none; border: none; font-size: 1.6rem; cursor: pointer; color: #1f6e8c; }
+    .logo h2 { font-size: 1.4rem; color: #0a2540; }
+    .logo span { color: #1f6e8c; }
+    .user-info { display: flex; gap: 1rem; align-items: center; }
+    .badge { background: #fef3c7; color: #92400e; padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.8rem; font-weight: 600; }
+    .logout-btn { background: #dc2626; color: white; border: none; padding: 0.5rem 1.2rem; border-radius: 2rem; cursor: pointer; }
+    .dashboard-container { padding: 2rem; max-width: 1600px; margin: 0 auto; }
+    .section-card { background: white; border-radius: 1.5rem; padding: 1.8rem; margin-bottom: 2rem; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .section-card.active-section { display: block; animation: fadeIn 0.3s; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px);} to { opacity: 1; transform: translateY(0);} }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 2px solid #eef2f8; padding-bottom: 0.75rem; flex-wrap: wrap; gap: 1rem; }
+    .section-header h2 { font-size: 1.3rem; color: #0a2540; }
+    .btn-sm { padding: 0.4rem 1rem; border-radius: 2rem; border: none; font-weight: 600; cursor: pointer; margin: 0.2rem; font-size: 0.75rem; transition: all 0.2s; }
+    .btn-primary { background: #1f6e8c; color: white; }
+    .btn-success { background: #10b981; color: white; }
+    .btn-danger { background: #ef4444; color: white; }
+    .btn-warning { background: #f59e0b; color: white; }
+    .btn-secondary { background: #6b7280; color: white; }
+    .input-group { margin-bottom: 1rem; }
+    .input-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: #334155; }
+    .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 0.75rem; border: 1.5px solid #e2e8f0; border-radius: 0.8rem; outline: none; }
+    .user-card, .task-card-admin, .submission-card { background: #f9fafc; border-radius: 1rem; padding: 1rem; border-left: 4px solid #1f6e8c; margin-bottom: 0.8rem; }
+    .status-badge { padding: 0.2rem 0.7rem; border-radius: 2rem; font-size: 0.7rem; font-weight: 600; display: inline-block; }
+    .status-pending { background: #fef3c7; color: #d97706; }
+    .status-approved { background: #d1fae5; color: #059669; }
+    .status-rejected { background: #fee2e2; color: #dc2626; }
+    .empty-state { text-align: center; padding: 3rem; color: #6c757d; background: #f9fafb; border-radius: 1rem; }
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 1rem; margin-top: 1rem; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #e2e8f0; }
+    th { background: #f8fafc; font-weight: 600; }
+    .toast { position: fixed; bottom: 30px; right: 30px; background: #1e293b; color: white; padding: 1rem 1.5rem; border-radius: 1rem; z-index: 2000; display: flex; align-items: center; gap: 12px; animation: slideIn 0.3s; max-width: 350px; }
+    .toast.success { background: #10b981; }
+    .toast.error { background: #ef4444; }
+    .toast.warning { background: #f59e0b; }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 3000; }
+    .modal-content { background: white; border-radius: 1.5rem; padding: 1.5rem; max-width: 500px; width: 90%; }
+    .task-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .refresh-icon { cursor: pointer; padding: 0.3rem 0.8rem; background: #e2e8f0; border-radius: 2rem; font-size: 0.8rem; transition: 0.2s; }
+    .refresh-icon:hover { background: #cbd5e1; transform: rotate(180deg); }
+    .settings-panel { background: #fef9e6; border-radius: 1rem; padding: 1rem; margin-bottom: 1.5rem; border: 1px solid #fde68a; }
+    @media (max-width: 768px) { .dashboard-container { padding: 1rem; } .sidebar { width: 280px; } .card-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<div class="app-wrapper">
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header"><h3>Scholarly<span>Hub</span> Admin</h3><button class="close-sidebar" id="closeSidebarBtn"><i class="fas fa-times"></i></button></div>
+    <div class="sidebar-nav">
+      <div class="nav-section"><div class="nav-section-title">MANAGEMENT</div>
+        <div class="nav-item" data-section="dashboard"><i class="fas fa-chart-line"></i> Dashboard</div>
+        <div class="nav-item" data-section="systemSettings"><i class="fas fa-cog"></i> System Settings</div>
+        <div class="nav-item" data-section="users"><i class="fas fa-users"></i> Users</div>
+        <div class="nav-item" data-section="allTasks"><i class="fas fa-tasks"></i> All Tasks</div>
+        <div class="nav-item" data-section="postTasks"><i class="fas fa-plus-circle"></i> Post Task</div>
+        <div class="nav-item" data-section="pendingSubmissions"><i class="fas fa-clock"></i> Pending Submissions</div>
+        <div class="nav-item" data-section="reviewedSubmissions"><i class="fas fa-check-double"></i> Reviewed Submissions</div>
+        <div class="nav-item" data-section="manageWithdrawals"><i class="fas fa-hand-holding-usd"></i> Withdrawals</div>
+        <div class="nav-item" data-section="manageSubscriptions"><i class="fas fa-ticket-alt"></i> Subscriptions</div>
+        <div class="nav-item" data-section="topWriters"><i class="fas fa-trophy"></i> Top Writers</div>
+        <div class="nav-item" data-section="adjustWallet"><i class="fas fa-coins"></i> Adjust Wallet</div>
+      </div>
+      <div class="nav-section"><div class="nav-section-title">SUPPORT</div>
+        <div class="nav-item" data-section="supportTickets"><i class="fas fa-headset"></i> Support Tickets</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="top-navbar">
+      <button class="menu-btn" id="menuBtn"><i class="fas fa-bars"></i></button>
+      <div class="logo"><h2>Scholarly<span>Hub</span> Admin</h2></div>
+      <div class="user-info"><span class="badge" id="adminName"><i class="fas fa-crown"></i> Loading...</span><button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button></div>
+    </div>
+    <div class="dashboard-container" id="dashboardContainer">
+      <div id="dashboard" class="section-card"><div class="section-header"><h2>📊 Dashboard Overview</h2><span class="refresh-icon" onclick="refreshAll()"><i class="fas fa-sync-alt"></i> Refresh</span></div><div id="dashboardContent"><div class="empty-state">Loading...</div></div></div>
+      
+      <div id="systemSettings" class="section-card"><div class="section-header"><h2>⚙️ System Settings</h2><span class="refresh-icon" onclick="loadSystemSettings()"><i class="fas fa-sync-alt"></i> Refresh</span></div><div id="systemSettingsContent"></div></div>
+      
+      <div id="users" class="section-card"><div class="section-header"><h2>👥 Manage Users</h2><span class="refresh-icon" onclick="loadUsers()"><i class="fas fa-sync-alt"></i> Refresh</span></div><div id="usersContent"><div class="empty-state">Loading users...</div></div></div>
+      
+      <div id="allTasks" class="section-card"><div class="section-header"><h2>📋 All Tasks (Manage, Edit, Delete)</h2><span class="refresh-icon" onclick="loadAllTasks()"><i class="fas fa-sync-alt"></i> Refresh</span></div><div id="allTasksContent"><div class="empty-state">Loading tasks...</div></div></div>
+      
+      <div id="postTasks" class="section-card"><div class="section-header"><h2>📝 Post New Task</h2></div><div id="postTasksContent"></div></div>
+      
+      <div id="pendingSubmissions" class="section-card"><div class="section-header"><h2>⏳ Pending Submissions</h2><span class="refresh-icon" onclick="loadPendingSubmissions()"><i class="fas fa-sync-alt"></i> Refresh</span></div><div id="pendingSubmissionsContent"><div class="empty-state">Loading...</div></div></div>
+      
+      <div id="reviewedSubmissions" class="section-card"><div class="section-header"><h2>✅ Reviewed Submissions</h2><span class="refresh-icon" onclick="loadReviewedSubmissions()"><i class="fas fa-sync-alt"></i> Refresh</span></div><div id="reviewedSubmissionsContent"><div class="empty-state">Loading...</div></div></div>
+      
+      <div id="manageWithdrawals" class="section-card"><div class="section-header"><h2>💰 Withdrawal Requests</h2><span class="refresh-icon" onclick="loadWithdrawals()"><i class="fas fa-sync-alt"></i> Refresh</span></div><div id="withdrawalsContent"><div class="empty-state">Loading...</div></div></div>
+      
+      <div id="manageSubscriptions" class="section-card"><div class="section-header"><h2>🎫 Subscription Management</h2><span class="refresh-icon" onclick="loadSubscriptions()"><i class="fas fa-sync-alt"></i> Refresh</span></div><div id="subscriptionsContent"><div class="empty-state">Loading...</div></div></div>
+      
+      <div id="topWriters" class="section-card"><div class="section-header"><h2>🏆 Top Writers Leaderboard</h2><span class="refresh-icon" onclick="loadTopWriters()"><i class="fas fa-sync-alt"></i> Refresh</span></div><div id="topWritersContent"><div class="empty-state">Loading...</div></div></div>
+      
+      <div id="adjustWallet" class="section-card"><div class="section-header"><h2>💰 Adjust User Wallet</h2><span class="refresh-icon" onclick="loadAdjustWallet()"><i class="fas fa-sync-alt"></i> Refresh</span></div><div id="adjustWalletContent"><div class="empty-state">Loading users...</div></div></div>
+      
+      <div id="supportTickets" class="section-card"><div class="section-header"><h2>🎫 Support Tickets</h2><span class="refresh-icon" onclick="loadSupportTickets()"><i class="fas fa-sync-alt"></i> Refresh</span></div><div id="ticketsContent"><div class="empty-state">Loading tickets...</div></div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDm-PeCeRdlx6TKPEvKNdT93lMqb5D5O20",
+    authDomain: "urbanpay-c5aee.firebaseapp.com",
+    projectId: "urbanpay-c5aee",
+    storageBucket: "urbanpay-c5aee.firebasestorage.app",
+    messagingSenderId: "648155825006",
+    appId: "1:648155825006:web:16d6ea4dfab808920b777f"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  let allUsers = [];
+  let allTasks = [];
+  let allSubmissions = [];
+  let withdrawals = [];
+  let subscriptionReqs = [];
+  let systemSettings = { minWithdrawal: 500, subscriptionPaymentLink: "https://pay.lipwa.app/p/6d0241c28" };
+
+  function showToast(msg, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i> ${msg}`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+  }
+
+  // Sidebar
+  const sidebar = document.getElementById('sidebar');
+  document.getElementById('menuBtn').onclick = () => sidebar.classList.add('open');
+  document.getElementById('closeSidebarBtn').onclick = () => sidebar.classList.remove('open');
+  const sections = ['dashboard', 'systemSettings', 'users', 'allTasks', 'postTasks', 'pendingSubmissions', 'reviewedSubmissions', 'manageWithdrawals', 'manageSubscriptions', 'topWriters', 'adjustWallet', 'supportTickets'];
+  function showSection(sectionId) {
+    sections.forEach(s => document.getElementById(s)?.classList.remove('active-section'));
+    document.getElementById(sectionId)?.classList.add('active-section');
+    sidebar.classList.remove('open');
+    document.querySelectorAll('.nav-item').forEach(i => {
+      if (i.getAttribute('data-section') === sectionId) i.classList.add('active');
+      else i.classList.remove('active');
+    });
+  }
+  document.querySelectorAll('.nav-item').forEach(i => i.addEventListener('click', () => showSection(i.getAttribute('data-section'))));
+
+  function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
+
+  // ============ SYSTEM SETTINGS ============
+  async function loadSystemSettings() {
+    const settingsDoc = await db.collection('settings').doc('systemConfig').get();
+    if (settingsDoc.exists) {
+      systemSettings = settingsDoc.data();
+    } else {
+      await db.collection('settings').doc('systemConfig').set(systemSettings);
+    }
+    document.getElementById('systemSettingsContent').innerHTML = `
+      <div class="settings-panel">
+        <h3><i class="fas fa-hand-holding-usd"></i> Withdrawal Settings</h3>
+        <div class="input-group"><label>Minimum Withdrawal Amount (Ksh)</label><input type="number" id="minWithdrawalInput" value="${systemSettings.minWithdrawal || 500}" placeholder="Minimum withdrawal amount"></div>
+        <button class="btn-primary" id="saveMinWithdrawalBtn">Save Minimum Withdrawal</button>
+      </div>
+      <div class="settings-panel">
+        <h3><i class="fas fa-credit-card"></i> Subscription Payment Link</h3>
+        <div class="input-group"><label>Payment Redirect URL</label><input type="url" id="paymentLinkInput" value="${escapeHtml(systemSettings.subscriptionPaymentLink || 'https://pay.lipwa.app/p/6d0241c28')}" placeholder="https://..."></div>
+        <button class="btn-primary" id="savePaymentLinkBtn">Save Payment Link</button>
+        <p class="empty-state" style="margin-top:0.5rem; padding:0.5rem;"><small>⚠️ This link will be used when users click "Subscribe Now" in their dashboard.</small></p>
+      </div>
+    `;
+    document.getElementById('saveMinWithdrawalBtn')?.addEventListener('click', async () => {
+      const newMin = parseInt(document.getElementById('minWithdrawalInput').value);
+      if (newMin < 100) { showToast('Minimum withdrawal must be at least Ksh 100', 'error'); return; }
+      await db.collection('settings').doc('systemConfig').update({ minWithdrawal: newMin });
+      systemSettings.minWithdrawal = newMin;
+      showToast(`Minimum withdrawal updated to Ksh ${newMin}`, 'success');
+    });
+    document.getElementById('savePaymentLinkBtn')?.addEventListener('click', async () => {
+      const newLink = document.getElementById('paymentLinkInput').value;
+      if (!newLink) { showToast('Please enter a valid URL', 'error'); return; }
+      await db.collection('settings').doc('systemConfig').update({ subscriptionPaymentLink: newLink });
+      systemSettings.subscriptionPaymentLink = newLink;
+      showToast('Payment link updated successfully!', 'success');
+    });
+  }
+
+  // ============ TASK CRUD OPERATIONS ============
+  async function postTask(title, desc, reward) {
+    if (!title) { showToast('Task title required', 'error'); return; }
+    await db.collection('tasks').add({ title, description: desc, reward: parseInt(reward) || 100, createdAt: new Date(), createdBy: auth.currentUser?.uid, completedBy: [] });
+    showToast('Task posted successfully!', 'success');
+    document.getElementById('taskTitle').value = '';
+    document.getElementById('taskDesc').value = '';
+    document.getElementById('taskReward').value = '100';
+    loadAllTasks();
+    loadDashboard();
+  }
+
+  async function updateTask(taskId, title, description, reward) {
+    await db.collection('tasks').doc(taskId).update({ title, description, reward: parseInt(reward), updatedAt: new Date() });
+    showToast('Task updated successfully!', 'success');
+    loadAllTasks();
+  }
+
+  async function deleteTask(taskId) {
+    if (confirm('Are you sure you want to delete this task? This action cannot be undone.')) {
+      await db.collection('tasks').doc(taskId).delete();
+      showToast('Task deleted!', 'warning');
+      loadAllTasks();
+      loadDashboard();
+    }
+  }
+
+  // ============ SUBMISSION REVIEW WITH REVERT ============
+  async function approveSubmission(subId, taskId, userId) {
+    await db.collection('submissions').doc(subId).update({ status: 'approved', reviewedAt: new Date() });
+    const task = allTasks.find(t => t.id === taskId);
+    const reward = task?.reward || 100;
+    const userRef = db.collection('users').doc(userId);
+    const userDoc = await userRef.get();
+    await userRef.update({ walletBalance: (userDoc.data().walletBalance || 0) + reward, completedTasks: [...(userDoc.data().completedTasks || []), taskId] });
+    await db.collection('transactions').add({ userId, type: 'task_payment', amount: reward, status: 'approved', date: new Date() });
+    showToast(`✅ Approved! +${reward} Ksh added`, 'success');
+    loadPendingSubmissions();
+    loadReviewedSubmissions();
+    loadDashboard();
+  }
+
+  async function rejectSubmission(subId) {
+    await db.collection('submissions').doc(subId).update({ status: 'rejected', reviewedAt: new Date() });
+    showToast('Submission rejected', 'warning');
+    loadPendingSubmissions();
+    loadReviewedSubmissions();
+  }
+
+  async function revertSubmission(subId, oldStatus) {
+    if (confirm('Revert this decision? This will move it back to pending.')) {
+      await db.collection('submissions').doc(subId).update({ status: 'pending', reviewedAt: null });
+      showToast('Decision reverted! Submission back to pending.', 'success');
+      loadPendingSubmissions();
+      loadReviewedSubmissions();
+    }
+  }
+
+  // ============ USER MANAGEMENT ============
+  async function updateUserRole(uid, newRole) { await db.collection('users').doc(uid).update({ role: newRole }); showToast(`Role updated to ${newRole}`, 'success'); loadUsers(); }
+  async function toggleSubscriptionStatus(uid, currentStatus) { await db.collection('users').doc(uid).update({ subscriptionActive: !currentStatus }); showToast(`Subscription ${!currentStatus ? 'activated' : 'deactivated'}`, 'success'); loadUsers(); loadSubscriptions(); }
+  async function toggleUserActive(uid, isActive) { await db.collection('users').doc(uid).update({ active: !isActive }); showToast(`User ${!isActive ? 'activated' : 'deactivated'}`, 'success'); loadUsers(); }
+  async function sendPasswordReset(email) { try { await auth.sendPasswordResetEmail(email); showToast(`Reset link sent to ${email}`, 'success'); } catch (e) { showToast('Error: ' + e.message, 'error'); } }
+  async function adjustWalletBalance(uid, amount, reason) {
+    if (isNaN(amount)) { showToast('Enter valid amount', 'error'); return; }
+    const userDoc = await db.collection('users').doc(uid).get();
+    const newBalance = (userDoc.data().walletBalance || 0) + amount;
+    if (newBalance < 0) { showToast('Balance cannot go negative', 'error'); return; }
+    await db.collection('users').doc(uid).update({ walletBalance: newBalance });
+    await db.collection('transactions').add({ userId: uid, type: 'admin_adjustment', amount, reason, date: new Date() });
+    showToast(`Wallet adjusted! New: Ksh ${newBalance}`, 'success');
+    loadUsers(); loadAdjustWallet();
+  }
+
+  // ============ WITHDRAWALS ============
+  async function approveWithdrawal(wdId, userId, amount) {
+    await db.collection('withdrawals').doc(wdId).update({ status: 'approved', processedAt: new Date() });
+    const userRef = db.collection('users').doc(userId);
+    const userDoc = await userRef.get();
+    await userRef.update({ walletBalance: (userDoc.data().walletBalance || 0) - amount });
+    await db.collection('transactions').add({ userId, type: 'withdrawal_approved', amount: -amount, status: 'approved', date: new Date() });
+    showToast(`Withdrawal approved: Ksh ${amount}`, 'success');
+    loadWithdrawals(); loadDashboard();
+  }
+  async function rejectWithdrawal(wdId) { await db.collection('withdrawals').doc(wdId).update({ status: 'rejected' }); showToast('Withdrawal rejected', 'warning'); loadWithdrawals(); }
+
+  // ============ SUBSCRIPTIONS ============
+  async function approveSubscription(reqId, userId) { await db.collection('subscriptionRequests').doc(reqId).update({ status: 'approved', approvedAt: new Date() }); await db.collection('users').doc(userId).update({ subscriptionActive: true }); showToast('Subscription activated', 'success'); loadSubscriptions(); loadUsers(); }
+  async function rejectSubscription(reqId) { await db.collection('subscriptionRequests').doc(reqId).update({ status: 'rejected' }); showToast('Subscription rejected', 'warning'); loadSubscriptions(); }
+
+  // ============ TOP WRITERS ============
+  async function batchUpdateTopWriters(writersJson) {
+    try { const writers = JSON.parse(writersJson); if (!Array.isArray(writers)) throw new Error(); await db.collection('settings').doc('topWriters').set({ writers, updatedAt: new Date() }); showToast('Top writers updated!', 'success'); loadTopWriters(); } 
+    catch (e) { showToast('Invalid JSON. Use: [{"name":"John","points":1500}]', 'error'); }
+  }
+
+  // ============ LOAD FUNCTIONS ============
+  async function loadUsers() {
+    const snapshot = await db.collection('users').get();
+    allUsers = []; snapshot.forEach(doc => allUsers.push({ id: doc.id, ...doc.data(), active: doc.data().active !== false, subscriptionActive: doc.data().subscriptionActive || false }));
+    if (allUsers.length === 0) { document.getElementById('usersContent').innerHTML = '<div class="empty-state">No users found</div>'; return; }
+    document.getElementById('usersContent').innerHTML = `<div class="table-responsive"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Wallet</th><th>Subscription</th><th>Status</th><th>Actions</th></tr></thead><tbody>${allUsers.map(u => `<tr><td>${escapeHtml(u.name)}</td><td>${escapeHtml(u.email)}</td><td><select onchange="updateUserRole('${u.id}', this.value)"><option ${u.role === 'admin' ? 'selected' : ''} value="admin">Admin</option><option ${u.role === 'user' ? 'selected' : ''} value="user">User</option></select></td><td>Ksh ${(u.walletBalance || 0).toFixed(2)}</td><td><button class="btn-sm ${u.subscriptionActive ? 'btn-success' : 'btn-warning'}" onclick="toggleSubscriptionStatus('${u.id}', ${u.subscriptionActive})">${u.subscriptionActive ? 'Active' : 'Inactive'}</button></td><td><span class="status-badge ${u.active ? 'status-approved' : 'status-rejected'}">${u.active ? 'Active' : 'Deactivated'}</span></td><td><button class="btn-sm btn-warning" onclick="sendPasswordReset('${u.email}')">Reset</button><button class="btn-sm ${u.active ? 'btn-danger' : 'btn-success'}" onclick="toggleUserActive('${u.id}', ${u.active})">${u.active ? 'Deactivate' : 'Activate'}</button><button class="btn-sm btn-primary" onclick="adjustWalletBalance('${u.id}', 100, 'Bonus')">+100</button></td></tr>`).join('')}</tbody></table>`;
+  }
+
+  async function loadAllTasks() {
+    const snapshot = await db.collection('tasks').orderBy('createdAt', 'desc').get();
+    allTasks = []; snapshot.forEach(doc => allTasks.push({ id: doc.id, ...doc.data() }));
+    if (allTasks.length === 0) { document.getElementById('allTasksContent').innerHTML = '<div class="empty-state">No tasks created yet</div>'; return; }
+    document.getElementById('allTasksContent').innerHTML = `<div class="card-grid">${allTasks.map(task => `<div class="task-card-admin"><div class="task-title"><strong>📌 ${escapeHtml(task.title)}</strong> <span style="background:#10b981; color:white; padding:0.2rem 0.6rem; border-radius:2rem;">Ksh ${task.reward || 100}</span></div><div class="task-desc" style="margin:0.5rem 0;">${escapeHtml(task.description || 'No description')}</div><div class="task-meta"><small>Created: ${task.createdAt?.toDate ? new Date(task.createdAt.toDate()).toLocaleDateString() : 'Recently'}</small></div><div class="task-actions"><button class="btn-sm btn-warning edit-task" data-id="${task.id}" data-title="${escapeHtml(task.title)}" data-desc="${escapeHtml(task.description || '')}" data-reward="${task.reward || 100}"><i class="fas fa-edit"></i> Edit</button><button class="btn-sm btn-danger delete-task" data-id="${task.id}"><i class="fas fa-trash"></i> Delete</button></div></div>`).join('')}</div>`;
+    document.querySelectorAll('.edit-task').forEach(btn => btn.addEventListener('click', () => showEditModal(btn.dataset.id, btn.dataset.title, btn.dataset.desc, btn.dataset.reward)));
+    document.querySelectorAll('.delete-task').forEach(btn => btn.addEventListener('click', () => deleteTask(btn.dataset.id)));
+  }
+
+  function showEditModal(id, title, desc, reward) {
+    const modal = document.createElement('div'); modal.className = 'modal'; modal.innerHTML = `<div class="modal-content"><h3>Edit Task</h3><div class="input-group"><label>Title</label><input id="editTitle" value="${escapeHtml(title)}"></div><div class="input-group"><label>Description</label><textarea id="editDesc" rows="3">${escapeHtml(desc)}</textarea></div><div class="input-group"><label>Reward (Ksh)</label><input id="editReward" type="number" value="${reward}"></div><div style="display:flex; gap:0.5rem;"><button id="saveEditBtn" class="btn-primary">Save</button><button id="closeModalBtn" class="btn-secondary">Cancel</button></div></div>`;
+    document.body.appendChild(modal);
+    document.getElementById('saveEditBtn').onclick = () => { updateTask(id, document.getElementById('editTitle').value, document.getElementById('editDesc').value, document.getElementById('editReward').value); modal.remove(); };
+    document.getElementById('closeModalBtn').onclick = () => modal.remove();
+  }
+
+  async function loadPendingSubmissions() {
+    const snapshot = await db.collection('submissions').get();
+    allSubmissions = []; snapshot.forEach(doc => allSubmissions.push({ id: doc.id, ...doc.data() }));
+    const pending = allSubmissions.filter(s => s.status === 'pending');
+    if (pending.length === 0) { document.getElementById('pendingSubmissionsContent').innerHTML = '<div class="empty-state">✅ No pending submissions</div>'; return; }
+    document.getElementById('pendingSubmissionsContent').innerHTML = `<div class="card-grid">${pending.map(sub => { const task = allTasks.find(t => t.id === sub.taskId); const user = allUsers.find(u => u.id === sub.userId); return `<div class="submission-card" style="border-left-color:#f59e0b;"><h3><i class="fas fa-file-alt"></i> ${escapeHtml(task?.title || 'Unknown')}</h3><p><strong>User:</strong> ${escapeHtml(user?.name || sub.userName || sub.userId)} (${escapeHtml(user?.email || '')})</p><p><strong>Submitted Work:</strong></p><div style="background:#f1f5f9; padding:0.6rem; border-radius:0.5rem;">${escapeHtml(sub.work)}</div><p><small>Submitted: ${sub.submittedAt?.toDate ? new Date(sub.submittedAt.toDate()).toLocaleString() : 'Recently'}</small></p><div><button class="btn-sm btn-success" onclick="approveSubmission('${sub.id}', '${sub.taskId}', '${sub.userId}')"><i class="fas fa-check"></i> Approve & Pay</button><button class="btn-sm btn-danger" onclick="rejectSubmission('${sub.id}')"><i class="fas fa-times"></i> Reject</button></div></div>`; }).join('')}</div>`;
+  }
+
+  async function loadReviewedSubmissions() {
+    const reviewed = allSubmissions.filter(s => s.status === 'approved' || s.status === 'rejected');
+    if (reviewed.length === 0) { document.getElementById('reviewedSubmissionsContent').innerHTML = '<div class="empty-state">No reviewed submissions yet</div>'; return; }
+    document.getElementById('reviewedSubmissionsContent').innerHTML = `<div class="card-grid">${reviewed.map(sub => { const task = allTasks.find(t => t.id === sub.taskId); const user = allUsers.find(u => u.id === sub.userId); return `<div class="submission-card" style="border-left-color:${sub.status === 'approved' ? '#10b981' : '#ef4444'};"><h3><i class="fas fa-${sub.status === 'approved' ? 'check-circle' : 'times-circle'}"></i> ${escapeHtml(task?.title || 'Unknown')}</h3><p><strong>User:</strong> ${escapeHtml(user?.name || sub.userName || sub.userId)}</p><p><strong>Work:</strong> ${escapeHtml(sub.work?.substring(0, 100))}...</p><p><span class="status-badge ${sub.status === 'approved' ? 'status-approved' : 'status-rejected'}">${sub.status.toUpperCase()}</span> <small>Reviewed: ${sub.reviewedAt?.toDate ? new Date(sub.reviewedAt.toDate()).toLocaleString() : ''}</small></p><button class="btn-sm btn-secondary" onclick="revertSubmission('${sub.id}', '${sub.status}')"><i class="fas fa-undo"></i> Revert Decision</button></div>`; }).join('')}</div>`;
+  }
+
+  async function loadWithdrawals() {
+    const snapshot = await db.collection('withdrawals').get();
+    withdrawals = []; snapshot.forEach(doc => withdrawals.push({ id: doc.id, ...doc.data() }));
+    const pending = withdrawals.filter(w => w.status === 'pending');
+    if (withdrawals.length === 0) { document.getElementById('withdrawalsContent').innerHTML = '<div class="empty-state">No withdrawal requests</div>'; return; }
+    document.getElementById('withdrawalsContent').innerHTML = `<h3>⏳ Pending (${pending.length})</h3>${pending.length ? pending.map(w => { const user = allUsers.find(u => u.id === w.userId); return `<div class="user-card"><b>${escapeHtml(user?.name || w.userName)}</b> (${escapeHtml(user?.email || '')})<br><b>Gateway:</b> ${w.gateway}<br><b>Details:</b> ${escapeHtml(w.details)}<br><b>Amount:</b> Ksh ${w.amount}<br><button class="btn-sm btn-success" onclick="approveWithdrawal('${w.id}', '${w.userId}', ${w.amount})">Approve</button><button class="btn-sm btn-danger" onclick="rejectWithdrawal('${w.id}')">Reject</button></div>`; }).join('') : '<div class="empty-state">No pending withdrawals</div>'}<h3 style="margin-top:1rem;">✅ Processed</h3>${withdrawals.filter(w => w.status !== 'pending').map(w => `<div class="user-card"><b>${escapeHtml(w.userId)}</b> - Ksh ${w.amount} - <span class="status-badge ${w.status === 'approved' ? 'status-approved' : 'status-rejected'}">${w.status}</span></div>`).join('') || '<div class="empty-state">None</div>'}`;
+  }
+
+  async function loadSubscriptions() {
+    const reqSnapshot = await db.collection('subscriptionRequests').get();
+    subscriptionReqs = []; reqSnapshot.forEach(doc => subscriptionReqs.push({ id: doc.id, ...doc.data() }));
+    const pending = subscriptionReqs.filter(r => r.status === 'pending');
+    const activeUsers = allUsers.filter(u => u.subscriptionActive === true);
+    document.getElementById('subscriptionsContent').innerHTML = `<h3>⏳ Pending Requests (${pending.length})</h3>${pending.length ? pending.map(r => { const user = allUsers.find(u => u.id === r.userId); return `<div class="user-card"><b>${escapeHtml(user?.name || r.userName)}</b> (${escapeHtml(user?.email || '')})<br><b>Message:</b> ${escapeHtml(r.paymentMessage)}<br><button class="btn-sm btn-success" onclick="approveSubscription('${r.id}', '${r.userId}')">Activate</button><button class="btn-sm btn-danger" onclick="rejectSubscription('${r.id}')">Reject</button></div>`; }).join('') : '<div class="empty-state">No pending requests</div>'}<h3 style="margin-top:1rem;">✅ Active Subscriptions (${activeUsers.length})</h3>${activeUsers.length ? activeUsers.map(u => `<div class="user-card"><b>${escapeHtml(u.name)}</b> - ${escapeHtml(u.email)}<br><span class="status-badge status-approved">Active</span><button class="btn-sm btn-warning" style="margin-left:0.5rem;" onclick="toggleSubscriptionStatus('${u.id}', true)">Deactivate</button></div>`).join('') : '<div class="empty-state">No active subscriptions</div>'}`;
+  }
+
+  async function loadTopWriters() {
+    const settings = await db.collection('settings').doc('topWriters').get();
+    const writers = settings.exists ? settings.data().writers : [{ name: "James M.", points: 12450 }, { name: "Sarah W.", points: 9820 }];
+    document.getElementById('topWritersContent').innerHTML = `<div class="input-group"><label>Batch Update (JSON array):</label><textarea id="batchWritersJson" rows="3" placeholder='[{"name":"John Doe","points":15000}]'></textarea><button id="updateWritersBtn" class="btn-primary">Update</button></div><hr><h3>Current Top Writers</h3><div class="card-grid">${writers.map(w => `<div class="user-card"><i class="fas fa-trophy"></i> <strong>${escapeHtml(w.name)}</strong> - ${w.points} pts</div>`).join('')}</div>`;
+    document.getElementById('updateWritersBtn')?.addEventListener('click', () => batchUpdateTopWriters(document.getElementById('batchWritersJson').value));
+  }
+
+  async function loadAdjustWallet() {
+    if (allUsers.length === 0) { document.getElementById('adjustWalletContent').innerHTML = '<div class="empty-state">No users</div>'; return; }
+    document.getElementById('adjustWalletContent').innerHTML = `<div class="input-group"><label>Select User</label><select id="walletUserId">${allUsers.map(u => `<option value="${u.id}">${escapeHtml(u.name)} (${escapeHtml(u.email)}) - Ksh ${(u.walletBalance || 0).toFixed(2)}</option>`).join('')}</select></div><div class="input-group"><label>Amount (+/-)</label><input type="number" id="adjustAmount" placeholder="500 or -200"></div><div class="input-group"><label>Reason</label><input id="adjustReason"></div><button class="btn-primary" id="applyAdjustBtn">Apply</button>`;
+    document.getElementById('applyAdjustBtn')?.addEventListener('click', () => adjustWalletBalance(document.getElementById('walletUserId').value, parseInt(document.getElementById('adjustAmount').value), document.getElementById('adjustReason').value));
+  }
+
+  async function loadSupportTickets() {
+    const snapshot = await db.collection('supportTickets').orderBy('createdAt', 'desc').get();
+    const tickets = []; snapshot.forEach(doc => tickets.push({ id: doc.id, ...doc.data() }));
+    if (tickets.length === 0) { document.getElementById('ticketsContent').innerHTML = '<div class="empty-state">No tickets</div>'; return; }
+    document.getElementById('ticketsContent').innerHTML = `<div class="card-grid">${tickets.map(t => { const user = allUsers.find(u => u.id === t.userId); return `<div class="user-card"><b>From:</b> ${escapeHtml(user?.name || t.userName)}<br><b>Email:</b> ${escapeHtml(user?.email || '')}<br><b>Message:</b> ${escapeHtml(t.message)}<br><b>Date:</b> ${t.createdAt?.toDate ? new Date(t.createdAt.toDate()).toLocaleString() : ''}<br><button class="btn-sm btn-primary" onclick="db.collection('supportTickets').doc('${t.id}').delete(); showToast('Resolved', 'success'); loadSupportTickets();">Resolve</button></div>`; }).join('')}</div>`;
+  }
+
+  async function loadDashboard() {
+    const pendingSubs = allSubmissions.filter(s => s.status === 'pending').length;
+    const pendingWds = withdrawals.filter(w => w.status === 'pending').length;
+    document.getElementById('dashboardContent').innerHTML = `<div class="card-grid"><div class="user-card"><h3>👥 Users</h3><div style="font-size:2rem;">${allUsers.length}</div></div><div class="user-card"><h3>📋 Tasks</h3><div style="font-size:2rem;">${allTasks.length}</div></div><div class="user-card"><h3>⏳ Pending Submissions</h3><div style="font-size:2rem; color:#f59e0b;">${pendingSubs}</div></div><div class="user-card"><h3>💰 Pending Withdrawals</h3><div style="font-size:2rem;">${pendingWds}</div></div></div>`;
+  }
+
+  // Post Task UI
+  document.getElementById('postTasksContent').innerHTML = `<div class="input-group"><label>Task Title</label><input id="taskTitle" placeholder="Enter title"></div><div class="input-group"><label>Description</label><textarea id="taskDesc" rows="3"></textarea></div><div class="input-group"><label>Reward (Ksh)</label><input id="taskReward" type="number" value="100"></div><button id="submitTaskBtn" class="btn-primary">Publish Task</button>`;
+  document.getElementById('submitTaskBtn')?.addEventListener('click', () => postTask(document.getElementById('taskTitle').value, document.getElementById('taskDesc').value, document.getElementById('taskReward').value));
+
+  // Expose global functions
+  window.updateUserRole = updateUserRole; window.toggleSubscriptionStatus = toggleSubscriptionStatus; window.toggleUserActive = toggleUserActive;
+  window.sendPasswordReset = sendPasswordReset; window.adjustWalletBalance = adjustWalletBalance; window.approveSubmission = approveSubmission;
+  window.rejectSubmission = rejectSubmission; window.revertSubmission = revertSubmission; window.approveWithdrawal = approveWithdrawal;
+  window.rejectWithdrawal = rejectWithdrawal; window.approveSubscription = approveSubscription; window.rejectSubscription = rejectSubscription;
+
+  async function refreshAll() {
+    await loadUsers(); await loadAllTasks(); await loadPendingSubmissions(); await loadReviewedSubmissions();
+    await loadWithdrawals(); await loadSubscriptions(); await loadTopWriters(); await loadAdjustWallet(); 
+    await loadSupportTickets(); await loadDashboard(); await loadSystemSettings();
+    showToast('All data refreshed!', 'success');
+  }
+
+  auth.onAuthStateChanged(async user => {
+    if (!user) { window.location.href = 'register.html'; return; }
+    const userDoc = await db.collection('users').doc(user.uid).get();
+    if (!userDoc.exists || userDoc.data().role !== 'admin') { alert('Admin access only'); window.location.href = 'user.html'; return; }
+    document.getElementById('adminName').innerHTML = `<i class="fas fa-crown"></i> ${escapeHtml(userDoc.data().name || 'Admin')}`;
+    await refreshAll();
+    showSection('dashboard');
+  });
+  document.getElementById('logoutBtn').addEventListener('click', async () => { await auth.signOut(); window.location.href = 'index.html'; });
+</script>
+</body>
+</html>
